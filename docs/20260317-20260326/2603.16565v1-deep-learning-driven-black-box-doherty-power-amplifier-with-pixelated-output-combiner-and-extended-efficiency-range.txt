@@ -1,0 +1,728 @@
+Title: Deep Learning-Driven Black-Box Doherty Power Amplifier with Pixelated Output Combiner and Extended Efficiency Range
+
+URL Source: https://arxiv.org/pdf/2603.16565v1
+
+Published Time: Wed, 18 Mar 2026 01:34:41 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+This work has been submitted to the IEEE for possible publication. Copyright may be transferred without notice, after which this version may no longer be accessible. 
+
+> 1
+
+# Deep Learning-Driven Black-Box Doherty Power Amplifier with Pixelated Output Combiner and Extended Efficiency Range 
+
+Han Zhou, Member, IEEE , Haojie Chang Member, IEEE , and David Wid´ en 
+
+Abstract —This article presents a deep learning-driven inverse design methodology for Doherty power amplifiers (PA) with multi-port pixelated output combiner networks. A deep con-volutional neural network (CNN) is developed and trained as an electromagnetic (EM) surrogate model to accurately and rapidly predict the S-parameters of pixelated passive networks. By leveraging the CNN-based surrogate model within a black-box Doherty framework and a genetic algorithm (GA)-based optimizer, we effectively synthesize complex Doherty combiners that enable an extended back-off efficiency range using fully symmetrical devices. As a proof of concept, we designed and fabricated two Doherty PA prototypes incorporating three-port pixelated combiners, implemented with GaN HEMT transistors. In measurements, both prototypes demonstrate a maximum drain efficiency exceeding 74% and deliver an output power surpassing 44 .1 dBm at 2.75 GHz . Furthermore, a measured drain efficiency above 52% is maintained at the 9-dB back-off power level for both prototypes at the same frequency. To evaluate linearity and efficiency under realistic signal conditions, both prototypes are tested using a 20 -MHz 5G new radio (NR)-like waveform exhibiting a peak-to-average power ratio (PAPR) of 
+
+9.0-dB. After applying digital predistortion (DPD), each design achieves an average power-added efficiency (PAE) above 51% ,while maintaining an adjacent channel leakage ratio (ACLR) better than −60 .8 dBc .
+
+Index Terms —Deep learning, Doherty power amplifier, genetic optimization, inverse design, load modulation, neural networks. 
+
+I. I NTRODUCTION 
+
+# TO meet the increasing demand for higher data rates, mod-ern communication systems have embraced advanced modulation techniques. These methods, however, inherently produce signals with a high peak-to-average power ratio (PAPR). Meanwhile, energy efficiency has become a critical design consideration, as power consumption in mobile net-works constitutes a substantial share of both operational costs and environmental impact. Excessive energy usage further complicates system design due to the need for additional cooling infrastructure to manage thermal dissipation. Among all radio front-end components, power amplifiers (PA) are typically the most power-intensive. Therefore, improving PA efficiency, particularly under backed-off output power condi-tions, can yield considerable energy savings and lead to more sustainable and cost-effective network deployments [1]. 
+
+This research was supported in part by Swedish Innovation Agency (Vinnova) Grant 2024-02531, MULTIRACS, through the Eureka CELTIC Framework, and in part by VINNOVA, Sivers Semiconductors, and Chalmers University of Technology under Grant 2022-00863. H. Zhou, H. Chang, and D. Wid´ en are with Chalmers University of Technology, Sweden (e-mail: han.zhou@ieee.org). 
+
+Active load-modulated PA architectures have gained con-siderable attention for their ability to enhance efficiency at back-off power levels. Recent innovations in this area [2]– [8] have demonstrated notable improvements in back-off effi-ciency. However, their circuit complexity often hinders prac-tical deployment, especially at higher frequencies. In contrast, the Doherty PA [9] exhibits a simpler circuit configuration, contributing to its widespread commercial adoption. Central to Doherty PA performance is the output combiner network, which govern the interaction between the main and auxiliary sub-amplifiers. This cooperative behavior directly impacts achievable back-off efficiency. In parallel, inverse design methodologies have emerged as a powerful paradigm across diverse fields such as integrated photonics [10]–[12], meta-lens antennas [13]–[15], and scat-tering theory [16], [17]. The core principle is to define a target performance and then determine the optimal structure through a top-down approach. This often involves pixelating a designated layout area into an N × M binary matrix, where each pixel denotes the presence or absence of a specific material. Compared to conventional electromagnetic (EM) structures composed of lumped or distributed elements, inverse design enables exploration of a vastly larger design space. In recent years, deep learning has been increasingly applied to such problems for its ability to learn complex features and efficiently navigate high-dimensional design spaces [18]. In radio frequency (RF) circuit design [19], deep learn-ing–based inverse design has been successfully applied to broadband PAs, passive circuits [20]–[24], and harmonic-tuned Class F PAs [25]. However, most prior work has focused on relatively standard structures such as power splitters, filters, and Class B PAs with conventional combiners. Doherty PAs, by contrast, require much more sophisticated three-port com-biner networks that integrate load modulation, power combin-ing, phase shifting, and impedance transformation within a compact footprint. To address this gap, we extend the inverse design methodol-ogy to the synthesis of complex pixelated three-port Doherty combiner networks. Inverse design of a traditional Doherty combiner is particularly challenging because it is typically developed through an iterative process, resulting in multi-ple cascaded networks such as matching sections, parasitic compensation stages, offset lines, and post-matching circuits in addition to the load modulation network [26]–[29]. This complexity significantly limits the practicality of applying inverse design directly to conventional combiners. By contrast, 
+
+> arXiv:2603.16565v1 [eess.SP] 17 Mar 2026 2
+
+Zm Za
+
+Im Ia
+
+Vin  Vin e-jϴ 
+
+Reciprocal & lossy 
+
+2-port combiner 
+
+(Z2P ) Aux 
+
+> Class C
+
+Vm
+
++
+
+-
+
++
+
+-
+
+Va    
+
+> Main
+> Class B
+> RL
+> Reciprocal &
+> lossless 3 -port
+> combiner ( Z3P )
+> RL
+> Lumped/distributed
+> T/ πnetwork
+> ……
+> Convolution Layers FC Layers
+> Inverse
+> Design
+> Deep CNN Based EM Emulator
+> Target
+> Synthesized
+> Aux Main
+> RL
+> S Parameters
+> Pixelated EM
+> Structure (N x M)
+> Forward
+> Inverse
+> Design
+
+(a)  
+
+> Symmetrical main & aux amplifiers with extended dynamic range
+> Rapid & accurate combiner synthesis using load -pull data
+> Pre -determined lumped/distributed network constrain design space
+> Lengthy EM simulations and parameter sweeps increase design time
+
+(b)    
+
+> Pixelated layouts represented by an N ×M binary matrix, where each
+> cell (0 or 1) indicates the absence or presence of metal
+> Flexible and rapid EM structure synthesis using deep CNN -based surrogate
+> models and genetic algorithms (GA) to target desired S -parameters
+> Expanded design space with improved solutions toward global optimum
+> Fig. 1. Overview of the proposed deep learning–driven approach for the synthesis and design of black-box Doherty PAs with symmetrical size and extended back-off efficiency range. (a) Analytical black-box approach for deriving combiner parameters from load-pull data. (b) Deep learning–based top-down approach employing a pixelated Doherty combiner layout to explore the full design space.
+
+adopting the black-box design approach of [30], [31] allows direct synthesis of the complete combiner from transistor load-pull data, eliminating the need to separately design and integrate each sub-network. This methodology greatly smooths the design process and enables extended efficiency enhance-ment within fully symmetrical configurations. Nevertheless, existing black-box approaches are typically limited to com-biner structures composed of lumped or distributed circuit elements, such as transmission lines, capacitors, and inductors. These methods rely on bottom-up design strategies that involve parameter sweeps and repeated EM simulations. Although such techniques provide insight into circuit behavior, they inherently constrain the design space to predefined topolo-gies with limited flexibility and a small number of tunable parameters. As a result, existing methodologies restrict the discovery of higher-performance solutions, require consider-able simulation and optimization time, and ultimately impede the exploitation of the full performance potential of Doherty combiner networks. Motivated by these limitations, this work introduces a data-driven inverse design framework that relaxes the topological constraints and mitigates the dependence on time-consuming EM simulations and tuning in existing Do-herty combiner synthesis approaches. Building on this foun-dation, we present the first Doherty PA design that combines deep learning–driven inverse design with a pixelated output combiner network (Fig. 1). A deep convolutional neural net-work (CNN) surrogate model is trained to map pixelated EM structures to their scattering parameters (S-parameters) with high accuracy. Coupled with a genetic algorithm (GA), this surrogate accelerates the inverse design process by eliminat-ing repeated full-wave EM simulations. Integrated with the black-box Doherty framework, our method achieves significant efficiency improvements at extended back-off levels using identical transistors directly synthesized from their load-pull data. The remainder of this paper is organized as follows. Section II illustrates the black-box combiner synthesis method-ology and analyzes the Class B/C Doherty PA. Section III details the CNN architecture, data generation workflow, and GA strategy. Section IV demonstrates the implementation process, including two Doherty PA prototypes. Section V reports measurement results. Section VI concludes the paper. II. T HE BLACK -BOX COMBINER THEORY 
+
+In this section, the generalized combiner synthesis approach is presented. The parameters of a generic two-port combiner are first derived to analyze the Class B/C Doherty PA behavior with extended efficiency range under varying drive conditions. Then, the synthesis procedure of a two-port Doherty combiner using load-pull data is demonstrated, along with the condition required to transform it into a lossless three-port combiner with resistive output loading. 
+
+A. Black-Box Doherty PAs 
+
+Following the analysis in [31], transistors are modeled as ideal, piecewise, voltage-controlled current sources. Only the fundamental component is considered, with higher harmonics short-circuited, representing ideal Class B operation. A phase delay θ is assumed between the output currents of the main and auxiliary amplifiers. The output currents are given by [8] 
+
+Im = βi m, M (1) 
+
+Ia =
+
+
+
+0, 0 ≤ β ≤ βB β − βB
+
+1 − βB
+
+
+
+ia,M · e−jθ , βB ≤ β ≤ 1 (2) where β and i denotes the normalized input voltage and fundamental current, respectively. In these expressions, the 3Case I  Case II  Case III               
+
+> Back -Off V in (βB)0.5 0.3 80.23
+> Current Ratio (a)1.0 0. 90.8
+> Back -Off Pout (γ)6 dB 7 dB 9 dB
+
+(a) 
+
+(b)
+
+(c)         
+
+> Fig. 2. Illustration of the black-box technique under different driving conditions. The output power is normalized to the corresponding saturated output power for each current-scaling ratio. (a) Normalized current drive profiles as a function of input voltage. (b) Theoretical performance comparison for different drive profiles (Cases I–III). (c) Corresponding current ratios and back-off levels for each case.
+
+first subscript (m or a) refers to the main or auxiliary amplifier, respectively, and the second subscript (M or B) denotes operation at maximum or back-off power levels. The combiner network is described by its impedance matrix 
+
+Z2P , relating voltages and currents at the amplifier outputs 
+
+Vm
+
+Va
+
+
+
+= Z2P 
+
+Im
+
+Ia
+
+
+
+=
+
+Z11 Z12 
+
+Z12 Z22 
+
+  Im
+
+Ia
+
+
+
+(3) Assuming an optimal load of Ropt for the main amplifier, the auxiliary amplifier’s optimal load reduces to Ropt /α , with 
+
+α defined as the ratio of peak output currents between the main and auxiliary amplifiers. The combiner’s impedance parameters are then derived as [32] 
+
+
+
+Z11 = Ropt 
+
+βB
+
+Z12 =
+
+
+
+1 − 1
+
+βB
+
+  Ropt 
+
+α
+
+
+
+ejθ 
+
+Z22 =
+
+ 1
+
+βB
+
++ αe −j2θ − 1
+
+  Ropt 
+
+α2
+
+
+
+ej2θ
+
+(4) To transform the lossy reciprocal two-port network into an equivalent lossless three-port combiner with resistive termina-tion, the following condition must be satisfied [30] 
+
+ℜ{ Z12 }2 = ℜ{ Z11 }ℜ{ Z22 } (5) The normalized output power back-off level, denoted by γ,and the phase delay θ are derived as [32] 
+
+γ = 1 + αβB
+
+(6) 
+
+θ = kπ ± arcsin 
+
+s
+
+βB (α − βB + 1) 1 − β2
+
+> B
+
+(7) where k is an arbitrary integer. Expressions (4–7) indicate that, for a given back-off level 
+
+γ and current ratio α, a valid phase shift θ and correspond-ing combiner impedance matrix Z2P can be determined. As illustrated in Fig. 2, the theoretical analysis suggests that this method enables the realization of desired back-off levels across various current ratios, facilitating full utilization of the main and auxiliary transistors. 
+
+B. Combiner Synthesized from Load-Pull Data 
+
+The theoretical analysis above demonstrates the fundamen-tal operating principle of the black-box approach. However, at high frequencies, transistor parasitics and nonlinearities significantly influence PA performance. As a result, a combiner design methodology guided by nonlinear device behavior un-der large-signal excitation becomes essential for fully utilizing the device capabilities. The two-port combiner impedance matrix ( Z2P ) can be derived from load-pull data, as follows. 
+
+
+
+Z11 = (Za,M + Za,off ) Zm,Bα2 + ( Zm,M − Zm,B) Zm,M
+
+Zm,M − Zm,B + ( Za,M + Za,off ) α2
+
+Z12 = (Zm,M − Zm,B) ( Za,M + Za,off ) αZm,M − Zm,B + ( Za,M + Za,off ) α2
+
+Z22 = (Za,M + Za,off ) Za,Mα2 + ( Zm,B − Zm,M) Za,off 
+
+Zm,M − Zm,B + ( Za,M + Za,off ) α2
+
+(8) The parameter α is given by 
+
+α = ia,M 
+
+im,M 
+
+=
+
+s
+
+ℜ{ Zm,M }Pa,M 
+
+ℜ{ Za,M }Pm,M 
+
+e−jθ (9) where P represents the delivered output power and Z is the optimal impedance, both from load-pull data. Furthermore, when selecting the design parameter for the back-off power level ( γB), the following relationship must be satisfied to ensure power conservation 
+
+γBPm,B = Pm,M + Pa,M (10) To implement a physically realizable, lossless three-port combiner (Z3P ) terminated with a resistive load RL, the synthesized lossy two-port network ( Z2P ) must satisfy the condition described in equation (5). Given equations (5), (8), and (9), the only remaining unknown is the phase parameter 4S Param eters 
+
+Pixelated EM 
+
+Structure ( N x M )
+
+Feature Maps  FC Layers 
+
+Convolutional Layer  Batch Norm.  ReLU      
+
+> Fig. 3. Architecture of the trained deep CNN with residual connections. The input is a binary 15 ×15 matrix representing the pixelated EM layout structure, and the output is the predicted real and imaginary components of the corresponding S-parameters across the frequency range of interest.
+
+Pixelated Layout 
+
+(N x M )
+
+RL
+
+Main 
+
+Aux 
+
+①
+
+1
+
+②
+
+③④
+
+VDD          
+
+> Fig. 4. The employed pixelated Doherty combiner networks, where the feed locations for the main (port 1), auxiliary (port 2), and output (port 3) are placed at the center of each corresponding edge of the 15 -pixel array. The output port 3is connected to the load ( RL), while port 4is left open.
+
+θ, which can be solved analytically or numerically. Once θ
+
+is determined, the complete impedance matrix Z2P for the combiner can be fully specified. III. D EEP LEARNING -D RIVEN INVERSE SYNTHESIS OF 
+
+DOHERTY COMBINER NETWORK 
+
+Building upon the theoretical analysis and equations in Section II, a two-port Doherty combiner matrix Z2P can be directly derived from load-pull data, enabling designs with extended back-off efficiency while fully utilizing the employed transistors. However, physical realizations of such combiners have traditionally relied on predefined lumped or distributed topologies, often depending on expert intuition, iterative EM simulations, and manual parameter tuning [30], [31]. To overcome these limitations, this section introduces an in-verse design methodology for synthesizing Doherty combiners using pixelated output networks. This approach enables explo-ration of a broader design space encompassing all fabricable structures. We begin by describing the pixelated layout design space and the corresponding training dataset. This is followed by the development of a deep CNN used as an EM surrogate                                                                                                
+
+> TABLE I DETAILED CONFIGURATION OF THE DEEP CNN A RCHITECTURE
+> Conv. Layer Filter Size Filter Number Inputs
+> C112 ×12 32 Matrix in
+> C212 ×12 32 C1
+> C310 ×10 32 C2+ Matrix in
+> C410 ×10 32 C3
+> C58×832 C4+C2
+> C68×832 C5
+> C76×632 C6+C4
+> C86×632 C7
+> C94×432 C8+C6
+> C10 4×432 C9
+> C11 3×332 C10 +C8
+> C12 3×332 C11
+> FC Layer Num. Neurons Dropout Act. Func.
+> F12048 0.25 LeReLU (0.01)
+> F22048 0.25 LeReLU (0.01)
+> F32048 0.25 LeReLU (0.01)
+> F42048 0.25 LeReLU (0.01)
+> F52048 0.25 LeReLU (0.01)
+> F678 0Tanh
+
+model, as shown in Fig. 3. Lastly, the inverse synthesis process is detailed using a GA optimizer. 
+
+A. Pixelated Doherty Combiner Network 
+
+To synthesize compact and low-loss Doherty combiner networks, a planar circuit layout is defined over a ground plane and discretized into a two-dimensional binary pixel grid. Each pixel is assigned a binary value: “1” represents the presence of metal, and “0” denotes a dielectric (non-metal) region. The layout is partitioned into a 15 × 15 grid, where each pixel measures 1.8 × 1.8 mm . This resolution is selected to balance EM coupling fidelity and the feasibility of model training [25]. A higher pixel resolution enables finer structural detail and access to a larger design space, potentially yielding improved performance at the expense of increased computational requirements. To ensure reliable 5
+
+electrical connectivity, particularly across diagonal paths, a 
+
+20% metal overlap is applied to each metal pixel. This results in a total physical combiner size of 27 .36 mm × 27 .36 mm .As illustrated in Fig. 4, the feed locations for the main (port 1) and auxiliary (port 2) amplifiers, as well as the output (port 3) connected to the load resistance ( RL), are placed at the center of each corresponding edge of the 15-pixel array. To enable DC biasing of the transistors, supply feeds (VDD) are introduced ahead of RL, allowing the implementation of RF chokes and DC blocks. The binary representation of this pixelated layout results in a total design space of 2225 possible EM structures. Given the vastness of this space, brute-force exploration is compu-tationally infeasible in both time and memory. This challenge presents a compelling opportunity for deep learning. If a deep neural network can be trained as a surrogate EM model using a much smaller subset of simulation data ( < 100000 ), it can then accurately and rapidly predict the scattering parameters of arbitrary pixelated layouts. This surrogate model effectively re-places time-intensive EM simulations governed by Maxwell’s equations. When combined with a GA optimizer and guided by a target specification, the inverse design of pixelated structures can be effectively achieved. 
+
+B. Deep Convolutional Neural Network 
+
+The pixelated circuit layout can be naturally interpreted as a structured image, making CNNs, widely used in computer vision and image processing, well suited for this task. CNNs effectively model local spatial interactions and capture EM coupling between adjacent pixels by learning hierarchical fea-tures. In the following texts, we present the dataset generation process used for CNN training and describe the architecture of the proposed deep CNN model. 
+
+1) Data Generation and Augumentation: A dataset com-prising diverse binary matrices representing pixelated EM structures and their corresponding S-parameters is essential for training the CNN. We fully automated the data generation process using Python scripts, which create pixelated layouts in Keysight Advanced Design System (ADS) and execute EM simulations using Momentum in ADS. The training circuits are generated by assigning each layout a random percentage of metal pixels, drawn from a normal distribution centered at 
+
+50% with a standard deviation of 15% . During data generation, we ensure that each circuit maintains connectivity between the ports by applying a depth-first search (DFS) algorithm to verify continuous electrical paths. We simulate a total of 77000 four-port pixelated EM structures, running four simulations in parallel. Each circuit simulation takes around 24 seconds. Using an Intel i5-14600KF CPU, the total time required to generate the dataset is approximately 129 hours. Each simulated structure includes four ports, with one port terminated in an open condition and another port terminated with a 50 Ω load during augmentation. By applying rotations, translations, and mirror reflections [20], we generate additional three-port EM structures with a 50 Ω load termination, where the S-parameters are derived directly from the original four-port simulations. We augment the data such that for every 
+
+Algorithm 1 Genetic Algorithm Optimization 
+
+Require: Desired S-parameter profile; trained CNN surrogate model; population size N ; maximum iterations X etc. 
+
+Ensure: Optimal pixelated layouts with target S-parameters.  
+
+> 1:
+
+Select a target S-parameter profile.  
+
+> 2:
+
+Generate N binary matrices with direct connections, sam-pled from a normal metal pixel density distribution.  
+
+> 3:
+
+for each generation up to X iterations do  
+
+> 4:
+
+Predict S-parameters of all candidate circuits using the trained deep CNN model.  
+
+> 5:
+
+Calculate fitness based on deviation from the target S-parameter profile.  
+
+> 6:
+
+if fitness of best candidate meets target then  
+
+> 7:
+
+break loop; optimal solution found.  
+
+> 8:
+
+end if  
+
+> 9:
+
+Retain the top 10 circuits as elite individuals for the next generation.  
+
+> 10:
+
+Add up to 30% new random circuits depending on current iteration count to maintain diversity.  
+
+> 11:
+
+Perform tournament selection:  
+
+> •
+
+Split and recombine rows for crossover.  
+
+> •
+
+Flip 1−10% of pixels randomly for mutation.  
+
+> •
+
+Fill population up to N circuits.  
+
+> 12:
+
+end for  
+
+> 13:
+
+return The best pixelated circuit layout achieving or approaching the target S-parameter profile. simulated circuit, eight training data points are created, sig-nificantly reducing the effective dataset creation time. After augmentation, the total dataset size is approximately 1.5 GB .
+
+2) Deep CNN Architecture: As illustrated in Fig. 3, the deep CNN architecture consists of twelve convolutional layers and six fully connected (FC) layers. A residual network (ResNet) structure is employed to mitigate the vanishing gradient problem, which improves training stability and accel-erates convergence [33]. Leaky rectified linear unit (LeReLU) functions are applied as activation functions after batch nor-malization [34], enabling the network to learn complex non-linear relationships. In the convolutional layers, local spatial features are effectively extracted from the binary input matrix representing the pixelated EM layout. These feature maps are then flattened into a one-dimensional vector, which is passed to the FC layers for further processing. During training, dropout layers are inserted to reduce the risk of overfitting [35]. Each convolutional layer uses 32 filters, and each FC layer contains 
+
+2048 neurons with a dropout rate of 25% . The CNN takes binary matrices as input and produces real and imaginary components of the S-parameters as output. A detailed overview of the network architecture is provided in Table I. We train the network using the mean absolute error (MAE) loss function, which quantifies the average absolute difference between predicted and actual values, and is defined by 
+
+L = 1
+
+N
+
+> N
+
+X
+
+> i=1
+
+|yi − ˆyi| (11) where yi and ˆyi denote the actual and predicted values, 6                              
+
+> TABLE II LOAD -PULL DATA OBTAINED AT 2.75 GHz
+> Main Amplifier Auxilary Amplifier
+> Zopt (Ω)Pdel (dBm) PAE ( %)Zopt (Ω)Pdel (dBm) PAE ( %)Peak Power Level 14 .3 + j1.642 .774 14 .3 + j1.642 .178
+> Back-Off Power Level 7.2 + j15 .336 .457 0.25 + j21 .1(Off) --
+
+respectively. The Adam optimizer [36] is used with an initial learning rate of 0.001 , which we reduce by a factor of 0.93 
+
+every 10 epochs to aid convergence. The neural network is trained for 300 epochs using a batch size of 2790 . Upon completion, the model achieves a mean absolute error (MAE) of 0.068 , demonstrating high prediction accuracy. 
+
+C. Genetic Algorithm-Based Inverse Synthesis 
+
+The inverse synthesis of pixelated Doherty combiners is performed using a GA to efficiently explore the vast design space. As illustrated in Algorithm 1, the process begins by defining a desired S-parameter profile, which serves as the target specification. We then generate an initial population of 
+
+N = 4000 binary matrices representing connected circuit lay-outs, sampling metal pixel densities from a normal distribution to ensure a diverse starting point. The trained CNN surrogate model is used to rapidly predict the S-parameters of all candidate circuits in each generation, and fitness scores are calculated based on the deviation from the target S-parameter profile. If the fitness of the best can-didate circuit meets the target performance or after X = 240 
+
+iterations, the algorithm is terminated. Otherwise, the top 10 
+
+circuits with the highest fitness scores are retained as elite individuals for the next generation. To maintain diversity, up to 30% of the population is replaced with new random circuits depending on the current iteration count. This encourages exploration during the early stages of the optimization while focusing on refinement in later generations. Tournament selection is performed to identify parent pairs for crossover, where rows of parent matrices are split at random points and recombined to produce offspring. We also apply a mutation step by flipping between 1% 
+
+and 10% of the pixels in the offspring circuits, introducing additional variability and helping to avoid convergence to local minima. This iterative process continues until the termination criterion is satisfied, gradually refining the population toward circuits that match the desired S-parameter response. IV. D EEP LEARNING -D RIVEN DOHERTY PA D ESIGN 
+
+In this section, we present the design of two prototype Doherty PAs using the proposed black-box synthesis method-ology augmented by deep learning. The objective is to demon-strate the complete design procedure and validate the effective-ness of the proposed approach. To ensure a fair and focused evaluation, the input networks of both Doherty PAs are kept completely identical. The only difference lies in the output Doherty combiners, which are in-dividually synthesized using the proposed deep learning-aided inverse design strategy. This setup highlights the diversity of synthesis solutions achievable with the method, as well as its robustness and flexibility. For both the main and auxiliary branches, we employ the same commercially available 10-W GaN HEMT transistor form (CG2H40010F, MACOM) as the active device. This choice ensures symmetry in the device characteristics. 
+
+A. Black-Box Doherty PA Design Based on Load-Pull Data 
+
+We begin by designing both amplifier branches using the MACOM transistors (CG2H40010F). The input network, including matching, stabilization, and biasing circuits, is identically designed and fixed for both Doherty prototypes. Low-impedance open stubs connected to the transistor gates, together with series RC networks at the inputs, are employed to simultaneously ensure unconditional stability and match the optimal source impedances of the transistors. In addition, resistors are incorporated in the gate bias lines to further enhance stability. A Wilkinson power divider is then used to equally distribute the input signal to the main and auxiliary amplifier branches. Next, we select the desired back-off power level ( γB = 9 dB ) and configure the gate bias of the main amplifier. Note that main amplifier’s gate bias involves a trade-off between gain and efficiency: biasing the main amplifier closer to Class AB operation improves gain performance but can reduce efficiency. In our design, we set the main amplifier’s gate bias to achieve a quiescent current of 40 mA .For the auxiliary amplifier, we set the gate bias in Class C op-eration. Selecting the auxiliary gate bias may require iterative adjustments to ensure that the auxiliary amplifier activates at the desired 9 dB back-off level. Load-pull characterization of the main and auxiliary ampli-fiers is performed at both the peak output and the specified back-off power level. These simulations are conducted using the bias conditions established in the preceding design phase. It should be noted that when selecting the optimal load impedance, multiple degrees of freedom exist to trade off efficiency, output power, and linearity. In this work, we pri-oritize maximizing efficiency at the back-off power level and maximizing delivered output power at the peak power level. The extracted optimal impedances and corresponding power performance for both Doherty prototypes at peak and back-off conditions are summarized in Table II. Using equations (8)–(10), together with equation (5), we derive the phase parameter solution of θ = 133 .4◦ and the corresponding two-port combiner impedance matrix ( Z2P ) as 
+
+Z2P =
+
+ 1.35 + j6.94 −5.37 + j14.02 
+
+−5.37 + j14.02 21.27 + j16.10 
+
+
+
+(12) The obtained Z2P matrix fully specifies the desired Doherty combiner behavior in a reciprocal two-port black-box form, 7(a)  (b)   
+
+> 1
+> ③
+> Port 1
+> Port 2
+> 50 Ω
+> 1
+> ③
+> Port 1
+> Port 2
+> 50 Ω
+> ①
+> ②
+> ①
+> ②
+
+Fig. 5. The two synthesized pixelated Doherty combiner networks, (a) and (b), along with their EM-simulated S-parameter results compared to the corresponding responses predicted by the deep learning approach, over the frequency range of 2.55 –2.95 GHz .RF in 
+
+> Width/Length
+> (mm/mm)
+> RF in
+
+(a)  (b)        
+
+> R1
+> C1
+> C1
+> TL2
+> TL3 TL4
+> TL6
+> TL3
+> TL5
+> TL7
+> TL8
+> R1
+> R1
+> R2
+> C2
+> R1
+> C3
+> Cb
+> Cb
+> Cb
+> C1
+> L1
+> R1
+> C1
+> C1
+> TL 2
+> TL3 TL4
+> TL6
+> TL3
+> TL5
+> TL7
+> TL8
+> R1
+> R1
+> R2
+> C2
+> R1
+> C3
+> Cb
+> Cb
+> Cb
+> C1
+> L1
+> Pixelated
+> Combiner
+> (15x15)
+> Pixelated
+> Combiner
+> (15x15)
+> TL1: 0.1/17.7; TL2: 1.1/12.0; TL3: 2.0/9.0; TL4: 3.0/4.6; TL5: 0.8/14.2; TL6:1.1/30.8; TL7: 2.1/8.5; TL8:0.8/12.9
+> R1: 100 Ω; R2:200 Ω; C1: 15 pF; C2: 2.2 pF; C3: 3 pF: Cb : 15 pF, 470 pF, 33 nF , 10 uF , 22 uF ; L1: 10 nH
+> RF out RF out
+> VGG m
+> VDD
+> VGG a
+> VGG m
+> VDD
+> VGG a
+
+Fig. 6. Full circuit schematic of the proposed deep learning-driven pixelated Doherty PAs: a) prototype 1 and (b) prototype 2. The corresponding full EM simulation results show the large-signal performance in terms of drain efficiency and gain versus output power over the frequency range of 2.65 − 2.85 GHz .
+
+specifying the impedance relationships required for achieving proper load modulation and matching. By implementing this impedance matrix as a lossless three-port combiner with all lossy resistive components consolidated into a single port, the Doherty PA can achieve the correct load trajectories across the entire back-off range, enabling an efficiency enhancement at 
+
+γB = 9 dB . Successfully implementing this combiner network represents a critical step, as the associated design space is vast and requires systematic exploration. 
+
+B. Pixelated Doherty Combiner Synthesis 
+
+Given the desired two-port impedance matrix derived ear-lier, we first convert this matrix into its corresponding scatter-ing matrix, which specifies the target S-parameter behavior of the combiner network. To realize a physical implementation matching this target response, we use the GA in combina-tion with the trained deep CNN surrogate model to search the vast pixelated design space efficiently. Unlike traditional approaches that require time-intensive EM simulations for every candidate structure, our deep learning-based method allows the CNN surrogate model to rapidly predict the S-parameters of thousands of pixelated layouts within a second per optimization step. This dramatically accelerates the design process compared to conventional brute-force EM sweeps. During the optimization, we evaluate each candidate’s pre-dicted S-parameters by calculating a fitness value based on how closely they match the target scattering parameters. The fitness function is defined as 
+
+F = 1
+
+e + ϵ (13) 8(a) 
+
+(b) 
+
+> LM Trajectory
+
+* PBO -> PPeak    
+
+> PBO ->PPeak
+> Fig. 7. (a) Power-delivered contours (maximum and -0.3 dB) and efficiency contours (maximum and -3% of the main amplifier for prototype 1 at peak and back-off output power, together with its load-modulation (LM) trajectory. (b) Load-modulation trajectories of the main and auxiliary amplifiers at the current-generator plane at the design center frequency.
+
+where the error term e is defined as 
+
+e = max 
+
+X ℜ{ ˆSi} − ℜ{ ¯Si} , X ℑ{ ˆSi} − ℑ{ ¯Si}
+
+
+
+(14) with ˆSi − ¯Si representing the absolute errors between the predicted and target values for both the real and imaginary parts of S11 , S12 , and S22 . A small constant ϵ = 10 −5
+
+is included in the denominator to ensure numerical stability during fitness calculation. Based on this optimization strategy, we synthesize two pixelated Doherty combiner networks, as shown in Fig. 5. The two solutions illustrate the stochastic nature of the GA, revealing that multiple distinct pixelated combiner networks can satisfy the same S-parameter targets for Doherty oper-ation. Note that all three ports are terminated with 50 Ω 
+
+during the simulations. The agreement observed between the EM-simulated S-parameters and the predictions generated by the CNN surrogate model demonstrates reasonable accuracy of the proposed deep learning–assisted design methodology. It is acknowledged that the prediction accuracy is subject to lim-itations, particularly when modeling S-parameters with small magnitudes. This agreement could be further improved by expanding the training dataset, enhancing the neural network architecture, and increasing the number of training epochs, given sufficient computational resources. Overall, these results confirm that the proposed approach effectively captures the complex EM interactions within the pixelated structures and enables efficient exploration of a large design space. 
+
+C. Simulation Results 
+
+Fig. 6 demonstrated the complete circuit schematics of the two fabricated Doherty PA prototypes. EM simulations of (a)  (b) 
+
+> RF in
+> RF out
+> RF in
+> RF out
+> VGG m
+> VGG a
+> VDD
+> VGG a
+> VGG m
+> VDD
+> Pixelated
+> Combiner
+> (15x15)
+> Pixelated
+> Combiner
+> (15x15)
+> Fig. 8. Photograph of the fabricated deep learning-driven Doherty PAs with pixelated output combiners: (a) prototype 1 and (b) prototype 2.
+
+all transmission lines are performed using Momentum within Keysight ADS. We use accurate models from Modelithics for all lumped components, and transistor models provided by Macom are employed to ensure reliable simulation results. The simulated efficiency and gain of the two prototypes versus output power at different operating frequencies are pre-sented in Fig. 6. Excellent efficiency is observed across both saturation and back-off operating points within the targeted frequency band. At the center frequency of 2.75 GHz , both prototypes achieve a peak drain efficiency exceeding 78% ,delivering more than 44 .2 dBm saturated output power. More-over, drain efficiency remains above 60% at the designated 
+
+9-dB back-off point. To further illustrate the large-signal behavior, Fig. 7(a) presents the delivered-power contours, drain-efficiency con-tours, and load-modulation trajectory of the main amplifier for prototype 1 as a representative example at both peak and back-off operating points. The delivered-power contours indicate the maximum output power and the output-power contour within 0.3-dB of this maximum, while the efficiency contours denote the maximum achieved drain efficiency and the corresponding 3% degradation boundary. In addition, the intrinsic load-modulation trajectory is shown in Fig. 7(b), clearly revealing the characteristic load-modulation behav-ior of a Doherty PA. Overall, both prototypes demonstrate consistent large-signal performance across the entire design bandwidth, thereby validating the robustness and practical viability of the proposed synthesis approach. V. M EASUREMENT RESULTS 
+
+A photograph of the two fabricated Doherty PA prototypes is shown in Fig. 8. The prototype circuits are fabricated on a 20-mil-thick Rogers 4350B substrate, each with a compact size of 60 × 110 mm 2. The manufactured printed circuit boards (PCBs) and the employed CG2H40010F GaN HEMT transistors are mounted on brass fixtures, which also serve as heat sinks for thermal management. We perform small-signal, continuous-wave (CW), and modulated-signal measurements 9                       
+
+> Fig. 9. Measurement setup: (a) small-signal and CW measurements, and (b) modulated-signal measurements. 2.3 2.5 2.7 2.9 3.1 3.3 Frequency (GHz) -40 -30 -20 -10 010 20 Scattering Parameters (dB) (a)
+> S11 sim S11 mea S21 sim S21 mea S22 sim S22 mea 2.3 2.5 2.7 2.9 3.1 3.3 Frequency (GHz) -40 -30 -20 -10 010 20 Scattering Parameters (dB) (b)
+> S11 sim S11 mea S21 sim S21 mea S22 sim S22 mea
+> Fig. 10. Measured and simulated S-parameters of the fabricated Doherty PAs: (a) prototype 1 and (b) prototype 2.
+
+to thoroughly characterize the fabricated Doherty prototypes. To ensure consistency, the drain supply voltage is set to 28 V 
+
+for both prototypes throughout all measurements. Specifically, a quiescent current of 40 mA is set to the main amplifiers, while the gate bias of the auxiliary amplifiers is fixed at −7 V .The measurement setup is shown in Fig. 9. Small-signal measurements are performed using a Keysight PNA-X network analyzer. For CW measurements, a signal generator provides the CW excitation, and the output power is measured using a power meter. To improve measurement accuracy, a low-pass filter is inserted at the output to suppress harmonic components and prevent them from entering the power meter. Moreover, a broadband linear driver amplifier supplies sufficient input power to drive the prototype circuits. For modulated-signal measurements, a Keysight PXIe vector transceiver (VXT M9421) generates and captures the modulated signals. 
+
+A. Small Signal 
+
+The performance of the two Doherty prototypes was first assessed through small-signal measurements to determine their frequency responses. As shown in Fig. 10, the strong corre-lation between simulated and measured data confirms proper operation. Within the 2.5–3 .1 GHz range, both designs achieve a measured small-signal gain ( S21 ) exceeding 10 dB, while maintaining an input return loss ( S11 ) better than -8 dB across the entire band. 
+
+B. Continuous Wave 
+
+Fig. 11 presents the measured drain efficiency and gain as functions of output power for frequencies spanning 2.65 to 
+
+2.85GHz in 50 -MHz steps. At the center design frequency of 2.75 GHz , Doherty prototype 1 achieves a measured peak drain efficiency of 74% with a maximum output power of 
+
+44 .1 dBm , and a measured drain efficiency of 55% at 9-dB back-off power level. Meanwhile, Doherty prototype 2 reaches a peak drain efficiency of 76% with a peak output power of 44 .8 dBm , and achieves a measured drain efficiency of 51% at the 9-dB back-off level. The performance of both prototypes versus frequency is also shown in Fig. 11, where the drain efficiency and power-added efficiency (PAE) at both the peak output power level and the 9-dB back-off level are presented, along with the peak output power. Across the frequency range from 2.65 to 2.85 GHz , the measured peak and 9-dB back-off efficiency for both prototypes exceed 68% 
+
+and 46% , respectively. These results clearly demonstrate that excellent high-efficiency enhancement is achieved around the 9-dB back-off power level, accompanied by a power gain compression 10 30 32 34 36 38 40 42 44 Output Power (dBm) 10 20 30 40 50 60 70 80 Drain Efficiency (%) 
+
+> 2.65 GHz 2.70 GHz 2.75 GHz 2.80 GHz 2.85 GHz
+
+(a) 24 26 28 30 32 34 36 38 40 42 44 Output Power (dBm) 46810 12 14 16 Gain (dB)  
+
+> 2.65 GHz 2.70 GHz 2.75 GHz 2.80 GHz 2.85 GHz
+
+(b) Frequency (GHz)      
+
+> 2.55 2.65 2.75 2.85 2.95
+> Power (dBm) & Efficiency (%)
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> DE Max
+> DE BO
+> PAE Max
+> PAE BO
+> PMax
+
+(c) 30 32 34 36 38 40 42 44 Output Power (dBm) 10 20 30 40 50 60 70 80 Drain Efficiency (%) 
+
+> 2.65 GHz 2.70 GHz 2.75 GHz 2.80 GHz 2.85 GHz
+
+(d) 24 26 28 30 32 34 36 38 40 42 44 Output Power (dBm) 46810 12 14 16 Gain (dB)  
+
+> 2.65 GHz 2.70 GHz 2.75 GHz 2.80 GHz 2.85 GHz
+
+(e) Frequency (GHz)      
+
+> 2.55 2.65 2.75 2.85 2.95
+> Power (dBm) & Efficiency (%)
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> DE Max
+> DE BO
+> PAE Max
+> PAE BO
+> PMax
+
+(f) 
+
+Fig. 11. Measured drain efficiency and gain of the Doherty prototype circuits versus output power, along with measured peak and back-off drain efficiency, PAE, and output power versus frequency: (a–c) prototype 1 and (d–f) prototype 2. 
+
+Fig. 12. Measured output spectrum, AM–AM/AM–PM characteristics, and constellation diagram under a 20-MHz, 9-dB PAPR 5G NR-like communication signal at 2.75 GHz: (a) Prototype 1 and (b) Prototype 2. 
+
+of approximately 3 dB . Furthermore, both prototype circuits exhibit consistent CW performance across the entire measured frequency band, confirming the effectiveness and robustness of the proposed design methodology. 
+
+C. Modulated Signal 
+
+Modulated-signal measurements are carried out to vali-date the proposed Doherty design methodology under real-istic wireless communication conditions. Digital predistortion (DPD) is implemented using an iterative learning control (ILC) algorithm [46], which iteratively refines the input waveform to produce an optimally linearized output from the prototypes. The test signals consisted of 20-MHz 5G new radio (NR)-like waveforms with a PAPR of 9.0 dB. Fig. 12 shows the measured adjacent channel leakage ratio (ACLR) for the two prototypes, which are −24 .8 dBc and −24 .5 dBc at 2.75 GHz without digital predistortion (DPD). When DPD is applied, the ACLR improves significantly to −60 .8 dBc and −61 .1 dBc at the same frequency. After DPD, both prototypes deliver an average output power of about 36 dBm while maintaining an average drain efficiency above 51% and an error vector magnitude (EVM) below 1.2% . The measured AM-AM and AM-PM 11                                                                                                                                                         
+
+> TABLE III BENCHMARKING OF STATE -OF -THE -A RT HIGH -E FFICIENCY PA S.Reference Architecture Freq (GHz)
+> Pmax
+> (dBm) OPBO (dB) DE / PAE @Pmax
+> (%) DE / PAE @ OPBO (%) Signal BW (MHz) PAPR (dB) DE @Pave
+> (%) ACLR (dBc) Size [30] 2016 Sym. 2-way DPA 1.95 44.0 968/60 52/44 20 8.5 55 −49 .00.062 [37] 2023 Sym. 2-way DPA 3.20 43 .2∗654 ∗/N.A. 46 ∗/N.A. 100 6.0 42.2 −49 .10.037 [38] 2019 Dual-In Sym. 2-way DPA 2.00 42.9 870 ∗/68 ∗65/62 50 9.5 53.3 −47 .1N.A. [39] 2022 Har. Inj. Sym. 2-way DPA 1.80 43 .2∗968 ∗/N.A. 64 ∗/N.A. 59.6 N.A. −23 .5∗∗ N.A. [40] 2023 Class-EF Sym. 2-way DPA 2.60 45.2 676/ 75 ∗74/ 74 ∗N.A. N.A. N.A. N.A. N.A. [41] 2023 Dual-In Sym. 2-way DPA 2.40 43.4 670/N.A. 58/N.A. N.A. N.A. N.A. N.A. N.A. [31] 2022 Sym. 3-way DPA 2.14 45.3 10 69/57 55/45 20 8.5 56.6 −49 .80.091 [42] 2022 RF-Input LMBA 2.40 44.1 654/N.A. 47/N.A. 10 8.6 44.0 −40 .5∗∗ N.A. [43] 2020 RF-Input SLMBA 3.30 43 .2∗10 71 ∗/59 ∗48 ∗/42 ∗200 10.0 43.6 −43 .90.086 [44] 2024 Double-Balanced SLMBA 2.10 40.0 15 65/N.A. 54/N.A. 20 13.0 50.2 −23 .5∗∗ 0.098 [45] 2024 RF-Input CLMA 3.40 42.3 657/N.A. 53/N.A. 20 7.0 51.0 −51 .6N.A.
+> This Work DL DPA Prototype 1 2.75 44 .1974 /68 55 /51 20 9.053 .5−61 .10.06
+> DL DPA Prototype 2 2.75 44 .8976 /69 52 /48 20 9.051 .2−60 .80.06
+> N.A. stands for data not available; *Estimated from graph; ** No DPD performed; Size is defined as the prototype circuit area normalized to the wavelength at the center frequency.
+
+characteristics, both with and without DPD applied, are The measured AM–AM and AM–PM responses, with and without DPD, are also presented, demonstrating that both prototypes achieve excellent linearity once DPD is applied. 
+
+D. Performance Comparison 
+
+The performance of the proposed deep learning-driven Doherty PA is summarized in Table III, alongside recently reported two-way and three-way Doherty PAs, as well as LMBAs and CLMAs. As can be observed, the designed prototype circuits achieve some of the highest efficiencies at deep power back-off levels, even when compared to other symmetrical two-way Doherty PAs employing dual-input or harmonic injection/tuning techniques. The efficiency is also competitive with that of symmetrical three-way Doherty archi-tectures. In addition, the performance of the proposed design surpasses several RF-input LMBAs and CLMAs that target Doherty-like behavior. Although sequential LMBAs (SLM-BAs) demonstrate improved efficiency under extreme power back-off conditions (beyond 10 dB ), these architectures often experience excessive compression in the main amplifier and demand a larger circuit footprint. Overall, the proposed deep learning-driven Doherty PAs offer a compelling combination of efficiency, compactness, and design flexibility. The measured linearity results verify that the prototypes satisfy the rigorous linearity and spectral require-ments of contemporary wireless communication systems. VI. C ONCLUSION 
+
+A deep learning-driven inverse design methodology for Doherty PAs with pixelated output combiner networks and extended back-off efficiency is proposed. In this approach, a deep CNN is trained as an EM surrogate model to accurately and efficiently predict the S-parameters of arbitrary pixelated structures. By integrating the surrogate model with a GA optimizer within a black-box Doherty framework, the method enables efficient synthesis of complex three-port combiner networks using fully identical transistors. To validate the proposed methodology, two Doherty PA prototypes are developed using GaN HEMT transistors. Both prototypes achieve peak drain efficiencies above 74% with output power exceeding 44 .1 dBm at the center frequency of 2.75 GHz , and maintain efficiencies greater than 52% at the 9-dB back-off level. Furthermore, under a 20 -MHz 5G NR-like signal with an 9.0-dB PAPR, the prototypes deliver average efficiencies exceeding 51% with ACLR better than 
+
+−60 .8 dBc after DPD deployment. These results demonstrate that the proposed deep learning-based methodology effectively enables rapid and accurate design of efficient, linear Doherty PAs suitable for modern wireless communication systems. ACKNOWLEDGMENT 
+
+The authors thank Modelithics, Inc., Tampa, FL, USA, for the use of Modelithics models utilized under the University License Program. The authors also acknowledge MACOM for supplying the GaN HEMT transistors used in this work. Furthermore, We would like to thank Prof. Mar´ ıa Jos´ e Madero Ayora of the University of Seville for fruitful discussions and for her support with 5G NR-like communication signal generation and modulated-signal testing. REFERENCES [1] H. Wang, P. M. Asbeck, and C. Fager, “Millimeter-wave power amplifier integrated circuits for high dynamic range signals,” IEEE Microw. Mag. ,vol. 1, no. 1, pp. 299–316, 2021. [2] D. J. Shepphard, J. Powell, and S. C. Cripps, “An efficient broadband reconfigurable power amplifier using active load modulation,” IEEE Microw. Wireless Compon. Lett. , vol. 26, no. 6, pp. 443–445, 2016. [3] J. Guo, P. Gong, and K. Chen, “Theory and design of pseudo-Doherty load-modulated double balanced amplifier with intrinsic insensitivity to antenna VSWR,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 72, no. 5, pp. 2048–2060, 2025. [4] Y. Cao, H. Lyu, and K. Chen, “Continuous-mode hybrid asymmetrical load- modulated balanced amplifier with three-way modulation and multi-band reconfigurability,” IEEE Trans. Circuits Syst. I, Reg. Papers ,vol. 69, no. 3, pp. 1077–1090, 2022. 12 
+
+[5] P. Saad, R. Hou, R. Hellberg, and B. Berglund, “A 1.8–3.8-GHz power amplifier with 40% efficiency at 8-dB power back-off,” IEEE Trans. Microw. Theory Techn. , vol. 66, no. 11, pp. 4870–4882, 2018. [6] G. Lv, W. Chen, X. Chen, F. M. Ghannouchi, and Z. Feng, “A 1.8–5.4-GHz GaN MMIC distributed efficient power amplifier with reactance compensation and adaptive biasing,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 71, no. 4, pp. 1531–1543, 2024. [7] E. Liu, H. Zhou, C. Fager, and H. Wang, “A Ka-band Doherty-like non-load modulated power amplifier,” IEEE J. Solid-State Circuits , vol. 60, no. 5, pp. 1584–1593, 2025. [8] H. Zhou, J.-R. Perez-Cisneros, B. Langborn, T. Eriksson, and C. Fager, “A wideband and highly efficient circulator load modulated power amplifier architecture,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 70, no. 8, pp. 3117–3129, 2023. [9] W. H. Doherty, “A new high efficiency power amplifier for modulated waves,” Proc. Inst. Radio Eng. , vol. 24, no. 9, pp. 1163–1182, Sep. 1936. [10] M. H. Tahersima, K. Kojima, T. Koike-Akino, D. K. Jha, B. Wang, C. Lin, and K. Parsons, “Deep neural network inverse design of integrated photonic power splitters,” Sci. Rep. , vol. 9, 2019. [11] W. Ma, Z. Liu, Z. A. Kudyshev, A. Boltasseva, W. Cai, and Y. Liu, “Deep learning for the design of photonic structures,” Nat. Photonics ,vol. 15, pp. 77 – 90, 2020. [12] S. Molesky, Z. Lin, A. Piggott, W. Jin, J. Vuˇ ckovi´ c, and A. W. Rodriguez, “Inverse design in nanophotonics,” Nat. Photonics , vol. 12, pp. 659–670, 2018. [13] P. Liu, L. Chen, and Z. N. Chen, “Prior-knowledge-guided deep-learning-enabled synthesis for broadband and large phase shift range metacells in metalens antenna,” IEEE Trans. Antennas Propag. , vol. 70, no. 7, pp. 5024–5034, 2022. [14] P. Liu and Z. N. Chen, “Full-range amplitude–phase metacells for sidelobe suppression of metalens antenna using prior-knowledge-guided deep- learning -enabled synthesis,” IEEE Transactions on Antennas and Propagation , vol. 71, no. 6, pp. 5036–5045, 2023. [15] R. Chen, C. W. L. Lee, P. K. Tan, R. Solanki, and T. H. Gan, “High-efficiency metalens antenna design through a controlnet diffusion generation model,” IEEE Antennas Wirel Propag Lett. , vol. 24, no. 4, pp. 938–942, 2025. [16] K. Xu, L. Wu, X. Ye, and X. Chen, “Deep learning-based inversion methods for solving inverse scattering problems with phaseless data,” 
+
+IEEE Trans. Antennas Propag. , vol. 68, no. 11, pp. 7457–7470, 2020. [17] Y. Zhou, Y. Zhong, Z. Wei, T. Yin, and X. Chen, “An improved deep learning scheme for solving 2-D and 3-D inverse scattering problems,” 
+
+IEEE Trans. Antennas Propag. , vol. 69, no. 5, pp. 2853–2863, 2021. [18] Y. LeCun, Y. Bengio, and G. Hinton, “Deep learning,” Nature , vol. 521, no. 7553, pp. 436–444, May 2015. [19] F. Feng, W. Na, J. Jin, J. Zhang, W. Zhang, and Q.-J. Zhang, “Artificial neural networks for microwave computer-aided design: The state of the art,” IEEE Trans. Microw. Theory Tech. , vol. 70, no. 11, pp. 4597–4619, 2022. [20] E. A. Karahan, Z. Liu, and K. Sengupta, “Deep-learning-based inverse-designed millimeter-wave passives and power amplifiers,” IEEE J. Solid-State Circuits , vol. 58, no. 11, pp. 3074–3088, 2023. [21] E. A. Karahan, Z. Liu, A. Gupta, Z. Shao, J. Zhou, U. Khankhoje, and K. Sengupta, “Deep-learning enabled generalized inverse design of multi-port radio-frequency and sub-Terahertz passives and integrated circuits,” Nat. Commun. , vol. 15, no. 1, p. 10734, Dec. 2024. [22] J. Zhou, E. A. Karahan, S. Ghozzy, Z. Liu, H. Jalili, and K. Sengupta, “AI-enabled design space discovery and end-to-end synthesis for rfics with reinforcement learning and inverse methods demonstrating mm-wave/sub-THz PAs between 30 and 120 GHz,” in IEEE Int. Solid-State Circuits Conf. (ISSCC) Dig. Tech. Papers , vol. 68, 2025, pp. 1–3. [23] S. Hang Chai, H. Chae, H. Yu, D. Z. Pan, and S. Li, “A D-band InP power amplifier featuring fully AI-generated passive networks,” IEEE Microw. Wireless Technol. Lett. , vol. 35, no. 6, pp. 824–827, 2025. [24] C. Chu, J. Xu, Y. Liu, J. Zeng, A. Wang, T. Torii, S. Shinjo, K. Ya-manaka, and H. Wang, “AI-assisted template-seeded pixelated design for multi-metal-layer high-coupling EM structures: A Ku-band 6G FR3 PA in 22nm FDX+,” in 2025 IEEE/MTT-S International Microwave Symposium - IMS 2025 , 2025, pp. 922–925. [25] H. Zhou, H. Chang, D. Wid´ en, L. Fornstedt, G. Melin, and C. Fager, “AI-assisted deep-learning-based design of high-efficiency class F power amplifiers,” IEEE Microw. Wireless Technol. Lett. , pp. 1–4, 2025. [26] X. Zhou, W. S. Chan, T. Sharma, J. Xia, S. Chen, and W. Feng, “A Doherty power amplifier with extended high-efficiency range using three-port harmonic injection network,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 69, no. 7, pp. 2756–2766, 2022. [27] J. Pang, C. Chu, J. Wu, Z. Dai, M. Li, S. He, and A. Zhu, “Broadband GaN MMIC Doherty power amplifier using continuous-mode combining for 5G Sub-6 GHz applications,” IEEE J. Solid-State Circuits , vol. 57, no. 7, pp. 2143–2154, 2022. [28] M. Li, J. Pang, Y. Li, and A. Zhu, “Bandwidth enhancement of Doherty power amplifier using modified load modulation network,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 67, no. 6, pp. 1824–1834, 2020. [29] W. Chen, S. Zhang, Y. Liu, Y. Liu, and F. M. Ghannouchi, “A concurrent dual-band uneven Doherty power amplifier with frequency-dependent input power division,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 61, no. 2, pp. 552–561, 2014. [30] M. ¨Ozen, K. Andersson, and C. Fager, “Symmetrical Doherty power amplifier with extended efficiency range,” IEEE Trans. Microw. Theory Techn. , vol. 64, no. 4, pp. 1273–1284, Apr. 2016. [31] H. Zhou, J.-R. Perez-Cisneros, S. Hesami, K. Buisman, and C. Fager, “A generic theory for design of efficient three-stage Doherty power amplifiers,” IEEE Trans. Microw. Theory Techn. , vol. 70, no. 2, pp. 1242–1253, 2022. [32] H. Zhou, “Efficient and wideband load modulated power amplifiers for wireless communication,” Ph.D. dissertation, Chalmers University of Technology, Gothenburg, Sweden, 2023. [Online]. Available: https://research.chalmers.se/en/publication/537868 [33] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image recognition,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , Las Vegas, NV, USA, Jun. 2016, pp. 770–778. [34] V. Nair and G. E. Hinton, “Rectified linear units improve restricted boltzmann machines,” in Proc. of the 27th Int. Conf. on Machine Learning (ICML) , 2010, pp. 807–814. [35] N. Srivastava, G. Hinton, A. Krizhevsky, I. Sutskever, and R. Salakhut-dinov, “Dropout: a simple way to prevent neural networks from overfit-ting,” J. Mach. Learn. Res. , vol. 15, no. 1, pp. 1929–1958, Jan. 2014. [36] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” 
+
+arXiv:1412.6980 , 2014. [37] Z. Xiao, F. You, C. Shen, Q. He, B. Pang, J. Guo, P. Hao, Y. Fan, M. Song, C. Li, and S. He, “A Doherty power amplifier based on AM-AM/PM cancellation combining network synthesized by back-off complex load impedance,” IEEE Microw. Wireless Technol. Lett. , vol. 33, no. 9, pp. 1333–1336, 2023. [38] C. Liang, P. Roblin, and Y. Hahn, “Accelerated design methodology for dual-input Doherty power amplifiers,” IEEE Trans. Microw. Theory Techn. , vol. 67, no. 10, pp. 3983–3995, 2019. [39] X. Zhou, W. S. Chan, T. Sharma, J. Xia, S. Chen, and W. Feng, “A Doherty power amplifier with extended high-efficiency range using three-port harmonic injection network,” IEEE Trans. Circuits Syst. I, Reg. Papers , vol. 69, no. 7, pp. 2756–2766, 2022. [40] C. Liu, X. Li, and F. M. Ghannouchi, “A highly-efficient Doherty power amplifier with generalized parallel-circuit class-EF mode,” IEEE Trans. Circuits Syst. II, Exp. Briefs. , vol. 70, no. 8, pp. 2819–2823, 2023. [41] Y. Yao, W. Shi, J. Pang, Z. Dai, and M. Li, “Design of a dual-input Doherty power amplifier with selectable output port,” IEEE Trans. Circuits Syst. II, Exp. Briefs. , vol. 70, no. 4, pp. 1405–1409, 2023. [42] K. Vivien, P. E. de Falco, O. Venard, G. Baudoin, P. Pierre-Charles-F´ elix, and T. Barton, “Load modulated balanced amplifier design method based on complex impedance trajectories,” IEEE J. Microw. , vol. 2, no. 1, pp. 199–213, 2022. [43] J. Pang, Y. Li, M. Li, Y. Zhang, X. Y. Zhou, Z. Dai, and A. Zhu, “Analysis and design of highly efficient wideband RF-input sequential load modulated balanced power amplifier,” IEEE Trans. Microw. Theory Techn. , vol. 68, no. 5, pp. 1741–1753, 2020. [44] S. F. B. Faruquee, J. Guo, P. Gong, and K. Chen, “Hybrid load-modulated double-balanced amplifier (H-LMDBA) with four-way load modulation and > 15-dB power back-off range,” in Proc. IEEE Wireless Microw. Technol. Conf. (WAMICON) , 2024, pp. 1–4. [45] H. Zhou, H. Chang, and C. Fager, “Analysis and design of RF-input Doherty-like circulator load modulated amplifier,” in Proc. 54th Eur. Microw. Conf. (EuMC) , 2024, pp. 27–30. [46] J. Chani-Cahuana, P. N. Landin, C. Fager, and T. Eriksson, “Iterative learning control for RF power amplifier linearization,” IEEE Trans. Microw. Theory Techn. , vol. 64, no. 9, pp. 2778–2789, 2016. 13 
+
+Han Zhou (Member, IEEE) received his B.Sc. degree in space science and astrophysics from the Harbin Institute of Technology, China, in 2016. He received his M.Sc. and Ph.D. degrees in electronic engineering from the Chalmers University of Tech-nology, Sweden in 2018 and 2023, respectively. In 2022, he was a visiting researcher with the IDEAS Group at ETH Zurich, Switzerland. He is currently a postdoctoral researcher at Chalmers University of Technology. His research in-terests include highly efficient, wideband, and linear power amplifier architectures for future wireless transmitters, the design of RF/mm-wave integrated circuits for wireless communication and sensing, and AI-assisted, deep learning-driven design for circuits and systems. Dr. Zhou received the IEEE Microwave Theory and Techniques Society (MTT-S) Graduate Fellowship Award in 2023 and the EuMC Young Engineer Prize at the 52nd European Microwave Conference in 2022. He was also awarded a grant from the Ericsson Research Foundation in 2021. 
+
+Haojie Chang received the Ph.D. degree in Nanjing University of Science and Technology, China, in 2023. In 2022, he became a visiting researcher in Microwave Electronics Laboratory, Chalmers Uni-versity of Technology, Sweden and from 2023 he became a post-doc in Chalmers. His current research interests include sub-THz circuits, antenna and pack-aging design, as well as advanced high-efficiency power amplifier theory and architectures. 
+
+David Wid´ en (Graduate Student Member, IEEE) received the B.Sc. degree in engineering physics from the Chalmers University of Technology, Gothenburg, Sweden, in 2024, where he is currently pursuing the M.Sc. degree in electrical engineering. His research interests include analog circuits and wireless communication.

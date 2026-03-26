@@ -1,0 +1,356 @@
+Title: CGFormer: A Cross-Attention Based Grid-Free Transformer for Radio Map Estimation
+
+URL Source: https://arxiv.org/pdf/2603.21408v1
+
+Published Time: Tue, 24 Mar 2026 01:34:23 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# CGFormer: A Cross-Attention Based Grid-Free Transformer for Radio Map Estimation 
+
+Haihan Nan ∗, Emmanuel Obeng Frimpong ∗, Zhi Tian ∗, Yue Wang †, Lingjia Liu ‡,
+
+> ∗
+
+Department of Electrical and Computer Engineering, George Mason University, Fairfax, VA, USA 
+
+> †
+
+Department of Computer Science, Georgia State University, Atlanta, GA, USA  
+
+> ‡
+
+Department of Electrical and Computer Engineering, Virginia Tech, Blacksburg, VA, USA 
+
+Abstract —Radio map estimation (RME), which predicts wire-less signal metrics at unmeasured locations from sparse mea-surements, has attracted growing attention as a key enabler of intelligent wireless networks. The majority of existing RME techniques employ grid-based strategies to process sparse mea-surements, where the pursuit of accuracy results in significant computational inefficiency and inflexibility for off-grid prediction. In contrast, grid-free approaches directly exploit coordinate features to capture location-specific spatial dependencies, en-abling signal prediction at arbitrary locations without relying on predefined grids. However, current grid-free approaches demand substantial preprocessing overhead for constructing the spatial representation, leading to high complexity and constrained adaptability. To address these limitations, this paper proposes a novel cross-attention grid-free based transformer model for RME. We introduce a lightweight spatial embedding module that incorporates environmental knowledge into high-dimensional feature construction. A cross-attention transformer then models the spatial correlation between target and measurement points. The simulation results demonstrate that our proposed method reduces RMSE by up to 6%, outperforming grid-based and grid-free baselines. 
+
+Index Terms —Radio map estimation, grid-free, deep learning, transformer, cross-attention. 
+
+I. I NTRODUCTION 
+
+Radio map estimation (RME) has emerged as a key enabler for intelligent and context-aware wireless systems by provid-ing spatial representations of performance indicators across geographical regions. By predicting radio frequency (RF) metrics such as received signal strength (RSS), power spectral density (PSD), and channel gain [1]–[3], RME supports a wide range of applications including wireless localization, network planning, and resource allocation [4]–[6]. These applications highlight the importance of accurate and efficient RME for enhancing the adaptability and robustness of next-generation wireless networks. Existing RME methods can be generally categorized into model-based and learning-based paradigms. Model-based ap-proaches, such as path-loss models [7], provide physically interpretable predictions and can achieve reasonable accuracy under fixed scenarios. However, their performance is often constrained by oversimplified propagation assumptions that fail to capture the variability of real-world environments. In addition, most model-based methods rely on comprehensive 
+
+> This work was supported in part by the National Science Foundation grants #2231209, #2136202 and #2128596.
+
+prior information, including transmitter power, node positions, and antenna orientations, which is rarely available in dynamic and heterogeneous wireless systems [8]. In contrast, learning-based methods can directly learn prop-agation characteristics from measurements without relying on explicit prior models [9]. Particularly, recent advances such as convolutional neural networks (CNNs) and vision transformers have shown remarkable performance in grid-based RME [10]– [12], where the region of interest is divided into uniform grids and radio metrics are predicted cell by cell. However, the grid-based formulation limits flexibility in representing irregular locations and requires processing the entire grid even when only sparse measurements or a small set of target points are involved, thereby incurring considerable computational cost. To solve this problem, grid-free methods have been pro-posed to overcome the discretization constraints of grid-based RME by directly modeling spatial representation at arbitrary location. Early grid-free estimators relied on classical interpolation techniques for RME, such as polynomial fitting or kernel-based regression [13], [14], which is inefficient in environments with sharp signal transitions or irregular spatial variations. More recently, some deep learning-based frameworks have been introduced to enhance grid-free esti-mation. For instance, a transformer-based architecture named STORM [15] constructs translation- and rotation-invariant spatial feature for each target point based on all measure-ments and utilize self-attention mechanism to capture spatial correlation among queries and measurements, demonstrating superior accuracy over traditional interpolators without relying on predefined grids. However, such designs also suffer from notable drawbacks. First, constructing target-specific features requires translating all measurement coordinates with respect to each target location and performing value-dependent ro-tations, which leads to quadratic attention complexity in the number of measurement. Second, existing grid-free learning models typically focus on re-weighting measurement contribu-tions but do not explicitly incorporate environmental semantics (e.g., building layouts or obstructions), reducing adaptability in heterogeneous propagation conditions. Third, self-attention mechanism is employed to represent the target point, which is redundant and lacks a clear query-conditioning structure, since the target embedding is entangled with all measurements in a symmetric manner. To address the aforementioned challenges, we propose a 
+
+> arXiv:2603.21408v1 [eess.SP] 22 Mar 2026
+
+novel cross-attention grid-free based transformer (CGFormer) for RME. Specifically, we first employs a spatial semantic embedding (SSE) module to encode raw coordinates through NeRF-style sinusoidal encoding scheme and integrate en-vironmental priors, efficiently generating expressive target-centric spatial representations. Subsequently, a cross-attention based transformer model is adopted to capture the spatial correlation of the measurements on the targ5et points, where the target point acts as a query attending to the measurements (keys/values). In this way, our proposed framework not only reduces computational overhead but also provides a more interpretable and physically consistent representation. The main contributions of this paper are summarized as follows: 1) We propose CGFormer, a cross-attention based grid-free transformer framework tailored for radio map estima-tion. Unlike existing grid-based models that are tied to fixed resolutions or grid-free models that require excessive pre-processing operations, CGFormer directly models target points through flexible coordinate em-beddings and cross-attention mechanism, thus enabling multi-resolution and adaptive deployment. 2) We design a spatial semantic embedding (SSE) module that encodes raw coordinates using a NeRF-style si-nusoidal scheme and incorporates environmental priors, which efficiently captures fine-grained spatial semantics and provides expressive, target-centric representations for spatial correlation modeling. 3) The comprehensive experiments on Wireless Insite datasets demonstrate that CGFormer consistently outper-forms state-of-the-art grid-based and grid-free baselines in terms of estimation accuracy and generalization across different spatial resolutions. II. P ROBLEM FORMULATION AND MODEL PRELIMINARIES 
+
+This section first formulates the RME problem, followed by contrasting the grid-based and grid-free paradigms to highlight their differences and limitations. We further provide a brief introduction to the transformer architecture, which serves as the foundation for our proposed framework. 
+
+A. Problem formulation 
+
+We consider a spatial RME problem over a geographical re-gion X , where the objective is to estimate fine-grained spatial distributions of RF metrics from sparse sensor measurements. The RF metric at each location is inherently influenced by multiple factors such as the transmit power, the number of transmitters, temporal variations, and the operating frequency band. In this work, we restrict our study to a time-invariant single-band setting with two transmitters, while allowing their positions and powers to vary across scenarios. Specifically, the measurement set is defined as M ≜n 
+
+p(m) 
+
+> n
+
+, ˜γ
+
+
+
+p(m)
+
+> n
+
+o Nn=1 
+
+, where N denotes the number of measurements, p(m) 
+
+> n
+
+∈ X is the coordinate of the n-th measurement, and ˜γ
+
+
+
+p(m)
+
+> n
+
+
+
+is the corresponding observed metric value. The RME problem aims to estimate the RF 
+
+> (a)
+> (b)
+> Fig. 1: Comparison of different RME paradigms. (a) grid-based RME, where the region is discretized into fixed grids, and (b) grid-free RME, where predictions are made at arbitrary spatial locations. External side information is not incorporated.
+
+metric ˆγ (p) at arbitrary location p ∈ X , given the measure-ment set M and optional environmental information E (e.g., building occupancy map B or sampling mask S), which can be expressed as: 
+
+ˆγ (p) = f (p, M, E) , (1) where f (·) denotes the estimator. If no side information is available, f (p, M, E) naturally reduces to f (p, M).
+
+B. Grid-based and Grid-free paradigms for RME 
+
+As illustrated in Fig. 1, RME methods can be broadly cat-egorized into grid-based and grid-free paradigms. Grid-based schemes provide a simple formulation with fixed Ny × Nx
+
+complexity, but discretization restricts their flexibility in han-dling irregular locations and requires retraining for different resolutions. In contrast, grid-free RME allows inference at arbitrary coordinates without predefined grids, avoiding dis-cretization errors and better preserving fine-grained spatial variations. It further supports multi-resolution and heteroge-neous tasks, as the query set P can be adaptively specified without model retraining. In the grid-based paradigm, the region X is discretized into an Ny × Nx rectangular grid with intervals ∆y and ∆x. The grid cell (i, j ) is located at ξi,j ≜ [j∆x, i ∆y ]T, where i ∈{1, ..., N y }, j ∈ { 1, ..., N x}. Each cell aggregates and averages all measurements within its coverage to obtain the sampled value, which is defined as: 
+
+˜γ  ξi,j 
+
+ = 1
+
+|Ni,j |
+
+XNn=1 ˜γ
+
+
+
+p(m)
+
+> n
+
+
+
+I
+
+
+
+p(m) 
+
+> n
+
+∈ N  ξi,j 
+
+
+
+, (2) where N (ξi,j )= p ∥p − ξi,j ∥ ≤ ∥ p − ξk,l ∥, ∀(k, l )̸ = ( i, j )
+
+is the set of measurement coordinates mapped to grid cell (i, j )
+
+and Ni,j is the number of measurements at corresponding cell, and ˜γ(ξi,j ) denote the measured value at ξi,j , which is set to 0 if the cell has no measurements. By aggregating measurements across all grid cells, the grid-based representation is given by ˜Γ = ˜γ  ξi,j 
+
+ Ny ,N x 
+
+> i=1 ,j =1
+
+∈RNy ×Nx . The ground-truth RF distribution is similarly ex-pressed as Γ∗ = γ∗  ξi,j 
+
+ Ny ,N x 
+
+> i=1 ,j =1
+
+∈ RNy ×Nx , where 
+
+γ∗  ξi,j 
+
+ represents the true value at ξi,j . Side information, such as building maps or sampling masks, can also be encoded on the same grid, denoted by B ∈ RNy ×Nx and S ∈ RNy ×Nx .Given ˜Γ and optional side information E ⊆ { B, S}, the grid-based RME task is to recover RF values over all grids in X :
+
+ˆΓ = f
+
+˜Γ, E
+
+
+
+, (3) where ˆΓ is the predicted RF map and E denotes auxiliary information (e.g., B and S) represented either as separate matrices or a unified composite form [10]. In contrast to grid-based RME, grid-free RME directly infers metric values at arbitrary locations without discretizing 
+
+X . For a query set P = {p1, . . . , pQ}, the predictions are expressed as ˆΓP
+
+= ˆγ(p1), ˆγ(p2), . . . , ˆγ(pQ)T =
+
+f (P, M, E), where ˆΓP denotes the predicted values at P.
+
+C. Encoder-Style Transformer Blocks 
+
+Given the limitations of grid-based CNNs and the flexibility of grid-free formulations, we adopt a Transformer-inspired design to model global spatial dependencies in RME. Rather than employing the full encoder-decoder Transformer, our model comprises a stack of Nl encoder-style attention blocks, each including a multi-head self-attention (MHA) layer and a position-wise feed-forward network, with residual connections and pre-layer normalization to ensure stable training. Given query Q ∈ RNQ×dQ , key K ∈ RNK ×dK , and value 
+
+V ∈ RNV ×dV sequences, the MHA operator is defined as: 
+
+MHA ( Q, K, V) = [head 1, ..., head h] WO , (4a) 
+
+head r = softmax 
+
+ QW Qr
+
+   KW Kr
+
+T
+
+√dh
+
+!
+
+VW Vr , (4b) where h is the number of heads, dh = d/h is the dimension-ality of each head, and WQr , WKr , WVr , WO are projection matrices of query, key, value, and output, respectively. Each block then applies the MHA output through a feed-forward module fMLP (Z) = W2ϕ(W1Z), denoted as: 
+
+Q′ = Q + MHA ( l1 (Q) , K, V) , (5a) 
+
+T (Q, K, V) = Q′ + fMLP (l2 (Q′)) , (5b) with independent LayerNorms l1,l2. Stacking such blocks allows transformers to capture long-range dependencies and refine contextualized representations. III. P ROPOSED METHOD 
+
+In this section, we present the proposed CGFormer frame-work for grid-free radio map estimation. We first provide an overview of the overall framework, followed by detailed de-scriptions of its key components, including the spatial semantic embedding (SSE) module and the cross-attention transformer prediction module. AP   
+
+> LN
+> Cross -attention based
+> Transformer Block
+> Loss GT
+> SSE
+> MLP
+> SSE MLP
+> Multi -Head
+> Cross -Attention
+> LN
+> MLP
+> Fig. 2: Overall architecture of the proposed CGFormer framework.
+
+A. Overall framework 
+
+As illustrated in Fig. 2, the proposed CGFormer framework estimates RF signal strengths at arbitrary target locations from sparse measurements and environmental priors. The input includes target coordinates p, environmental variables E, mea-surement coordinates PM , and corresponding measurement values ˜ΓM . All coordinates, together with E, are first encoded by the SSE module, which produces spatial features for target and measurement points. The resulting target features 
+
+Up serve as queries, while the measurement features UM
+
+act as keys in the cross-attention enhanced prediction block. Meanwhile, measurement values ˜ΓM are transformed through a two-stage MLP and concatenated with UM to obtain the value features GM , which can be expressed as: 
+
+GM = MLP θ2
+
+h 
+
+MLP θ1
+
+˜ΓM 
+
+∥UM
+
+i 
+
+, (6) where MLP θ1 and MLP θ2 are two-layer MLP with 64 and 32 hidden units. This design allows the measurement values to be effectively fused with their positional information, providing a compact and expressive representation. Finally, multiple cross-attention based transformer blocks iteratively update the queries by attending to measurement fea-tures, yielding predictions ˆγ (p). Model training is supervised by minimizing the RMSE loss between predicted and ground-truth signal values. 
+
+B. Spatial semantic embedding module 
+
+The SSE module enhances spatial representations by en-coding raw coordinates with a NeRF-style sinusoidal map-ping [16], [17], which captures high-frequency variations of wireless propagation beyond the information contained in raw 2D positions. As shown in Fig. 3, each point p ∈ P or PM
+
+is transformed through sinusoidal encoding E(p), yielding richer embeddings that facilitate modeling multipath effects and spatial irregularities. The encoding function is defined as: 
+
+E(x) = x, {sin(2 kπx ), cos(2 kπx )}L−1
+
+> k=0
+
+, (7) where the function E (·) is separately applied to each of the two coordinate values in p.NN                 
+
+> NN
+> Sinusoidal encoding
+> concat
+> 64 64 64 64 64 Fig. 3: Architecture of the SSE module, which encodes spatial coordinates pand environmental priors Einto NeRF-style sinu-soid coordinate embeddings E(p)and global semantic embeddings
+> eB(p)and eS(p)for buildings and measurements, respectively.
+
+In addition, environmental context is incorporated through semantic priors such as building maps B and measurement masks S. Both priors are represented as 2D grids of size Ny ×
+
+Nx, aligned with the underlying spatial layout. To transform these raw binary maps into expressive features, we employ a lightweight three-layer convolutional encoder. Formally, for each prior X ∈ { B, S}, the encoder is defined as: 
+
+Ex = fCNN (X)= Conv 3 (ReLU (Conv 3 (ReLU (Conv 5 (X))))) , (8) where Conv k denotes a 2D convolution with kernel size 
+
+k, stride 1, and zero-padding to preserve the spatial reso-lution, and ReLU is used as the activation function. This design is computationally lightweight yet effective in extract-ing structural information such as building boundaries and measurement accessibility patterns. For each coordinate p, we retrieve its nearest-grid semantic vectors eB (p) and eS (p)
+
+from the corresponding feature maps. The semantic features are concatenated with sinusoid-encoded coordinate embedding 
+
+E (p) to form the target-centric embedding: 
+
+hp = [ E (p)∥ eB (p)∥ eS (p)] ∈ R2×(2 L+1)+ db+ds , (9) where db and ds denote the dimensions of eB (p) and eS (p),respectively. To further refine the latent representation hp, we employ a residual MLP MLP θ (hp), which consists of 5 fully connected layers with ReLU activations and a skip connection at the third layer. The residual design facilitates stable training and effec-tive feature transformation while preserving the original infor-mation in hp. The output of MLP θ (·) is a high-dimensional feature vector up that serves as the refined representation for subsequent prediction. 
+
+C. Cross-attention enhanced prediction module 
+
+Cross-attention enhanced prediction module aims to capture spatial dependencies between queries and available measure-ment. Given the spatial features, we construct the transformer inputs as queries Q(0) = UP = [ u1, u2, ..., uQ], keys K =
+
+UM =
+
+h
+
+u(m)1 , u(m)2 , ..., u(m)
+
+> N
+
+i
+
+, and values V = GM . Within each transformer block, multi-head cross-attention updates the query features by attending to the measurement features, followed by normalization and feed-forward layers. At each layer l, the query representations are updated through the transformer operator with Nh heads: 
+
+Q(l+1) = T
+
+
+
+Q(l), K, V
+
+
+
+. (10) After Lt layers, the final queries Q(Lt) are projected through a linear mapping ℓ(·) to yield the estimated RF metric values, i.e., ˆΓP = ℓ  Q(Lt) ∈ RQ. This iterative update mechanism enables the queries to adaptively incorporate contextual infor-mation from the measurement features, thereby enhancing the prediction accuracy. For model training, we adopt the mean squared error (MSE) as the objective function, which directly measures the discrep-ancy between predicted and ground-truth RF values: 
+
+LMSE = 1
+
+Q ∥ˆΓP − Γ∗P ∥22 (11) where ˆΓP and Γ∗P denote the predicted and ground-truth signal values at the Q query points, and ∥ · ∥ denotes the Euclidean norm. IV. E XPERIMENTAL RESULTS 
+
+This section presents the experimental evaluation of the proposed CGFormer framework. The datasets and setup are first introduced, followed by performance comparisons with state-of-the-art baselines. We then present ablation studies to analyze the impact of key modules and demonstrate the frameworks adaptability across different spatial resolutions. 
+
+A. Experimental setting 1) Dataset: We evaluate CGFormer on the quasi-realistic Wireless InSite dataset. The raw datasets are generated using the Remcom Wireless InSite ray-tracing simulator in an urban canyon scenario, which captures multipath propagation and obstacle interactions. A total of 42 raw power maps are obtained, each corresponding to a single transmitter deploy-ment. The original maps with size 656 .1 m × 661 .5 m
+
+are uniformly discretized into 244 × 246 grids (i.e., spatial interval ∆ = 3.25 m ) with two key attributes, including 2D coordinates and received power. The training maps are built by randomly aggregating two maps from the index set 
+
+Itrain = {1, 2, ..., 33 }. For each aggregated map, a random 
+
+16 × 16 sub-region is extracted, and the sampling factor is uniformly drawn from [0 .04 , 0.8] . To simulate the practical constraint that only partial measurements are available, we adopt the strategy proposed in prior work [10]. Specifically, each 16 × 16 sub-region is further augmented into 10 sub-samples by randomly splitting the measurements into two subsets: 50% are retained as observed inputs and the remaining 50% are used as prediction targets. Based on the above construction, we generate 1.25 × 10 6 samples, which are further divided into training and validation sets with a 0.9 and 0.1 split. Similarly, the independent test set is derived from the raw maps indexed by Itest = {34 , ..., 42 }, from which 1000 aggregated maps are generated with two transmitters, ensuring no overlap with the training data. 20 40 60 80 100 120 
+
+> Number of measurements
+> 1
+> 2
+> 3
+> 4
+> 5
+> RMSE (dB)
+> KNN
+> GPR
+> Kriging
+> DCAE
+> STORM
+> CGFormer Fig. 4: RMSE comparison of different methods under varying num-bers of measurements on the Wireless InSite dataset.
+
+2) Baselines: We compare CGFormer with a diverse set of baselines, including KNN [18], Kriging [19], Gaussian Process Regression (GPR) [20], and deep learning methods. For the latter, we consider both grid-based methods such as the Deep Completion Autoencoder (DCAE) [10] and grid-free methods such as STORM [15], a transformer-based model with translation- and rotation-invariant spatial features. 
+
+3) Evaluation metrics: The prediction performance is eval-uated using a widely adopted error metric: the root mean square error (RMSE), which is defined as: 
+
+RMSE = 
+
+vuut 1
+
+NtNtX
+
+> i=1
+
+(ˆ γi − γi)2, (12) where ˆγi and γi denote the predicted and ground-truth signal strength at the i-th location, respectively. Nt represents the total number of available test points sampled from non-building regions of the radio map. 
+
+4) Implementation details: Raw coordinates are mapped into a high-dimensional space with L = 16 , db = 16 , ds = 16 
+
+in the SSE modules. Meanwhile, the residual MLP is imple-mented with 64 hidden units, producing feature embeddings of 32 dimensions. The cross-attention enhanced module adopts a lightweight transformer backbone with Lt = 2 stacked block, each using a hidden size of 64 for all vectors and Nh = 4 
+
+attention heads. we employ Adam optimizer with an initial learning rate of 5 × 10 −4 and a batch size of 64. Models are trained for 200 epochs on an NVIDIA 3090 GPU with early stopping based on validation loss. 
+
+B. Experimental results 1) Baseline comparison: To evaluate prediction accuracy, we compare the RMSE of different baselines on the Wireless InSite datasets under different sampling factors. The test sampling factor is varied from 0.05 to 0.5 in increments of 0.05, simulating scenarios with varying levels of measurement availability. 
+
+> Fig. 5: Visualization of sampled, ground-truth, and estimated maps produced by CGFormer, STORM, and DCAE under sampling factors of 0.05, 0.25, and 0.5. White regions correspond to building areas.
+
+As shown in Fig 4, deep learning-based methods con-sistently outperform classical interpolation and kernel-based baselines across most sampling factors, highlighting their advantages in capturing complex propagation patterns. Mean-while, Both CGFormer and STORM leverage transformer architecture to model spatial correlation, which demonstrate notable performance gains at higher sampling factors, whereas the grid-based DCAE shows slower improvement. Overall, CGFormer achieves the best performance across all sampling factors, reducing RMSE by an average of 12.9% compared with the second-best DCAE baseline. To more intuitively illustrate the superiority of CGFormer for RME, we randomly visualize the true map and recon-structed maps of different methods under three different sam-pling factors. As illustrated in 5, CGFormer can reconstruct radio maps more accurately than STORM and DCAE across all sampling factors, effectively capturing both high and low signal strength regions. While STORM improves under higher sampling rates, its performance degrades significantly with sparse measurements. In contrast, DCAE produces overly smoothed estimates and struggles to model sharp signal bound-aries. 
+
+2) Ablation study: To evaluate the contribution of each component in the SSE module, we conduct ablation studies by selectively removing positional encoding, building map encoding, and measurement mask encoding. Specifically, we compare the following variants: CGFormer without sinusoidal positional encoding (CGFormer w/o PosEnc), CGFormer with-out building map encoding (CGFormer w/o B), and CGFormer without measurement mask encoding (CGFormer w/o S). As shown in Table I, the performance will degrade when removing any component in the SSE module, confirming their effectiveness in enhancing spatial representation. Among them, positional encoding has the most significant impact on RMSE, indicating its critical role in capturing high-frequency variations in wireless propagation. The inclusion of building maps and measurement masks further improves accuracy by integrating semantic priors, but their contributions are rel-atively smaller. Overall, the full CGFormer model, which combines all three components, achieves the lowest RMSE TABLE I: Ablation study on the SSE module. The comparison in-cludes removing NeRF-style sinusoid positional encoding (PosEnc), building map ( B), and measurement mask ( S). The full CGFormer model integrates all three components. 
+
+Variant Average RMSE (dB) Full CGFormer 1.387 w/o PosEnc 1.655 w/o B 1.423 w/o S 1.416 16×16 ( Δ=6.25m) 32×32 ( Δ=3.125m) 
+
+> Grid Size
+> 0
+> 1
+> 2
+> 3
+> 4
+> 5
+> Average RMSE (dB)
+> 2.88
+> 2.62
+> 4.46
+> 3.25
+> CGFormer
+> STORM
+
+Fig. 6: Average RMSE of CGFormer and STORM under different grid sizes, corresponding to spatial intervals ∆ of 6.25 m and 3.125 m, respectively. 
+
+and delivers the best performance. 
+
+3) Adaptivity to off-grid query: Practical deployments often involve heterogeneous spatial resolutions and irregular query locations. To assess adaptivity, we evaluate CGFormer in a representative off-grid prediction scenarios. The model is trained on 16 × 16 maps ( ∆ = 6 .5m ) and directly tested on finer 32 × 32 maps ( ∆ = 3 .25m ). The finer grid introduces many off-grid query points unseen during training. As shown in Fig. 6, CGFormer achieves significantly lower RMSE than STORM under both matched and unseen resolutions, demon-strating strong generalization beyond the training resolution. Notably, despite the larger fraction of off-grid queries, CG-Former benefits from denser measurements and achieves even higher accuracy at finer resolution. Overall, CGFormer adapts effectively to both varying spatial resolutions and unseen query points without retraining, underscoring its practicality for dynamic deployment conditions. V. C ONCLUSIONS 
+
+This paper introduced CGFormer, a cross-attention based grid-free framework for radio map estimation. CGFormer integrates spatial semantic embeddings and an cross-attention enhanced prediction module to efficiently capture complex spatial correlations. Experimental results on quasi-realistic datasets show the effectiveness of CGFormer in delivering accurate and efficient radio map estimation compared with grid-based and grid-free baselines. Its capability to handle varying resolutions and off-grid predictions enables practical applications in the next-generation networks. REFERENCES [1] S. Bi, J. Lyu, Z. Ding, and R. Zhang, “Engineering radio maps for wireless resource management,” IEEE Wireless Communications ,vol. 26, no. 2, pp. 133–141, 2019. [2] W. Zhang, Y. Wang, F. Yu, Z. Qin, X. Chen, and Z. Tian, “Wideband spectrum sensing based on collaborative multi-task learning,” in 2022 IEEE International Conference on Communications Workshops (ICC Workshops) , 2022, pp. 01–06. [3] D. Yang, Y. Wang, S. Zhang, Y. Li, and Z. Cai, “Physics-inspired distributed radio map estimation,” 2025. [Online]. Available: https://arxiv.org/abs/2502.00319 [4] B. Huang, Z. Xu, B. Jia, and G. Mao, “An online radio map update scheme for wifi fingerprint-based localization,” IEEE Internet of Things Journal , vol. 6, no. 4, pp. 6909–6918, 2019. [5] D. Romero, T. N. Ha, R. Shrestha, and M. Franceschetti, “Theoretical analysis of the radio map estimation problem,” IEEE Transactions on Wireless Communications , vol. 23, no. 10, pp. 13 722–13 737, 2024. [6] M. Pesko, T. Javornik, A. Koir, M. tular, and M. Mohori, “Radio envi-ronment maps: The survey of construction methods,” KSII Transactions on Internet and Information Systems , vol. 8, no. 11, pp. 3789–3809, November 2014. [7] S. Kurt and B. Tavli, “Path-loss modeling for wireless sensor networks: A review of models and comparative evaluations,” IEEE Antennas and Propagation Magazine , vol. 59, no. 1, pp. 18–37, 2017. [8] T. Rautiainen, G. Wolfle, and R. Hoppe, “Verifying path loss and delay spread predictions of a 3d ray tracing propagation model in urban environment,” in Proceedings IEEE 56th Vehicular Technology Conference , vol. 4, 2002, pp. 2470–2474 vol.4. [9] B. Feng, M. Zheng, W. Liang, and L. Zhang, “A recent survey on radio map estimation methods for wireless networks,” Electronics , vol. 14, no. 8, 2025. [10] Y. Teganya and D. Romero, “Deep completion autoencoders for ra-dio map estimation,” IEEE Transactions on Wireless Communications ,vol. 21, no. 3, pp. 1710–1724, 2022. [11] K. Qiu, S. Bakirtzis, H. Song, I. Wassell, and J. Zhang, “Deep learning-based path loss prediction for outdoor wireless communication systems,” in ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , 2023, pp. 1–2. [12] S. Bakirtzis, . Yapar, K. Qiu, I. Wassell, and J. Zhang, “The first indoor pathloss radio map prediction challenge,” in ICASSP 2025 - 2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) , 2025, pp. 1–2. [13] J. A. Bazerque, G. Mateos, and G. B. Giannakis, “Group-lasso on splines for spectrum cartography,” IEEE Transactions on Signal Processing ,vol. 59, no. 10, pp. 4648–4663, 2011. [14] X. Chen and J. Wang, “Grid-free radio map estimation via unsupervised implicit continuous representation,” IEEE Signal Processing Letters ,vol. 32, pp. 3430–3434, 2025. [15] P. Q. Viet and D. Romero, “Spatial transformers for radio map estimation,” 2024. [Online]. Available: https://arxiv.org/abs/2411.01211 [16] B. Mildenhall, P. P. Srinivasan, M. Tancik, J. T. Barron, R. Ramamoorthi, and R. Ng, “Nerf: representing scenes as neural radiance fields for view synthesis,” Commun. ACM , vol. 65, no. 1, p. 99106, Dec. 2021. [Online]. Available: https://doi.org/10.1145/3503250 [17] X. Zhao, Z. An, Q. Pan, and L. Yang, “Nerf2: Neural radio-frequency radiance fields,” in Proceedings of the 29th Annual International Conference on Mobile Computing and Networking , ser. ACM MobiCom ’23. New York, NY, USA: Association for Computing Machinery, 2023. [Online]. Available: https://doi.org/10.1145/3570361.3592527 [18] D. T. Larose and C. D. Larose, kNearest Neighbor Algorithm . Wiley Data and Cybersecurity, 2014, pp. 149–164. [19] N. Cressie, “Spatial prediction and ordinary kriging,” Mathematical geology , vol. 20, no. 4, pp. 405–421, may 1988. [20] C. E. Rasmussen, Gaussian Processes in Machine Learning . Berlin, Heidelberg: Springer Berlin Heidelberg, 2004, pp. 63–71. [Online]. Available: https://doi.org/10.1007/978-3-540-28650-9 4

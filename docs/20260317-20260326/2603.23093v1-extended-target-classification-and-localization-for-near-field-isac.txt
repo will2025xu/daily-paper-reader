@@ -1,0 +1,1008 @@
+Title: Extended-Target Classification and Localization for Near-Field ISAC
+
+URL Source: https://arxiv.org/pdf/2603.23093v1
+
+Published Time: Wed, 25 Mar 2026 01:19:17 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Extended-Target Classification and Localization for Near-Field ISAC 
+
+Zongyao Zhao, Zhaolin Wang, Lincong Han, Jing Jin, Yuanwei Liu, Fellow, IEEE , and Kaibin Huang, Fellow, IEEE 
+
+Abstract —Near-field integrated sensing and communication (ISAC) enables object-level sensing from distance-dependent array responses, yet most existing near-field methods still rely on point-target models and realistic extended targets remain largely unexplored. In this paper, joint target classification and range-azimuth localization are studied from channel responses of realistic extended targets. A dual-branch inference framework is proposed. Semantic and geometric branches are used for classification and localization, respectively. Cross-task attention is introduced after task-specific encoding so that complementary cues can be exchanged without forcing full feature sharing from the input stage. To improve localization on the same backbone, uncertainty-aware regression and a physics-guided structured ob-jective are adopted, including planar consistency, peak-response regularization, and geometry-coupling constraints. Training and evaluation data are generated from full-wave electromagnetic scattering simulations of voxelized vehicle targets with random-ized heading angles, material contrasts, and placements. The compared variants show that cross-task attention mainly benefits classification, while uncertainty-aware and structured supervision are needed to recover strong localization performance on the same backbone. Under the adopted shared-OFDM benchmark, the proposed framework reaches the best joint operating point with fewer sensing tones for the same target performance region. 
+
+Index Terms —Integrated sensing and communication, target classification, localization, cross-task attention, near-field sensing. 
+
+I. I NTRODUCTION 
+
+# INtegrated sensing and communication (ISAC) is a key capability for sixth-generation (6G) systems, where sensing and communication share hardware, spectrum, and signal processing resources [2]–[6], [8], [10]. A central challenge in ISAC is the tradeoff between communication efficiency and sensing performance under a shared time-frequency bud-get. This tradeoff becomes particularly acute for object-level sensing, which demands richer observations and hence places heavier pressure on limited sensing resources. To manage this tradeoff, existing ISAC studies have mainly focused on waveform and beamforming design, signal pro-cessing, and communication–sensing tradeoff optimization. 
+
+An early version of this work is available on arXiv [1] and has been accepted for presentation at an IEEE International Conference on Commu-nications (ICC) 2026 Workshop. (Corresponding authors: Yuanwei Liu and Kaibin Huang) 
+
+Z. Zhao, Z. Wang, Y. Liu, and K. Huang are with the Department of Electrical and Computer Engineering, The University of Hong Kong, Hong Kong (E-mail: zongyao@hku.hk, zhaolin.wang@hku.hk, yuanwei@hku.hk, huangkb@hku.hk). L. Han and J. Jin are with Future Research Laboratory, China Mo-bile Research Institute, Beijing (E-mails: hanlincong@chinamobile.com, jin-jing@chinamobile.com). 
+
+Transmit covariance matrices, beam patterns, and probing sequences have been designed to support sensing and com-munication simultaneously [7], [13], [40]. Uncertainty-aware beamforming formulations have also been explored for ISAC transceiver design [39]. Cram´ er-Rao-bound-based beamform-ing and design methods have been developed for sensing-aware transceiver optimization [9], [37]. Joint optimization of communication rate and sensing quality has also been studied under shared resource constraints in several ISAC settings, including bistatic, multi-user, and multi-target sce-narios [35], [36], [38]. Most of them, however, still adopt far-field propagation and point-target models. The sensing outputs are mainly geometric parameters such as range, angle, and velocity rather than object-level semantic information. As a result, the target is usually represented by a few low-dimensional parameters instead of a structured object with category-dependent scattering behavior. As the array aperture grows from conventional massive multiple-input multiple-output (MIMO) to extremely large-scale antenna systems, many targets enter the radiating near-field region. In this regime, spherical-wave propagation re-places the far-field plane-wave model and yields distance-dependent array signatures [14], [15]. The resulting angle-range coupling enables higher-resolution sensing and has stimulated extensive research on near-field localization and sensing [15], [16]. Recent near-field ISAC studies have de-veloped signal models and sensing frameworks with distance-dependent responses [14], [19], integrated sensing-positioning-communication formulations [17], performance analysis and beam-focusing designs [20], and system-level transceiver or beamforming designs for near-field extremely large-scale multiple-input multiple-output (XL-MIMO) systems [21], [22]. Related near-field XL-MIMO studies have also consid-ered joint tasks such as activity detection, channel estimation, and localization [18]. These results confirm that near-field array responses carry richer geometric information than their far-field counterparts. Despite this progress, most existing works still address point targets and geometric estimation, where the target response can still be described by a small number of physical parameters. Practical objects are extended targets rather than isolated point reflectors in near-field scenarios. Their echoes are pro-duced by many distributed scatterers whose amplitudes and phases depend on target shape, material composition, and pose. The received near-field channel is a coupled superposition of many scattering contributions across the array aperture and the sensing subcarriers. For a point target, a low-dimensional       
+
+> arXiv:2603.23093v1 [eess.SP] 24 Mar 2026 2Extended target Point target
+> Spherical wavefronts (near -field)
+> of multiple scatter points
+> Spherical wavefronts (near -field)
+> of one scatter point
+> Fig. 1. Illustration of near-field point-target and extended-target sensing.
+
+spherical-wave model is often sufficient, and the resulting angle-range coupling can be exploited directly for model-based localization [41], [42]. For realistic extended targets, such a tractable model is usually unavailable. Applying point-target methods then leads to severe model mismatch. Point-target sensing follows a simple spherical-wave response; extended-target sensing is shaped by multiple interacting scatterers (Fig. 1). This motivates direct inference from near-field ISAC channel responses. Existing near-field ISAC studies with ex-tended targets are still limited. Extremely-large-aperture-array (ELAA)-based near-field ISAC performance in the presence of extended targets and clutter has been analyzed in [23], while [24] studies energy-efficient hybrid beamfocusing under both point-target and extended-target formulations. Electromagnetic modeling results in [25] further analyze when point-target approximations remain adequate and when model mismatch emerges as target extent and shape are explicitly accounted for. These studies mainly address performance analysis, elec-tromagnetic modeling, or beam design rather than receiver-side joint semantic recognition and geometric localization, where the two tasks rely on different cues and are not well handled by naive feature sharing. Classification-only recognition is a useful first step, and a preliminary version of this research studied classification-only near-field target recognition [1]. Practical sensing, however, also requires target location for downstream functions such as scene understanding, tracking initialization, and sensing-assisted communication control. This paper extends that early result to joint classification and range-azimuth localization. The key difficulty is that the two tasks do not rely on the same cues. Classification depends more on morphology and material related signatures, while localization depends more on phase and spatial-frequency variations induced by target position. Joint inference is therefore more challenging than solving either task alone and is not well handled by naive feature sharing. This paper investigates receiver-side joint target classifica-tion and localization from near-field ISAC channel responses of realistic extended targets under limited frequency resources. The first goal is joint semantic-geometric inference beyond point-target abstractions, while the second is to determine how much sensing bandwidth is required to reach a target sensing-quality region under a shared orthogonal frequency-division multiplexing (OFDM) budget. The design starts from a simple observation: category and position are embedded in the same channel tensor, but they are not expressed through the same structures. Category is tied more strongly to distributed scattering patterns, while location is tied more strongly to phase evolution and array-frequency geometry. The proposed network therefore does not enforce hard sharing from the first layer. Instead, two task-specific branches are used first, and bidirectional cross-task attention is introduced only af-ter branch-wise encoding. Geometric cues can then assist semantic recognition without fully collapsing the two repre-sentations. To recover localization quality on the same CTA backbone, uncertainty-aware regression and a physics-guided structured objective are further introduced for range-azimuth estimation. A benchmark-rate calibration is included to in-terpret the bandwidth implication under the shared sensing-communication budget. The main contributions of this paper are summarized as follows:  
+
+> •
+
+A physics-grounded joint inference problem is formulated for realistic near-field extended targets, where category and range-azimuth location are inferred from limited multi-frequency observations. The formulation makes ex-plicit that semantic recognition and geometric localization depend on different structures in the same channel tensor and are therefore not well served by naive feature sharing.  
+
+> •
+
+A task-aware dual-branch framework is developed. Se-mantic and geometric branches first preserve task-specific statistics, and token-level cross-task attention is intro-duced only after branch-wise encoding to moderate task interference while still enabling selective information exchange.  
+
+> •
+
+An uncertainty-aware and physics-guided objective is developed as structured inductive bias for the same CTA backbone. The experiments show that CTA mainly im-proves classification, whereas the additional structured terms are needed to recover localization on the shared backbone. Under the adopted shared-OFDM rate interpre-tation, the resulting model reaches the same sensing-QoS region with fewer sensing tones. 
+
+Notation : Italic letters denote scalars; bold lowercase and uppercase letters denote vectors and matrices, respectively; and calligraphic letters denote sets or higher-order tensors. For a vector or matrix, [·]i and [·]m,n denote its entries, and | · | denotes either the absolute value of a scalar or the cardinality/measure of a set according to context. R and 
+
+C denote the real and complex fields. (·)T and (·)H denote the transpose and conjugate transpose, while ℜ{·} and ℑ{·} 
+
+denote the real and imaginary parts. E[·] denotes expectation, 
+
+CN (·, ·) denotes the circularly symmetric complex Gaussian distribution, and In denotes the n × n identity matrix. ∥ · ∥ 1
+
+and ∥·∥ 2 denote the ℓ1 and Euclidean norms, respectively, and 
+
+≜ denotes equality by definition. A hat indicates an estimate or network prediction, while a tilde is used for transformed or real-valued representations such as the channel tensor ˜Hs.Unless otherwise specified, subscripts t, r, k, and i index transmit antennas, receive antennas, subcarriers, and samples, respectively, and all angles are measured in radians. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+We consider a near-field integrated sensing and commu-nication (ISAC) base station equipped with a cross-shaped 3Rx
+
+Tx      
+
+> Spherical wavefronts (near -field)
+> of multiple scatter points
+> Extended target
+> One of scatter points
+> Range
+> Angle
+> Fig. 2. Illustration of the near-field extended-target sensing scenario.
+
+multiple-input multiple-output (MIMO) array comprising Nt
+
+transmit and Nr receive antennas. The transmit uniform linear array (ULA) is deployed along the y-axis and the receive ULA along the z-axis, both with element spacing d = λc/2,where λc is the carrier wavelength. Owing to the large array aperture, the target of interest is assumed to lie in the radiating near-field region [14], [15]. Let r(tx)  
+
+> t
+
+∈ R3 and r(rx)  
+
+> r
+
+∈ R3
+
+denote the positions of the t-th transmit and r-th receive antennas, respectively; see Fig. 2. An orthogonal frequency-division multiplexing (OFDM) waveform with K subcarriers is employed [17], [19]. On the k-th subcarrier at frequency 
+
+fk and angular frequency ωk = 2 πf k, the probing vector is denoted by xk ∈ CNt×1. The corresponding received echo is modeled as 
+
+yk = Hk xk + zk, (1) where Hk ∈ CNr ×Nt is the target-induced near-field MIMO channel matrix and zk ∼ CN (0, σ 2 
+
+> s
+
+INr ) denotes additive noise. The formulation focuses on the residual target response after background calibration or suppression, so dominant en-vironmental echoes are assumed removed in preprocessing. In this work, {xk} are assumed known, and the estimated channel responses {Hk} are directly used as input features for joint target classification and localization. The scattering model is three-dimensional, whereas the localization task is restricted to range-azimuth estimation in a prescribed sensing plane. Let Π : R3 → R2 denote the projection from the three-dimensional global coordinate to the local coordinate in this plane, and write ¯r = Π( r) for the projected coordinate of point r.
+
+A. Near-Field Extended-Target Scattering Model 
+
+Unlike idealized point-target models, realistic targets occupy a finite spatial region and generate distributed scattering. Let 
+
+Vs ⊂ R3 denote the target support region. The target is mod-eled as an isotropic inhomogeneous dielectric scatterer with spatially varying relative permittivity εr (r) and conductivity 
+
+σ(r). Under standard frequency-domain dielectric-scattering formulations [12], the complex contrast on subcarrier k is defined as 
+
+χk(r) = εr (r) − 1 − j σ(r)
+
+ωkε0
+
+, r ∈ Vs, (2) where ε0 is the free-space permittivity. The background medium outside Vs is assumed to be homogeneous free space with permittivity ε0 and permeability μ0.
+
+1) Dipole Excitation and Incident Field: Each transmit element is modeled as a small electric dipole with effective dipole moment pt ∈ C3 located at r(tx)  
+
+> t
+
+. For a dipole source at rsrc with moment p and an observation point r, define 
+
+R = ∥r − rsrc ∥, bR = r − rsrc 
+
+R . (3) At subcarrier k, the free-space wavenumber is k0 = ωk
+
+√μ0ε0.The electric field generated by the dipole in free space is written as 
+
+Edip  
+
+> k
+
+(r; rsrc , p) = e−jk 0R
+
+4πε 0
+
+ k20
+
+R
+
+
+
+I3 − bR bRT
+
++
+
+ 1
+
+R3 − jk 0
+
+R2
+
+ 
+
+3 bR bRT − I3
+
+
+
+p, (4) where I3 is the 3 × 3 identity matrix. Stacking the incident fields generated by all transmit anten-nas, we define the incident-field transfer matrix at position r
+
+as 
+
+Ak, inc (r) = Edip  
+
+> k
+
+(r; r(tx) 1 , p1), . . . , 
+
+Edip  
+
+> k
+
+(r; r(tx)  
+
+> Nt
+
+, pNt ) ∈ C3×Nt . (5) For a given probing vector xk, the superposed incident field is 
+
+Ek, inc (r) = Ak, inc (r)xk. (6) 
+
+2) Volume Integral Equation and Total-Field Transfer: 
+
+Under standard assumptions for inhomogeneous dielectric scattering, the total electric field inside Vs satisfies the volume integral equation (VIE) [12] 
+
+Ek(r) = Ek, inc (r) + k20
+
+Z
+
+> Vs
+
+Gk(r, r′)
+
+× χk(r′)Ek(r′) d r′, r ∈ Vs, (7) where Gk(r, r′) is the free-space dyadic Green’s function [11] 
+
+Gk(r, r′) = 
+
+
+
+I3 + 1
+
+k20
+
+∇∇ T
+
+
+
+gk(∥r − r′∥), (8) with scalar Green’s function 
+
+gk(R) = e−jk 0R
+
+4πR . (9) Since (7) is linear in xk, the total field depends linearly on the probing vector. Therefore, for each r ∈ Vs, there exists a total-field transfer matrix Ak(r) ∈ C3×Nt such that 
+
+Ek(r) = Ak(r)xk. (10) Substituting (6) and (10) into (7) yields 
+
+Ak(r) = Ak, inc (r) + k20
+
+Z
+
+> Vs
+
+Gk(r, r′)
+
+× χk(r′)Ak(r′) d r′, r ∈ Vs. (11) 4
+
+3) Receiver Model and Channel Matrix Construction: Let 
+
+qr ∈ C3 denote the receive polarization vector of the r-th antenna. Stacking all receive elements, define 
+
+Bk(r′) = 
+
+
+
+qH 
+
+> 1
+
+Gk(r(rx) 1 , r′)
+
+...
+
+qH 
+
+> Nr
+
+Gk(r(rx)  
+
+> Nr
+
+, r′)
+
+ ∈ CNr ×3. (12) For notational simplicity, constant antenna and hardware scal-ing factors are absorbed into the definition of the channel matrix. Then the target-induced channel response on subcarrier 
+
+k is written as 
+
+Hk = k20
+
+Z
+
+> Vs
+
+Bk(r′)χk(r′)Ak(r′) d r′. (13) The observed channel response is determined by distributed scattering over the target support rather than by a single ideal reflection point. For numerical implementation, Vs is discretized into Ns
+
+voxels with centers {rn}Ns 
+
+> n=1
+
+and volume ∆V . Then (13) is approximated as 
+
+Hk ≈ k20 ∆V
+
+> Ns
+
+X
+
+> n=1
+
+Bk(rn)χk(rn)Ak(rn). (14) The matrices {Hk} constitute the raw near-field ISAC obser-vations and are generated offline by solving the discretized forward scattering problem. 
+
+B. Channel Tensor Representation 
+
+Let Ks = {k1, . . . , k Ks } denote the selected subcarrier set, where 1 ≤ Ks ≤ K and k1 < · · · < k Ks . The corresponding multi-frequency observation is stacked as 
+
+Hs = Hk1 , Hk2 , . . . , HkKs 
+
+ ∈ CNr ×Nt×Ks . (15) For neural processing, the real and imaginary parts are stacked to form the real-valued tensor 
+
+˜Hs ∈ R2×Nr ×Nt×Ks , (16) with 
+
+[ ˜Hs]1,:,:,: = ℜ{H s}, [ ˜Hs]2,:,:,: = ℑ{H s}, (17) where the first dimension corresponds to the real and imagi-nary channels. This representation keeps the receive, transmit, and frequency dimensions explicit for subsequent inference. 
+
+C. Communication Model and Resource Partition 
+
+To interpret the sensing allocation from the communication perspective, we embed the selected sensing tones into a shared OFDM block with Ktot total subcarriers. Among them, Ks
+
+tones are reserved for sensing and the remaining 
+
+Kc = Ktot − Ks (18) tones are available for communication. Here, Ktot is asystem-level OFDM size introduced to calibrate the sensing-communication tradeoff and does not alter the sensing tensor dimension used by the learning model. After standard commu-nication precoding and combining, let hk denote the effective scalar downlink channel coefficient on active communication tone k. We assume independent and identically distributed (i.i.d.) Rayleigh fading, i.e., hk ∼ CN (0 , 1) , and equal power allocation across the Kc active communication tones. Let ¯γc
+
+denote the average received signal-to-noise ratio (SNR) per communication subcarrier when the full OFDM block is used for communication. Once Ks tones are reserved for sensing, the redistributed power over the remaining communication tones yields the per-tone instantaneous SNR ¯γcKtot |hk|2/K c.We define the normalized ergodic-rate benchmark as 
+
+Rerg (Ks) ≜ E
+
+"
+
+1
+
+Ktot 
+
+> Kc
+
+X
+
+> k=1
+
+log 2
+
+
+
+1 + ¯ γc
+
+Ktot 
+
+Kc
+
+|hk|2
+
+#
+
+, (19) with units of bit/s/Hz over the entire OFDM block. It captures both the loss of communication tones and the compensating power concentration on the remaining tones. This leads to a simple sensing-bandwidth objective. Let 
+
+A(Ks) denote the achievable classification accuracy and let 
+
+Ep(Ks) denote the achievable planar localization error when 
+
+Ks sensing tones are reserved. Since larger Ks leaves fewer tones for communication under (19), maximizing the residual communication rate is equivalent to minimizing the sensing bandwidth subject to sensing-QoS constraints: 
+
+K⋆s = arg max  
+
+> Ks∈{ 1,...,K }
+
+Rerg (Ks) = arg min  
+
+> Ks∈{ 1,...,K }
+
+Ks
+
+s.t. A(Ks) ≥ τcls , E p(Ks) ≤ τloc . (20) (20) can be used to compare which inference architecture reaches a desired sensing-quality region with the smallest sens-ing bandwidth under the shared OFDM budget. Accordingly, 
+
+Rerg (Ks) provides a communication-aware interpretation of bandwidth-efficient sensing. 
+
+D. Joint Classification and Localization Task 
+
+Let c ∈ {1, . . . , C } denote the target class label. The localization label is defined by the geometric center of the target support region, 
+
+rctr = 1
+
+|Vs|
+
+Z
+
+> Vs
+
+r dr ≈ 1
+
+NsNsX
+
+> n=1
+
+rn, (21) where |Vs| denotes the target volume. Let ¯rctr = [ xc, y c]T ∈
+
+R2 denote the projected center coordinate, i.e., ¯rctr = Π( rctr ).The range-azimuth pair is then defined as 
+
+r = ∥¯rctr ∥2, θ = atan2( yc, x c). (22) Given the observation tensor ˜Hs, the goal is to jointly infer 
+
+{ˆc, ˆr, ˆθ} = fΘ( ˜Hs), (23) where fΘ(·) is the learned mapping parameterized by Θ.This label associates localization with the geometric support of the object rather than with a single dominant scatterer. To avoid angular discontinuity, the azimuth is encoded in sine-cosine form: 
+
+a = [sin θ, cos θ]T. (24) 5Channel Response Semantic 
+
+> Traning Only
+
+Range Azimuth 
+
+Encoder Semantic Embedding Geometric Encoder Geometric Embedding Uncertainty-aware 
+
+Localization Head 
+
+Physical-Classification 
+
+Head 
+
+Class 
+
+Cross-task 
+
+Attention Guide Regularization  
+
+> Fig. 3. Overall system framework of the proposed method.
+
+The network predicts a normalized vector ˆa, from which ˆθ is recovered as 
+
+ˆθ = atan2  [ˆ a]1, [ˆ a]2
+
+. (25) Besides the individual range and azimuth errors, the final localization quality is characterized by the planar localization error 
+
+epl ,i =
+
+q
+
+ˆr2 
+
+> i
+
++ r2 
+
+> i
+
+− 2ˆ riri cos(∆ θi), (26) where ∆θi ≜ wrap( ˆθi − θi) ∈ [−π, π ) denotes the wrapped azimuth error in radians. This metric measures the exact Euclidean localization error in the sensing plane and will later motivate the physics-guided regularization in Section III. III. P ROPOSED JOINT LEARNING FRAMEWORK 
+
+The two tasks considered here are inferred from the same near-field tensor, but they do not rely on the same structures in that tensor. Classification depends more on distributed scattering signatures, while localization depends more on phase-aligned geometric variation across the array and the selected subcarriers. The framework in Fig. 3 is built around this mismatch. Task-specific features are extracted first, cross-task interaction is introduced next, and localization is then regularized by losses that better match the final planar metric. 
+
+A. Overall Architecture and Dual-Branch Feature Extraction 
+
+The network input is the real-valued observation tensor defined in (16), 
+
+˜Hs ∈ R2×Nr ×Nt×Ks , (27) where the first dimension corresponds to the real and imag-inary channels and the last dimension collects the selected subcarriers. Two task-specific branches are adopted to reduce feature conflict from the first stage of representation learn-ing, in contrast to classical hard-parameter-sharing multi-task learning [26], and in line with task-interaction designs such as Cross-Stitch and the Multi-Task Attention Network (MTAN) [27], [28]. Specifically, the network contains a semantic (classification-oriented) branch and a geometric (localization-oriented) branch. Let Ecls (·) and Eloc (·) denote the semantic and geometric encoders, respectively. They take the same input tensor but use independent parameters: 
+
+Fcls = Ecls ( ˜Hs), Floc = Eloc ( ˜Hs), (28) where Fcls , Floc ∈ RL×df are tokenized latent feature se-quences, L is the number of tokens after flattening the spatial-frequency feature maps, and df is the token dimension. In the implementation used in Section IV, each branch starts with three convolutional blocks, each composed of a 2-D convolution, batch normalization, and a rectified linear unit (ReLU), together with two intermediate max-pooling stages. The reduced spatial-frequency feature map is then flattened into a token sequence, so the token extractor is kept identical across branches and only the branch weights differ. The resulting sequence is refined by two transformer-style encoder blocks with four attention heads, layer normalization, Gaussian error linear unit (GELU) feed-forward layers of width 2df , and learnable subcarrier embeddings. The semantic branch is in-tended to preserve morphology- and material-related scattering patterns, while the geometric branch targets phase-amplitude structures more directly tied to range and azimuth. 
+
+B. Cross-Task Attention for Semantic-Geometric Interaction 
+
+The two branches process the same near-field channel responses and thus retain complementary cues. Bidirectional cross-task attention is introduced at the token level following Transformer-style attention [29]. From Fcls and Floc , the query, key, and value matrices are formed as 
+
+Qcls = Fcls W cls  
+
+> Q
+
+, Kloc = Floc W loc  
+
+> K
+
+, Vloc = Floc W loc  
+
+> V
+
+,
+
+(29) 
+
+Qloc = Floc W loc  
+
+> Q
+
+, Kcls = Fcls W cls  
+
+> K
+
+, Vcls = Fcls W cls  
+
+> V
+
+,
+
+(30) where W (·) 
+
+> Q
+
+, W (·) 
+
+> K
+
+, and W (·) 
+
+> V
+
+are trainable projection matrices. The semantic tokens are refined by attending to the geometric 6
+
+tokens, while the geometric tokens are refined symmetrically: 
+
+˜Fcls = Fcls + softmax 
+
+ Qcls KT
+
+> loc
+
+√da
+
+
+
+Vloc , (31) 
+
+˜Floc = Floc + softmax 
+
+ Qloc KT
+
+> cls
+
+√da
+
+
+
+Vcls , (32) where da is the attention dimension. Residual connections are embedded in (32), followed by feed-forward refinement. In the implementation used in Section IV, the residual contribution from the cross branch is further controlled by learnable mixing coefficients, initialized to a small value, so that the model is not forced into strong cross-task coupling at the start of training. The attention weights in (32) are computed from the current semantic and geometric features rather than fixed coefficients. The semantic branch thus receives location-sensitive cues from the geometric branch, while the geometric branch receives category-dependent scattering cues from the semantic branch. The refined token sequences are then aggregated by global pooling and linear projection: 
+
+hcls = Pcls ( ˜Fcls ), hloc = Ploc ( ˜Floc ), (33) where hcls , hloc ∈ Rd are the task-level semantic and geomet-ric embeddings. The semantic embedding is used for classifi-cation, while the geometric embedding is used for localization, uncertainty estimation, and the auxiliary regularization head. 
+
+Remark 1. If ˜Fcls = Fcls and ˜Floc = Floc , the proposed architecture reduces to a task-decoupled dual-branch model. If the two branches are further collapsed into a shared encoder, the resulting structure approaches hard-parameter-sharing multi-task learning [26]. The proposed cross-task attention provides a controlled intermediate design between fully decoupled and fully shared representations. C. Uncertainty-Aware Task Supervision 
+
+Based on the task-level embeddings in (33), shallow pre-diction heads are introduced for category prediction, range regression, and azimuth regression. The classification head maps the semantic embedding to the class logits: 
+
+ocls = Gcls (hcls ). (34) The classification probability vector and the predicted label are then given by 
+
+ˆp = softmax( ocls ), ˆc = arg max  
+
+> c
+
+[ ˆ p]c. (35) The geometric embedding is used to predict the range and its log-variance: 
+
+ˆr = Gr (hloc ), ˆsr = Gur (hloc ). (36) The azimuth branch outputs a sine-cosine representation together with its log-variance: 
+
+ˆa = Gθ (hloc ), ˆsθ = Guθ (hloc ), (37) where ˆa = [ dsin θ, [cos θ]T is normalized as 
+
+ˆa ← ˆa
+
+∥ˆa∥2
+
+, (38) and the azimuth estimate ˆθ is recovered from ˆa through the sine-cosine decoding introduced in Section II. During inference, only ˆc, ˆr, and ˆθ are retained. The prediction heads are supervised by a task-oriented objective that combines category prediction with uncertainty-aware range-azimuth regression. The network estimates both the target parameters and their sample-dependent regression uncertainty [30]. The task-supervision part is written as 
+
+Ltask = Lcls + λr Lr + λθ Lθ , (39) where λr and λθ are weighting coefficients. The classification term Lcls is the standard cross-entropy loss, 
+
+Lcls = − 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+log exp([ ocls ,i ]ci )
+
+PCc=1 exp([ ocls ,i ]c) . (40) For the localization task, heteroscedastic Gaussian negative log-likelihood (NLL) surrogates are adopted for range and nor-malized azimuth errors [30]. Let er,i = ˆ ri −ri and eθ,i = ¯∆θi,where ¯∆θi = ∆ θi/π and ∆θi = wrap( ˆθi − θi) ∈ [−π, π ).Then the range and azimuth terms Lr and Lθ can be written compactly as 
+
+Lν = 12B
+
+> B
+
+X
+
+> i=1
+
+ e−ˆsν,i e2 
+
+> ν,i
+
++ ˆ sν,i 
+
+ , ν ∈ { r, θ }, (41) with the corresponding precision weights wν,i = e−ˆsν,i . The additive log-variance term in (41) prevents trivial inflation of the predicted uncertainty. The uncertainty heads adapt the effective regression weights according to the residual scale. The NLL term is not an auxiliary output for post-processing; it directly reshapes the training signal seen by the localization branch. 
+
+D. Physics-Guided Structured Regularization and Optimiza-tion 
+
+Independent task losses do not explicitly capture the exact planar localization metric or the structural priors carried by the near-field response. A physics-guided regularization term is added to Ltask , and the overall loss is written as 
+
+L = Ltask + Lphy , (42) with 
+
+Lphy = λpLpl + λpk Lpeak + λcLcp , (43) where λp, λpk , and λc are weighting coefficients. The three terms in Lphy play different roles. Lpl aligns training with the exact planar localization metric. Lpeak in-jects an observation-domain saliency prior extracted from the multi-frequency channel response. Lcp regularizes the balance between radial and angular errors. 7
+
+To align training with the final localization metric, a planar consistency term is introduced: 
+
+Lpl = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+q
+
+ˆr2 
+
+> i
+
++ r2 
+
+> i
+
+− 2ˆ riri cos(∆ θi) + ϵ. (44) Unlike independent squared penalties on range and azimuth, (44) directly matches the exact Euclidean localization error in the sensing plane. To support the peak-response regularization, an auxiliary peak head is introduced from the geometric embedding: 
+
+ˆu = Gu(hloc ), (45) where ˆu ∈ R2 is the predicted observation-domain peak coordinate used only during training. To incorporate an observation-driven physical prior, an auxiliary peak-response constraint is constructed from the dominant saliency of the input. For the i-th sample, let 
+
+Mi =
+
+> Ks
+
+X
+
+> m=1
+
+H(i) 
+
+> km
+
+, u⋆i = arg max  
+
+> u
+
+[Mi]u, (46) where Mi is the aggregated magnitude map over the selected subcarriers and u⋆i is the coordinate of its dominant peak. The corresponding peak-response prior is 
+
+Lpeak = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+∥ ˆui − u⋆i ∥1, (47) where ˆui is the predicted peak coordinate generated by the auxiliary head in (45). The summation over the selected subcarriers in (46) suppresses isolated subcarrier fluctuations while preserving the dominant spatial saliency induced by the target. This prior is kept weak. It does not force the dominant magnitude peak to coincide with the final geometric center, but biases the localization branch toward physically active regions of the observation. To regularize the coupled nature of range and azimuth errors, a geometry-coupling term is also adopted: 
+
+Lcp = 1
+
+B
+
+> B
+
+X
+
+> i=1
+
+|ˆri − ri| − | ri∆θi| . (48) Here, |ri∆θi| corresponds to the tangential displacement measured along the sensing circle of radius ri. Unlike Lpl ,which measures the exact planar error, Lcp is an auxiliary regularizer that discourages strong imbalance between radial and tangential localization discrepancies. Training is end-to-end, while inference only requires a single forward pass through the learned network. IV. N UMERICAL RESULTS 
+
+A. Simulation Setup 
+
+The simulation pipeline is based on electromagnetic data generation for sparse multi-frequency sensing. A cross-shaped near-field MIMO array with Nt = Nr = 64 is considered at a carrier frequency of 4.9 GHz, and an orthogonal frequency-division multiplexing waveform with K = 16 subcarriers is used for sensing. Realistic extended targets are generated from voxelized 3D vehicle models derived from ShapeNet [34].                                     
+
+> TABLE I MAIN SIMULATION AND TRAINING PARAMETERS UNDER THE DEFAULT SETTING .Carrier frequency 4.9GHz Transmit/receive antennas Nt=Nr= 64
+> Array spacing λc/2
+> Default input tensor size 2×64 ×64 ×16
+> Default selected subcarriers Ks= 16
+> Rate-proxy benchmark Ktot = 64 ,¯γc= 15 dB Target models ShapeNet-derived vehicles Number of classes C= 2 (motorbike/car) Intra-class randomization heading, material contrast, position Training/validation/test samples 3984 /500 /492
+> Labels class, range, azimuth Optimizer AdamW Initial learning rate 2×10 −4
+> Training epochs 200
+> Seeds {42 ,43 ,44 }
+
+The discretized VIE solver preserves distributed scattering and near-field wavefront effects beyond point-target abstrac-tions. Background-suppressed target responses are considered, so homogeneous free space is used instead of a cluttered multipath scene. The dataset contains two classes, motorbike and car, with continuous range-azimuth labels. The projected target center is sampled over ranges from 5 to 50 m and azimuths from −60 ◦ to 60 ◦. Metallic body parts and lossy tires are assigned different complex contrasts with random perturbations across samples, and each target is placed at a random heading angle. The resulting channel tensors exhibit substantial intra-class diversity, while the train/validation/test split remains mesh-disjoint: each 3D vehicle instance appears in only one split, so test samples are not new poses or material realizations of training meshes. The near-field channel responses are obtained by solving the discretized volume integral equation offline for each configuration. Each sensing sample uses Ks selected sensing subcarriers, and the default configuration adopts Ks = 16 . The net-work input is represented by the real-valued tensor ˜Hs ∈
+
+R2×Nr ×Nt×Ks . Under the default setting, the input size is therefore 2 × 64 × 64 × 16 . The adopted dataset con-tains 3984 training samples, 500 validation samples, and 
+
+492 test samples. The class counts are nearly balanced: the train/validation/test splits contain 1984 /252 /240 motorbike samples and 2000 /248 /252 car samples, respectively. Each sample is labeled by the target category together with the range and azimuth associated with the projected geometric center defined in Section II. The reduced-data experiments in Section IV-G are conducted by subsampling only the training split while keeping the validation and test sets unchanged. For the benchmark tradeoff calibration used in the communication-oriented analysis below, we additionally in-stantiate (19) with an auxiliary shared-OFDM block of size 
+
+Ktot = 64 and a reference full-band per-subcarrier SNR 
+
+¯γc = 15 dB. This setting calibrates the horizontal rate axis and leaves the sensing dataset and learning models unchanged. Table I summarizes the main simulation and training pa-rameters, including the Adam with decoupled weight decay (AdamW) optimizer. The proposed model is trained in a supervised manner using AdamW [33] with an initial learning rate of 2 × 10 −4 and 8                                                       
+
+> TABLE II COMPARISON WITH BASELINES UNDER THE DEFAULT SETTING .Method Acc. (%) Range MAE (m) Azimuth MAE ( ◦)Planar MAE (m) Succ@1m (%)
+> Classical model-based references
+> Traditional FFT (2D-Periodogram) –16.4085 1.4270 16.4389 2.64 Near-field point-target matched filter –8.8971 1.6732 8.9847 6.30
+> Joint-learning baselines
+> Shared-MTL w/o PCGrad [26] 98.92 ±0.35 1.0535 ±0.0160 2.0537 ±0.0939 1.6033 ±0.0560 39.23 ±1.68 Shared-MTL w PCGrad [26], [31] 98.92 ±0.25 1.0650 ±0.0165 1.2158 ±0.0257 1.2912 ±0.0205 50.27 ±0.82 Cross-Stitch [27] 99.19 ±0.33 1.0580 ±0.0282 1.8163 ±0.0459 1.4969 ±0.0106 43.02 ±0.42
+> Single-task references
+> Single-task classification 98.92 ±0.42 ––––Single-task localization –1.0528 ±0.0184 1.7529 ±0.0530 1.4630 ±0.0324 43.29 ±0.17
+> Proposed variants
+> Proposed w/o CTA w/o physics 98.92 ±0.10 1.0427 ±0.0343 1.8439 ±0.0748 1.4884 ±0.0568 39.70 ±2.46 Proposed w CTA w/o physics 99.66 ±0.25 1.0691 ±0.0091 1.8566 ±0.1238 1.5344 ±0.0309 42.28 ±1.45 Proposed w CTA w physics 99.32 ±0.10 1.0787 ±0.0137 0.7299 ±0.0386 1.1641 ±0.0174 57.79 ±1.07
+
+cosine-annealing learning-rate decay [32]. Unless otherwise specified, the default training length is 200 epochs, the loss weights are (λr , λ θ , λ p, λ pk , λ c) = (1 .0, 1.8, 0.2, 0.05 , 0.1) ,and the reported results are averaged over three seeds 
+
+{42 , 43 , 44 }. Mild sample-wise amplitude perturbation is ap-plied only to the training split. Model selection is performed on the validation set using the same criterion throughout the experiments, and all tables and figures in this section report final performance on the test split unless explicitly stated otherwise. The reported metrics are classification accuracy, range mean absolute error (MAE), azimuth MAE, planar MAE, and the success rate within 1 m, denoted by Succ@1m .
+
+B. Comparison With Baselines 
+
+Representative baselines under the default setting are com-pared next, and Fig. 4 visualizes the gain map. The com-pared methods fall into four groups: two deterministic model-based references, the far-field fast Fourier transform (FFT) periodogram, denoted as Traditional FFT (2D-Periodogram), rooted in classical spectral estimation [41], and a near-field point-target matched filter, which follows spherical-wave point-target localization ideas in near-field array processing [15], [42]; shared-encoder multi-task baselines, Shared-MTL w/o PCGrad [26] and Shared-MTL w PCGrad [26], [31], where the latter applies the standard PCGrad update [31] to the shared-encoder backbone; a soft-sharing multi-task baseline, Cross-Stitch [27]; and two single-task references for classification and localization. The reduced proposed variants, denoted as Proposed w/o CTA w/o physics and Proposed w CTA w/o physics, are reported separately to show how the gain evolves inside the same backbone, while Proposed w CTA w physics denotes the complete framework. The external learning baselines are kept under their standard deterministic objectives, whereas the proposed-family comparison is used to separate the effects of controlled task interaction and structured supervision within the same backbone. Since the two classical model-based references do not involve training, they are reported as single test-set means rather than seed-averaged mean ±standard-deviation values. Among all compared methods, the proposed framework achieves the lowest planar MAE and the highest Succ@1m .The two classical model-based baselines already reveal the importance of matching the sensing geometry to the operating " Acc. vs ST-Cls (pp) "     
+
+> 00.2 0.4 0.6 0.8
+> Planar MAE reduction vs ST-Loc (%)  "
+> -10
+> -5
+> 0
+> 5
+> 10
+> 15
+> 20
+> Shared-MTL w/o PCGrad
+> Shared-MTL w PCGrad
+> Cross-Stitch
+> Prop. w/o CTA w/o Physics
+> Prop. w CTA w/o Physics
+> Prop. w CTA w Physics
+> joint gain ST-Cls reference
+> (single-task classifier)
+> ST-Loc reference
+> (single-task localizer)
+> Fig. 4. Joint-learning gain map relative to the single-task references.
+
+regime. Specifically, Table II shows that moving from the far-field 2D periodogram to the near-field point-target matched filter reduces the planar MAE substantially, yet the remaining gap to the proposed method is still large because realistic extended targets cannot be represented well by a single point scatterer. Among the learning-based methods, Proposed w CTA w/o physics attains the highest classification accuracy, which indicates that cross-task attention effectively transfers geometric cues to semantic discrimination. Its localization metrics remain clearly worse than those of Shared-MTL w PC-Grad, suggesting that CTA alone pushes the joint model toward a classification-favorable operating point. Once uncertainty-aware regression and the physics-guided terms are added, the same backbone achieves the best azimuth MAE, the best pla-nar MAE, and the highest Succ@1m while maintaining highly competitive classification accuracy. The full model combines CTA-driven classification gains with a structured objective that restores a more balanced joint classifier-localizer. The gain map further visualizes the multi-task benefit rela-tive to the two single-task references: the horizontal axis mea-sures the classification-accuracy gain over Single-task classifi-cation, while the vertical axis measures the relative planar-MAE reduction over Single-task localization. The upper-91 2 4 8 16            
+
+> Selected sensing subcarriers Ks
+> 95
+> 96
+> 97
+> 98
+> 99
+> Acc. (%)
+> (a) Classification accuracy
+> Shared-MTL w/o PCGrad
+> Shared-MTL w PCGrad
+> Cross-Stitch
+> Single-task classification
+> Single-task localization
+> Proposed w/o CTA w/o physics
+> Proposed w CTA w/o physics
+> Proposed w CTA w physics
+> 124816
+> Selected sensing subcarriers Ks
+> 1.1
+> 1.2
+> 1.3
+> 1.4
+> 1.5
+> 1.6
+> 1.7
+> 1.8
+> 1.9
+> Planar MAE (m)
+> (b) Planar localization error
+> 124816
+> Selected sensing subcarriers Ks
+> 30
+> 35
+> 40
+> 45
+> 50
+> 55
+> 60
+> Succ@1m (%)
+> (c) Success rate within 1 m
+
+Fig. 5. Performance versus the number of selected subcarriers Ks.
+
+right region corresponds to a desirable synergistic regime in which classification accuracy is improved over the single-task classifier while planar localization error is simultaneously reduced relative to the single-task localizer. In the gain map, Proposed w CTA w/o physics mainly shifts rightward, reflect-ing the classification gain brought by cross-task interaction. The full proposed model then moves further upward after the uncertainty-aware and physics-guided objective is introduced. CTA primarily helps classification, while the structured objec-tive pulls the joint model into the strongest balanced operating region. 
+
+C. Performance Under Limited Frequency Resources 
+
+The next comparison examines the behavior of the complete proposed model and the above baselines when the number of sensing subcarriers is reduced. All methods are evaluated at 
+
+Ks ∈ { 1, 2, 4, 8, 16 }, while the total OFDM resource remains fixed. This comparison reveals whether accurate joint inference can still be maintained when the sensing-side frequency budget is limited, and it also reflects the sensing-communication resource trade-off because increasing the sensing allocation reduces the residual communication resource. To keep the visualization readable while still covering the main trends, Fig. 5 reports three representative metrics: classification accu-racy, planar MAE, and Succ@1m . All learning-based baselines and the two single-task references with complete frequency-sweep experiments are included. The classical model-based references are omitted because only their default Ks = 16 
+
+evaluations are available. The frequency sweep reveals a consistent ordering. In Fig. 5(b) and Fig. 5(c), Proposed w CTA w physics forms the dominant localization frontier across all tested Ks, with especially visible gains when the sensing-side frequency bud-get is highly constrained. For example, at Ks = 4 it already reaches a planar MAE of 1.1826 m and a Succ@1m of 
+
+59 .35% , while the strongest non-proposed baseline Shared-MTL w PCGrad remains at 1.3485 m and 48 .64% , respec-tively. Figure 5(a) further shows that the classification accuracy becomes saturated for several methods once Ks ≥ 4, so the main practical difference under limited frequency resources lies in localization fidelity rather than in recognition alone. 3.5 3.75 4 4.25        
+
+> Ergodic rate Rerg (bit/s/Hz)
+> 95
+> 96
+> 97
+> 98
+> 99
+> Acc. (%)
+> (a) Comm.-classification tradeoff
+> Proposed
+> Shared-MTL w PCGrad
+> Single-task cls.
+> 3.5 3.75 44.25
+> Ergodic rate Rerg (bit/s/Hz)
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> Planar MAE (m)
+> (b) Comm.-localization tradeoff
+> Proposed
+> Shared-MTL w PCGrad
+> Single-task loc.
+
+Fig. 6. Sensing-communication tradeoff under the ergodic-rate benchmark. 
+
+These results show that the proposed task-aware architecture and structured objective are especially beneficial when the fre-quency resources allocated to sensing are limited and motivate the benchmark-rate view studied next. 
+
+D. Sensing-Communication Tradeoff 
+
+The limited-frequency study above can also be expressed on a communication-oriented axis by mapping each sensing allocation Ks to the ergodic-rate measure Rerg (Ks) in (19). This subsection instantiates the bandwidth-allocation view-point in (20): smaller sensing allocations that still satisfy a target sensing-QoS region correspond to more communication-favorable operating points. Here we use the auxiliary shared-OFDM setting described earlier, namely Ktot = 64 total subcarriers and reference full-band per-subcarrier SNR ¯γc =15 dB. The resulting rate axis lets the sensing-bandwidth sweep be read directly in communication-resource terms. Fig 6 makes this tradeoff explicit. The left panel depicts the rate/classification relation and the right panel depicts the rate/localization relation, with the shaded bands indicating seed-to-seed variation. In Fig. 6(a), the proposed model re-mains on the favorable accuracy frontier across the considered rates and consistently stays above the strongest joint-learning baseline Shared-MTL w PCGrad. In Fig. 6(b), the separa-tion is even clearer for localization: at the same Rerg , the proposed model achieves the lowest planar MAE throughout 10                        
+
+> TABLE III COMMUNICATION -EFFICIENT OPERATING POINTS UNDER THE TWO SENSING -Q OSTARGETS DEFINED IN THE TEXT .Method QoS-I QoS-II
+> K⋆sBench. rate K⋆sBench. rate Shared-MTL w PCGrad 44.1436 16 3.5361 Cross-Stitch 83.9467 Not met Proposed w/o CTA 16 3.5361 Not met Proposed w CTA 83.9467 Not met Proposed full 24.2400 44.1436
+
+the sweep. For instance, at Ks = 4 , which corresponds to 
+
+Rerg ≈ 4.14 bit/s/Hz in this setting, the proposed method already attains 98 .58% classification accuracy together with a planar MAE of 1.1826 m, whereas Shared-MTL w PCGrad remains at 98 .24% and 1.3485 m. From the perspective of (20), this means that the proposed model reaches the same sensing-quality region at a smaller sensing allocation and hence at a more communication-favorable point on the rate axis. Even at Ks = 2 (Rerg ≈ 4.24 bit/s/Hz), the proposed framework still maintains a clear localization advantage. To make the communication-efficiency implication explicit, Table III reports the minimum sensing bandwidth K⋆s re-quired by representative joint-learning methods to satisfy two sensing-QoS targets, together with the associated rate. Smaller 
+
+K⋆s means fewer reserved sensing tones and a higher rate under (19). Here, QoS-I is defined by A(Ks) ≥ 98 .0% and 
+
+Ep(Ks) ≤ 1.50 m, while QoS-II is defined by A(Ks) ≥
+
+98 .5% and Ep(Ks) ≤ 1.30 m. For compactness, Table III abbreviates the reduced proposed variants as Proposed w/o CTA and Proposed w CTA, corresponding to Proposed w/o CTA w/o physics and Proposed w CTA w/o physics, re-spectively. The proposed full model reaches QoS-I with only 
+
+K⋆s = 2, corresponding to Rerg ≈ 4.24 bit/s/Hz in this setting, while Shared-MTL w PCGrad requires K⋆s = 4 and Cross-Stitch requires K⋆s = 8. Under the stricter QoS-II target, the proposed full model remains feasible at K⋆s = 4 ,while Shared-MTL w PCGrad needs the full Ks = 16 sweep endpoint. Relative to the competing joint-learning methods, the proposed model reaches the same target sensing-QoS region at a more communication-favorable operating point. Entries marked “Not met” indicate that the corresponding target is not achieved within the tested sweep Ks ∈ { 1, 2, 4, 8, 16 }.Within this benchmark calibration, reserving only a few sensing tones, e.g., Ks ≤ 4 within the 64 -tone shared OFDM block, already preserves strong joint classification and localization performance while keeping the associated benchmark rate above 4 bit/s/Hz. The next question is which architectural and objective components produce this operating-point advantage. 
+
+E. Ablation Studies 
+
+The ablation study analyzes the proposed design from two complementary perspectives. The architecture ablation compares representative joint-learning backbones under the basic deterministic objective. The objective ablation then fixes the dual-branch cross-task backbone and studies how the heteroscedastic NLL term and the structured physics-guided constraints reshape the final performance. To keep the pre-sentation compact, both comparisons are summarized in two blocks. 
+
+1) Architecture Ablation: The upper block evaluates whether task interaction alone is sufficient under the basic deterministic loss. Proposed w CTA w/o physics attains the highest classification accuracy, which suggests that controlled cross-task interaction allows localization-related geometric cues to assist semantic discrimination. Its localization metrics, however, remain inferior to those of Shared-MTL w PCGrad, indicating that interaction alone does not fully preserve the geometry-sensitive structure required for regression. The re-sults therefore support task-specific encoding first and motivate additional structured supervision on the same CTA backbone. 
+
+2) Objective Ablation: The lower block of Table IV then fixes the dual-branch cross-task backbone and varies only the training objective. Moving from Proposed w CTA w/o physics to Proposed w CTA w NLL only reduces the planar MAE from 1.5344 m to 1.1810 m, improves Succ@1m from 
+
+42 .28% to 57 .79% , and sharply lowers the azimuth MAE. This indicates that uncertainty-aware supervision is important once cross-task interaction is enabled. Adding the structured physics-guided terms then further reduces the planar MAE to 
+
+1.1641 m, keeps Succ@1m at 57 .79% , and slightly recovers the classification accuracy from 99 .25% to 99 .32% , although the NLL-only variant remains marginally better on azimuth MAE. Taken together, the ablation suggests that CTA mainly helps the classification side, whereas the additional structured terms mainly stabilize localization on the same backbone. 
+
+F. Error Distribution Analysis 
+
+The ablation results explain why the average metrics im-prove, but they do not show where the errors occur spatially. We next compare the spatial distribution of the planar localiza-tion error for the main overall-comparison methods that pro-duce localization outputs. The set includes Traditional FFT, the near-field point-target matched filter, Single-task localization, Shared-MTL w PCGrad, Cross-Stitch, and Proposed w CTA w physics. Since Single-task classification does not output coordinates, it is not included in this figure. For visualization, the three-seed learning-based results are aggregated and then binned and interpolated over the range-azimuth plane to form continuous sector maps, while the deterministic model-based references are plotted from their single full-test evaluations. This analysis complements the mean-error and success-rate results by showing where large errors concentrate in the sensing sector. Because classification errors are much sparser than local-ization errors, directly plotting a spatial misclassification-rate map would be statistically unstable. We instead compare the predictive classification entropy of the main classification-output methods, Single-task classification, Shared-MTL w/o PCGrad, Shared-MTL w PCGrad, Cross-Stitch, Proposed w CTA w/o physics, and Proposed w CTA w physics, while di-rectly overlaying the misclassified samples. For visualization, the three-seed test-set outputs are aggregated for each method. In these predictive-entropy sector maps, the shared-backbone baselines exhibit broader elevated-entropy regions near the 11 
+
+TABLE IV ABLATION STUDIES UNDER THE DEFAULT SETTING .Variant Acc. (%) Range MAE (m) Azimuth MAE ( ◦) Planar MAE (m) Succ@1m (%) 
+
+(a) Architecture variants with the basic deterministic objective 
+
+Shared-MTL w/o PCGrad [26] 98.92 ±0.35 1.0535 ±0.0160 2.0537 ±0.0939 1.6033 ±0.0560 39.23 ±1.68 Shared-MTL w PCGrad [26], [31] 98.92 ±0.25 1.0650 ±0.0165 1.2158 ±0.0257 1.2912 ±0.0205 50.27 ±0.82 
+
+Cross-Stitch [27] 99.19 ±0.33 1.0580 ±0.0282 1.8163 ±0.0459 1.4969 ±0.0106 43.02 ±0.42 Proposed w/o CTA w/o physics 98.92 ±0.10 1.0427 ±0.0343 1.8439 ±0.0748 1.4884 ±0.0568 39.70 ±2.46 Proposed w CTA w/o physics 99.66 ±0.25 1.0691 ±0.0091 1.8566 ±0.1238 1.5344 ±0.0309 42.28 ±1.45 
+
+(b) Objective variants on the dual-branch cross-task backbone 
+
+Proposed w CTA w/o physics 99.66 ±0.25 1.0691 ±0.0091 1.8566 ±0.1238 1.5344 ±0.0309 42.28 ±1.45 Proposed w CTA w NLL only 99.25 ±0.10 1.0992 ±0.0173 0.7281 ±0.0065 1.1810 ±0.0160 57.79 ±0.91 
+
+w/o planar consistency 98.78 ±0.33 1.1199 ±0.0459 0.8178 ±0.0304 1.2272 ±0.0452 55.89 ±0.88 w/o peak regularization 98.98 ±0.17 1.1177 ±0.0456 0.7428 ±0.0230 1.2006 ±0.0461 55.62 ±1.77 w/o coupling constraint 99.05 ±0.67 1.0957 ±0.0325 0.7516 ±0.0393 1.1821 ±0.0376 57.72 ±3.03 Proposed w CTA w physics 99.32 ±0.10 1.0787 ±0.0137 0.7299 ±0.0386 1.1641 ±0.0174 57.79 ±1.07 60 
+
+> 30
+> 0
+> 30
+> 60
+> 10
+> 20
+> 30
+> 40
+> 50
+> (a) 2D-FFT
+> 60
+> 30
+> 0
+> 30
+> 60
+> (b) NF point MF
+> 60
+> 30
+> 0
+> 30
+> 60
+> (c) ST-Loc
+> 60
+> 30
+> 0
+> 30
+> 60
+> (d) MTL+PCGrad
+> 60
+> 30
+> 0
+> 30
+> 60
+> (e) Cross-Stitch
+> 60
+> 30
+> 0
+> 30
+> 60
+> (f) Proposed
+> 0.1
+> 0.25
+> 0.5
+> 1
+> 2
+> 4
+> 8
+> Planar error (m)
+
+Fig. 7. Sector-wise planar-error maps for the main localization-output methods. 60 
+
+> 30
+> 0
+> 30
+> 60
+> 10
+> 20
+> 30
+> 40
+> 50
+> (a) ST-Cls
+> 60
+> 30
+> 0
+> 30
+> 60
+> (b) Shared-MTL
+> 60
+> 30
+> 0
+> 30
+> 60
+> (c) MTL+PCGrad
+> 60
+> 30
+> 0
+> 30
+> 60
+> (d) Cross-Stitch
+> 60
+> 30
+> 0
+> 30
+> 60
+> (e) Prop. w CTA
+> 60
+> 30
+> 0
+> 30
+> 60
+> (f) Proposed
+> 0
+> 0.03
+> 0.06
+> 0.09
+> 0.12
+> 0.15
+> Predictive entropy (bits)
+
+Fig. 8. Predictive-entropy sector maps for the main classification-output methods on the aggregated three-seed test split. Black crosses denote misclassified samples. 
+
+outer boundary and in several off-boresight sectors. Cross-Stitch and Proposed w CTA w/o physics already produce more concentrated uncertainty regions, whereas the full proposed model yields the fewest misclassified samples and keeps the high-entropy zones more spatially localized around the diffi-cult regions. The remaining high-entropy hot spot is mainly concentrated in a small close-range region. One plausible explanation is that, under the adopted sensing geometry, the observed target extent can be incomplete there, which weakens the semantic cues used to distinguish motorbike from car. The sector-wise error and entropy patterns further clarify where the performance gaps arise. Figure 7 shows that the two classical model-based references retain broad high-error regions over large portions of the sensing sector, especially at longer ranges, which is consistent with their much larger planar MAE in Table II. The learned baselines reduce these hot regions considerably, with Shared-MTL w PCGrad and Cross-Stitch already exhibiting much more controlled spatial behavior than the classical approaches. The proposed full model further yields the most uniformly low-error sector among the compared methods, with the clearest improvement appearing in the long-range and large-azimuth regions. This suggests that the physics-guided constraints are particularly effective at suppressing the geometric regression errors that tend to accumulate in those more challenging parts of the sensing sector. The complementary predictive-entropy view in Fig. 8 is consistent with this picture and keeps the uncertainty concentrated around the remaining difficult regions. 
+
+G. Robustness to Reduced Training Data 
+
+Reduced-data robustness is examined next. The training-data fraction is varied over multiple levels while keeping the validation and test splits unchanged. For readability, three representative metrics are reported over the practically relevant range from 25% to 100% .All methods improve as the training-data fraction increases, while the proposed family remains particularly robust in the localization-oriented metrics. As shown in Fig. 9, already at the lowest displayed fraction of 25% , the full model provides the clearest advantage in planar localization and Succ@1m ,which suggests that the structured objective acts as a useful regularizer when supervision is limited. As the training set grows, the classification accuracies of several methods become more tightly clustered, while the full proposed model keeps the best localization accuracy across all fractions. The advantage is especially meaningful in the low-data regime, where accurate localization is harder to maintain. 
+
+H. Sensitivity to Imperfect Input Responses 
+
+The reduced-data experiment above addresses limited su-pervision. The final experiment studies robustness to im-perfect test-time inputs. Starting from the default check-points, we perturb the input tensor only during inference 12 25 50 75 100       
+
+> Training-data fraction (%)
+> 95
+> 96
+> 97
+> 98
+> 99
+> Acc. (%)
+> (a) Classification accuracy
+> 25 50 75 100
+> Training-data fraction (%)
+> 1.25
+> 1.50
+> 1.75
+> 2.00
+> 2.25
+> 2.50
+> 2.75
+> Planar MAE (m)
+> (b) Planar localization error
+> Shared-MTL w/o PCGrad
+> Shared-MTL w PCGrad
+> Cross-Stitch
+> Single-task classification
+> Single-task localization
+> Proposed w CTA w physics
+> 25 50 75 100
+> Training-data fraction (%)
+> 20
+> 25
+> 30
+> 35
+> 40
+> 45
+> 50
+> 55
+> 60
+> Succ@1m (%)
+> (c) Success rate within 1 m
+
+Fig. 9. Representative performance versus the training-data fraction under reduced-data conditions. 16.5 20.0 26.0 34.0 Clean     
+
+> Equivalent input SNR (dB)
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Planar MAE (m)
+> (a) Additive noise
+> 0510 20 30
+> Global phase offset (deg)
+> 1.2
+> 1.3
+> 1.4
+> 1.5
+> Planar MAE (m)
+> (b) Global phase offset
+> Shared-MTL w PCGrad
+> Cross-Stitch
+> Proposed
+
+Fig. 10. Localization sensitivity under additive noise and global phase offset. 
+
+and compare three representative joint models: Shared-MTL w PCGrad, Cross-Stitch, and Proposed w CTA w physics. We focus on two representative perturbation types: addi-tive complex noise with normalized scale σ/ RMS( H) ∈{0, 0.02 , 0.05 , 0.10 , 0.15 }, where RMS denotes the root-mean-square magnitude of the clean input, and global phase offsets in {0◦, 5◦, 10 ◦, 20 ◦, 30 ◦}. In Fig. 10(a), the noise strength is reported through the equivalent input signal-to-noise ratio axis 
+
+SNR eq = −20 log 10 (σ/ RMS( H)) , with the zero-noise point shown as the clean reference. For compactness, Fig. 10 reports the seed-averaged planar MAE, which is the most sensitive localization metric in this perturbation study. Figure 10 shows that the two perturbation types have clearly different effects. Under global phase offsets, the pro-posed model is largely invariant and keeps the lowest planar MAE throughout the full sweep, which indicates good toler-ance to moderate phase-calibration errors. Additive noise is more challenging for all methods, yet the proposed model preserves the best clean-condition localization and remains strongest over the moderate-SNR regime, while Cross-Stitch becomes slightly better only at the lowest tested SNR point. The uncertainty-aware and physics-guided objective improves nominal localization accuracy and maintains competitive sta-bility under imperfect input responses, especially when the perturbation level is not extreme. Stronger clutter variation, synchronization mismatch, and hardware effects are left for future study. V. C ONCLUSION 
+
+In this paper, receiver-side joint target classification and range-azimuth localization were studied for realistic extended targets from channel responses of a near-field ISAC system under a shared sensing-communication resource budget. A physics-grounded inference formulation was established by combining electromagnetic scattering modeling with a multi-frequency observation representation. On top of this formu-lation, a dual-branch framework with controlled cross-task interaction was developed. The numerical results point to a consistent picture: cross-task attention mainly helps classifica-tion, while the uncertainty-aware and physics-guided objective makes the same backbone reliable for localization. Under the adopted shared-OFDM rate interpretation, the proposed model reaches the same sensing-QoS region with a smaller sensing-bandwidth allocation. The results are obtained from full-wave simulation with background-suppressed channel re-sponses and two target classes. Extensions to hardware mea-surements, cluttered and multipath-rich environments, richer target taxonomies, and tighter closed-loop communication-sensing integration are natural next steps. REFERENCES [1] Z. Zhao, Z. Wang, L. Han, J. Jin, and K. Huang, “A Spatio-Temporal-Frequency Transformer Framework for Near-Field Target Recognition,” 
+
+arXiv preprint arXiv:2603.14829 , 2026. [2] Y. Cui, F. Liu, X. Jing, and J. Mu, “Integrating sensing and communi-cations for ubiquitous IoT: applications, trends, and challenges,” IEEE Network , vol. 35, no. 5, pp. 158–167, Oct. 2021. [3] F. Liu, Y. Cui, C. Masouros, J. Xu, T. X. Han, Y. C. Eldar, and S. Buzzi, “Integrated sensing and communications: towards dual-functional wireless networks for 6G and beyond,” IEEE J. Sel. Areas Commun. , vol. 40, no. 6, pp. 1728–1767, Jun. 2022. [4] A. Hassanien, M. G. Amin, Y. D. Zhang, and F. Ahmad, “Signaling strategies for dual-function radar communications: an overview,” IEEE Aerosp. Electron. Syst. Mag. , vol. 31, no. 10, pp. 36–45, Oct. 2016. [5] A. R. Chiriyath, B. Paul, and D. W. Bliss, “Radar-communications con-vergence: coexistence, cooperation, and co-design,” IEEE Trans. Cogn. Commun. Netw. , vol. 3, no. 1, pp. 1–12, Mar. 2017. [6] A. Hassanien, M. G. Amin, E. Aboutanios, and B. Himed, “Dual-function radar communication systems: a solution to the spectrum congestion problem,” IEEE Signal Process. Mag. , vol. 36, no. 5, pp. 115–126, Sep. 2019. 13 
+
+[7] X. Liu, T. Huang, N. Shlezinger, Y. Liu, J. Zhou, and Y. C. Eldar, “Joint transmit beamforming for multiuser MIMO communications and MIMO radar,” IEEE Trans. Signal Process. , vol. 68, pp. 3929–3944, Jun. 2020. [8] J. A. Zhang, F. Liu, C. Masouros, R. W. Heath, Z. Feng, L. Zheng, and A. Petropulu, “An overview of signal processing techniques for joint communication and radar sensing,” IEEE J. Sel. Topics Signal Process. ,vol. 15, no. 6, pp. 1295–1315, Nov. 2021. [9] F. Liu, Y.-F. Liu, A. Li, C. Masouros, and Y. C. Eldar, “Cram´ er-Rao bound optimization for joint radar-communication beamforming,” IEEE Trans. Signal Process. , vol. 70, pp. 240–253, Dec. 2022. [10] F. Liu, C. Masouros, A. Petropulu, H. Griffiths, and L. Hanzo, “Joint radar and communication design: applications, state-of-the-art, and the road ahead,” IEEE Trans. Commun. , vol. 68, no. 6, pp. 3834–3862, Jun. 2020. [11] H. F. Arnoldus, “Representation of the near-field, middle-field, and far-field electromagnetic Green’s functions in reciprocal space,” J. Opt. Soc. Am. B , vol. 18, no. 4, pp. 547–555, Apr. 2001. [12] P. A. Martin, Multiple Scattering: Interaction of Time-Harmonic Waves with N Obstacles , Cambridge, U.K.: Cambridge Univ. Press, 2006. [13] Z. Cheng, S. Shi, Z. He, and B. Liao, “Transmit Sequence Design for Dual-Function Radar-Communication System With One-Bit DACs,” IEEE Trans. Wireless Commun. , vol. 20, no. 9, pp. 5846–5860, Sep. 2021. [14] Z. Wang, X. Mu, and Y. Liu, “Near-field integrated sensing and communications,” IEEE Commun. Lett. , vol. 27, no. 8, pp. 2048–2052, Aug. 2023. [15] Z. Wang, P. Ramezani, Y. Liu, and E. Bj¨ ornson, “Near-field localization and sensing with large-aperture arrays: From signal modeling to process-ing,” IEEE Signal Process. Mag. , vol. 42, no. 1, pp. 74–87, Jan. 2025. [16] H. Chen, M. F. Keskin, A. Sakhnini, N. Decarli, S. Pollin, D. Dardari, and H. Wymeersch, “6G localization and sensing in the near field: Features, opportunities, and challenges,” IEEE Wireless Commun. , vol. 31, no. 4, pp. 260–267, Aug. 2024. [17] H. Li, Z. Wang, X. Mu, Z. Pan, and Y. Liu, “Near-field integrated sens-ing, positioning, and communication: A downlink and uplink framework,” 
+
+IEEE J. Sel. Areas Commun. , vol. 42, no. 9, pp. 2196–2212, Sep. 2024. [18] L. Qiao, A. Liao, Z. Li, H. Wang, Z. Gao, X. Gao, Y. Su, P. Xiao, L. You, and D. W. K. Ng, “Sensing user’s activity, channel, and location with near-field extra-large-scale MIMO,” IEEE Trans. Commun. , vol. 72, no. 2, pp. 890–906, Feb. 2024. [19] B. Zhao, C. Ouyang, Y. Liu, X. Zhang, and H. V. Poor, “Modeling and analysis of near-field ISAC,” IEEE J. Sel. Topics Signal Process. , vol. 18, no. 4, pp. 678–693, 2024. [20] K. Qu, S. Guo, N. Saeed, and J. Ye, “Near-field integrated sensing and communication: Performance analysis and beamforming design,” IEEE Open J. Commun. Soc. , vol. 5, pp. 6353–6366, 2024. [21] L. Sun, Z. Zhao, C. Jia, and T. Q. S. Quek, “On the design of NOMA-based integrated sensing and communications (ISAC) in near-field extremely large-scale MIMO systems,” IEEE Internet Things J. , vol. 12, no. 12, pp. 18554–18569, Jun. 2025. [22] C. Meng, D. Ma, Z. Wang, Y. Liu, Z. Wei, and Z. Feng, “Near-field hybrid beamforming design for modular XL-MIMO ISAC systems,” IEEE Trans. Commun. , vol. 73, no. 11, pp. 11840–11854, Nov. 2025. [23] J. K. Dassanayake, D. H. Gunasinghe, and G. Amarasuriya, “Near-field performance of ELAA-based ISAC,” in Proc. IEEE Int. Conf. Commun. (ICC) , 2025, pp. 1778–1783. [24] W. Hu, Z. He, W. Xu, Y. Huang, D. W. K. Ng, and N. Al-Dhahir, “Energy-efficient hybrid beamfocusing for near-field integrated sensing and communication,” IEEE Trans. Signal Process. , vol. 73, pp. 4011– 4026, 2025. [25] B. Sambon, F. De Saint Moulin, G. Thiran, C. Oestges, and L. Vanden-dorpe, “Electromagnetic modelling of extended targets in a distributed antenna system,” IEEE Trans. Radar Syst. , vol. 3, pp. 1257–1268, 2025. [26] R. Caruana, “Multitask learning,” Machine Learning , vol. 28, pp. 41–75, Jul. 1997. [27] I. Misra, A. Shrivastava, A. Gupta, and M. Hebert, “Cross-stitch net-works for multi-task learning,” in Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2016, pp. 3994–4003. [28] S. Liu, E. Johns, and A. J. Davison, “End-to-end multi-task learning with attention,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2019, pp. 1871–1880. [29] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, “Attention is all you need,” in Adv. Neural Inf. Process. Syst. (NeurIPS) , vol. 30, 2017, pp. 5998–6008. [30] A. Kendall, Y. Gal, and R. Cipolla, “Multi-task learning using un-certainty to weigh losses for scene geometry and semantics,” in Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR) , 2018, pp. 7482– 7491. [31] T. Yu, S. Kumar, A. Gupta, S. Levine, K. Hausman, and C. Finn, “Gradient surgery for multi-task learning,” in Adv. Neural Inf. Process. Syst. (NeurIPS) , vol. 33, 2020. [32] I. Loshchilov and F. Hutter, “SGDR: Stochastic gradient descent with warm restarts,” in Proc. Int. Conf. Learn. Represent. (ICLR) , 2017. [33] I. Loshchilov and F. Hutter, “Decoupled weight decay regularization,” in Proc. Int. Conf. Learn. Represent. (ICLR) , 2019. [34] A. X. Chang et al. , “ShapeNet: an information-rich 3D model reposi-tory,” arXiv preprint arXiv:1512.03012 , 2015. [35] B. Guo, J. Liang, G. Wang, B. Tang, and H. C. So, “Bistatic MIMO DFRC system waveform design via fractional programming,” IEEE Trans. Signal Process. , vol. 71, pp. 1952–1967, May 2023. [36] M. Zhu, L. Li, S. Xia, et al. , “Information and sensing beamforming optimization for multi-user multi-target MIMO ISAC systems,” EURASIP J. Adv. Signal Process. , vol. 2023, no. 15, pp. 1–29, Jan. 2023. [37] Z. Zhao, L. Zhang, R. Jiang, X.-P. Zhang, X. Tang, and Y. Dong, “Joint beamforming scheme for ISAC systems via robust Cram´ er-Rao bound optimization,” IEEE Wireless Commun. Lett. , vol. 13, no. 3, pp. 889– 893, Mar. 2024. [38] Z. Zhao, Z. Liu, R. Jiang, Z. Li, X.-P. Zhang, X. Tang, and Y. Dong, “Joint beamforming for multi-target detection and multi-user communi-cation in ISAC systems,” IEEE Trans. Veh. Technol. , vol. 74, no. 9, pp. 14938–14942, 2025. [39] Z. Zhao, Z. Liu, W. Dai, X. Tang, X.-P. Zhang, and Y. Dong, “Bayesian beamforming for integrated sensing and communication systems,” in 
+
+Proc. IEEE Int. Conf. Commun. Workshops (ICC Workshops) , 2025, pp. 1395–1400. [40] Z. Zhao, X. Tang, and Y. Dong, “Cognitive waveform design for dual-functional MIMO radar-communication systems,” in Proc. IEEE Global Commun. Conf. (GLOBECOM) , Dec. 2022, pp. 5607–5612. [41] S. Kay, Fundamentals of Statistical Signal Processing: Estimation Theory , Englewood Cliffs, NJ, USA: Prentice-Hall, 1993. [42] I. Bekkerman and J. Tabrikian, “Target detection and localization using MIMO radars and sonars,” IEEE Trans. Signal Process. , vol. 54, no. 10, pp. 3873–3883, Oct. 2006.

@@ -1,0 +1,1030 @@
+Title: RSMA-Assisted Multi-Functional 6G: Integrated Sensing, Communication, and Powering
+
+URL Source: https://arxiv.org/pdf/2603.16102v1
+
+Published Time: Wed, 18 Mar 2026 00:36:24 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# RSMA-Assisted Multi-Functional 6G: Integrated Sensing, Communication, and Powering 
+
+Xiaoxuan Jiang and Yijie Mao 
+
+School of Information Science and Technology, ShanghaiTech University, Shanghai 201210, China Email: {jiangxx2024,maoyj }@shanghaitech.edu.cn 
+
+Abstract —Integrated sensing, communication, and powering (ISCAP) has emerged as a promising solution for enabling multi-functionality in 6G networks. However, it poses a significant challenge in the design of multi-functional waveforms that must jointly consider communication, sensing, and powering perfor-mance. In this paper, we propose a novel rate-splitting multiple access (RSMA)-enabled multi-functional ISCAP network, where RSMA facilitates the use of communication signals to simultane-ously achieve all three functionalities. Based on the proposed sys-tem model, we investigate the beamforming optimization problem to explore the performance trade-offs among communication, sensing, and power transfer. To efficiently solve this problem, we develop a novel ISCAP-extragradient (ISCAP-EG) algorithm, which transforms the original problem into a sequence of convex subproblems, reformulates the dual problem as a variational inequality, and solves it using the EG method. Numerical results show that the proposed ISCAP-EG algorithm achieves perfor-mance equivalent to that of the conventional successive convex approximation (SCA)-based method, while significantly reducing simulation time. Moreover, the RSMA-enabled multi-functional ISCAP network enhance the performance trade-off compared with the conventional space-division multiple access (SDMA)-based scheme, highlighting RSMA as a promising technique for advancing multi-functional ISCAP development in 6G. 
+
+Index Terms —integrating sensing, communication, and pow-ering (ISCAP), rate-splitting multiple access (RSMA), multi-functional, max-min fairness (MMF), efficient algorithm 
+
+I. I NTRODUCTION 
+
+It is envisioned that future wireless networks will undergo a paradigm shift from the “communication-centric 5G” to a “multi-functional 6G” era, supporting not only communication services but also new functions such as sensing, intelligence, computation, localization, navigation, and powering [1]. Un-der this background, the integrated sensing, communication, and powering (ISCAP) network has been proposed in [2], which unifies these three functionalities into a single system and leverages the communication waveform to simultaneously enable sensing and wireless power transfer. However, the integration of these functionalities poses severe challenges in managing the interference between different functionalities, including multi-user interference, interference between com-munication and radar sensing, and interference between radar sensing and power transfer. The existence of these interfer-ences significantly degrades the performance of ISCAP, which is a major obstacle to its practical implementation in 6G. Existing works have made some efforts to address these challenges by focusing on waveform design [2]–[5]. However, they all rely on conventional space-division multiple access (SDMA), which handles inter-user interference by simply treating it as noise. Recent studies have shown that rate-splitting multiple access (RSMA) is a promising interference management technique, encompassing conventional SDMA, non-orthogonal multiple access (NOMA), and orthogonal mul-tiple access (OMA) as special cases [6], [7]. It achieves enhanced spectral efficiency, energy efficiency, and robust-ness against imperfect channel state information, making it a promising approach for ensuring the resilience of 6G networks [8]. By leveraging a common stream to simultaneously man-age inter-user interference, mitigate inter-functionality inter-ference, and serve as radar sequences for sensing beampattern requirements (or as power beams for energy harvesting at energy users), RSMA has demonstrated enhanced trade-offs between dual functionalities. This improvement applies to both integrated sensing and communication (ISAC) [1], [9], [10] and simultaneous wireless information and power transfer (SWIPT) [11]. However, the integration of RSMA into multi-functional ISCAP systems remains largely unexplored. Motivated by the benefits of RSMA in ISAC and SWIPT, as well as its research gap in ISCAP, in this work, we initiate the study of RSMA in ISCAP. The primary contributions of this work are summarized as follows:  
+
+> •
+
+We propose a novel RSMA-enabled multi-functional ISCAP network that allows communication signals to simultaneously support communication, sensing, and power transfer. Leveraging the common stream intro-duced by RSMA, the system eliminates the need for dedicated radar sequences or energy-carrying signals for target sensing and energy receivers (ERs), thereby mitigating inter-functionality interference. To the best of our knowledge, this is the first work to investigate RSMA for multi-functional ISCAP.  
+
+> •
+
+We formulate a joint waveform design problem that aims to maximize the worst-case rate of communication users and the Cram´ er-Rao Bound (CRB) for radar sensing, while satisfying the energy harvesting constraints at the ERs and the power budget at the base-station (BS). To solve this problem, we propose a novel algorithm, termed ISCAP-extragradient (ISCAP-EG), which decom-poses the original problem into a sequence of convex subproblems, reformulates the dual of each subproblem as a variational inequality, and solves it using the extra-gradient method.  
+
+> •
+
+Numerical results validate the effectiveness of the pro-posed approach, showing that ISCAP-EG achieves per-formance equivalent to that of the conventional suc-cessive convex approximation (SCA)-based method,  
+
+> arXiv:2603.16102v1 [eess.SP] 17 Mar 2026 Messages for
+> K IR s
+> 1
+> 
+> 2
+> …
+> Message Splitter
+> ,1
+> , 2
+> …
+> , 
+> ,1
+> , 2
+> …
+> , 
+> Message combiner
+> Encoder
+> 
+> 1
+> 2
+> 
+> …
+> Linear Precoder  …
+> 1
+> 2
+> 
+> ……
+> IR-K
+> IR-1
+> Target ER-1
+> ER-LISCAP Transmitter
+
+Fig. 1: An RSMA-assisted ISCAP system illustration. while significantly reducing simulation time. Further-more, the RSMA-enabled multi-functional ISCAP net-work achieves a superior performance trade-off com-pared to conventional SDMA-based schemes, highlight-ing RSMA as a promising technology for advancing multi-functional ISCAP systems in 6G. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+As illustrated in Fig. 1, this work focuses on a downlink multi-user multiple-input single-output (MU-MISO) network comprising a multi-functional BS, multiple information re-ceivers (IRs), ERs, and a sensing target. The BS is equipped with Nt transmit antennas and Nr receive antennas, where the receive antennas are dedicated to target sensing. This work considers separate IRs and ERs, which are respectively indexed by K = {1, 2, . . . , K } and L = {1, 2, . . . , L }.The BS employs the basic 1-layer RSMA model [6] which enables message splitting by dividing each IR’s message into: 
+
+Wc,k (a common part) and Wp,k (a private part). The common parts of IRs, denoted as {Wc, 1, . . . , W c,K }, are combined and then encoded into a common stream sc for all IRs. In parallel, each private part Wp,k , k ∈ K is independently encoded into the private stream sk dedicated to IR-k. The data streams for all IRs s = [ sc, s 1, . . . , s K ]T ∈ CK+1 are linearly precoded by the precoders in P = [ pc, p1, · · · , pK ] ∈ CNt×(K+1) ,leading to the transmit signal: 
+
+x = pcsc + ∑
+
+> k∈K
+
+pksk. (1) Here, we assume E {ss H } = I and the transmit power is upper bounded by Pt, i.e., tr (PP H ) ≤ Pt. Although there is no dedicated radar sequence or energy-carrying signal, the transmit signal in (1) is designed to simultaneously fulfill three functions: delivering information to the IRs, transferring energy to the ERs, and sensing targets. Let hk and gj denote the channels from the BS to IR-k
+
+and ER-j, respectively. Assume the transmitter fully knows the channel state information, the signal received at IR-k is: 
+
+yk = hHk x + nk, ∀k ∈ K , (2) where nk with zero mean and variance σ2 
+
+> k
+
+is the additive white Gaussian noise (AWGN) received at IR-k.At IR-k, employing the successive interference cancellation (SIC) method, the common stream sc and the dedicated private stream sk are sequentially decoded with the signal-to-interference-plus-noise ratios (SINR) respectively given as: 
+
+γc,k =
+
+∣∣hHk pc
+
+∣∣2
+
+∑
+
+> j∈K
+
+∣∣hHk pj
+
+∣∣2 + σ2
+
+> k
+
+, ∀k ∈ K , (3) 
+
+γp,k =
+
+∣∣hHk pk
+
+∣∣2
+
+∑ 
+
+> j∈K ,j 6=k
+
+∣∣hHk pj
+
+∣∣2 + σ2
+
+> k
+
+, ∀k ∈ K . (4) The corresponding transmission rates at IR-k are expressed as 
+
+Ri,k = log 2 (1 + γi,k ) , ∀k ∈ K , i ∈ { c, p }. (5) As all IRs are required to decode sc, its achievable common rate is limited by the worst-case rate as Rc =min {Rc, 1, . . . , R c,K }. Denoting the common rate allocated to IR-k as ck, we have ∑ 
+
+> k∈K
+
+ck = Rc. The overall achievable rate at IR-k is then expressed as Rk = ck + Rp,k .At each ER, the energy carried by all information precoders is harvested. Following the energy harvesting model in [12], the resulting harvested energy at ER-l is given as: 
+
+Γl = Ml
+
+Xl (1 + exp ( −υl (Ql − ςl))) − Yl, ∀l ∈ L , (6) where Ql =
+
+(∣∣gHl pc
+
+∣∣2 + ∑
+
+> k∈K
+
+∣∣gHl pk
+
+∣∣2)
+
+, Xl = 
+
+> exp( υlςl)
+> 1+exp( υlςl)
+
+, and Yl = Ml 
+
+> exp( υlςl)
+
+, Ml is the maximum output DC power under saturation, υl and ςl are constants related to the energy harvesting circuit. The transmit signal is also utilized for target sensing. The echo signal reflected from the sensing target to the BS is: ys = Hsx + n, where n represents the AWGNs at the BS receiver with zero mean and variance σ2 
+
+> s
+
+, Hs =
+
+αar (θ)aHt (θ) , αA(θ) is the channel matrix from the BS to the target and then to the BS receive antennas. Here, α and θ
+
+respectively denote the complex reflection coefficient and the angle of departure/arrival (AoD/AoA), at(θ) ∈ CNt×1 and 
+
+ar (θ) ∈ CNr ×1 are the transmit and receive array steering vectors, respectively. In this work, we employ the Cram´ er-Rao Bound (CRB) associated with θ as a sensing performance metric. For brevity, we denote Hsx as xs. By stacking the parameters for estimation as ω , [θ, ̂ αT ]T ∈ R3×1,where ̂ α = [ ℜ{ α}, ℑ{ α}]T denotes the complex reflection coefficient, where ℜ{ α} and ℑ{ α} respectively denote the real and the imaginary parts of α. The Fisher information matrix (FIM) related to ω is then computed as [13] 
+
+F = ℜ
+
+{ ∂xHs
+
+∂ω R−1
+
+> s
+
+∂xs
+
+∂ω
+
+}
+
+= 2
+
+σ2
+
+> s
+
+ℜ
+
+{ ∂xHs
+
+∂ω
+
+∂xs
+
+∂ω
+
+}
+
+, (7) where Rs = σ2 
+
+> s
+
+INr . F can be further rewritten into the blockwise form as 
+
+F =
+
+[F11 F12 
+
+F⊤ 
+
+> 12
+
+F22 
+
+]
+
+, (8) where each block can be expressed as: 
+
+F11 = κ|α|2tr ( ˙Aθ Rx ˙AHθ ),
+
+F12 = κℜ
+
+{
+
+[α∗tr (AR x ˙AHθ ), α ∗tr (AR x ˙AHθ )j]
+
+}
+
+,
+
+F22 = κtr (AR xAH )I.Here, κ = 2
+
+> σ2
+> s
+
+, Rx = PP H , α∗ is the conjugate of α, and 
+
+˙Aθ is the derivative of A(θ) with respective to θ:
+
+˙Aθ = ˙ ar (θ)aHt (θ) + ar (θ) ˙ aHt (θ). (9) The trace of the CRB matrix, which is defined as trace of the inverse of the FIM, i.e., tr (F−1), is used as the sensing performance metric. In this work, we aim at jointly maximizing the worst-case communication rate among IRs and minimizing the trace of CRB by optimizing the precoding matrix P and the common rate allocation c , [c1, c 2, . . . , c K ]T . This optimization is subject to constraints on the minimum harvested energy of each energy receiver and the power budget of BS. The problem is formulated as follows: 
+
+max  
+
+> P,c
+
+min 
+
+> k∈K
+
+{ck + Rp,k } − λtr (F−1) (10a) s.t. 1T c ≤ min 
+
+> k∈K
+
+{Rc,k }, (10b) 
+
+c ≥ 0, (10c) tr (PP H ) ≤ Pt, (10d) 
+
+Γl ≥ El, ∀l ∈ L , (10e) where λ ≥ 0 is the tradeoff between the MMF rate for the IRs and radar sensing metric for target detection, 1 is the all-one vector, El is the harvested energy lower bound at ER-l.III. P ROPOSED OPTIMIZATION FRAMEWORK 
+
+Problem (10) is challenging to solve due to its inherent non-convexity and non-smooth nature. To address these dif-ficulties, we propose a novel and efficient optimization algo-rithm that guarantees convergence to a suboptimal solution of (10), while significantly reducing simulation time compared to conventional SCA-based methods. Specifically, we first employ fractional programming (FP) and first-order Taylor approximation to transform the original problem into a series of convex subproblems. However, rather than directly solving these subproblems using conventional interior-point methods which are usually implemented by CVX, we focus on the Lagrangian dual of each subproblem, which is equivalent to a variational inequality problem. Base on this observation, an extragradient-based algorithm is proposed to effectively tackle the Lagrangian dual problem with iterative closed-form solutions. 
+
+A. Problem Transformation 
+
+To tackle the non-convex rate expressions, the FP technique can be employed here. By applying the Lagrangian dual transformation method as described in [14], we have: 
+
+fi,k (P, ϑ i,k ) , log(1+ ϑi,k )−ϑi,k + (1 + ϑi,k )γi,k 
+
+1 + γi,k 
+
+, i ∈ { c, p }
+
+(11) where ϑi,k is auxiliary variable wth respect to γi,k , i ∈ { c, p }.
+
+fi,k is lower bound for Ri,k , i ∈ { c, p }. The equalities hold when: 
+
+ϑ◦ 
+
+> i,k
+
+= γi,k , i ∈ { c, p } (12) By further employing the quadratic transform in [14], we have: 
+
+gi,k (P, ϑ i,k , ϕ i,k ) , Ji,k + 2 √1 + ϑi,k Si,k − | ϕc,k |2Ti,k ,
+
+(13) where i ∈ { c, p }, ϕi,k is auxiliary variable, Ji,k , log(1 + 
+
+ϑi,k ) − ϑi,k , Sc,k , ℜ{ ϕc,k hHk pc}, Sp,k , ℜ{ ϕp,k hHk pk},
+
+Tc,k , |hHk pc|2 +∑Kj=1 |hHk pj |2 +σ2
+
+> k
+
+, Tp,k , Tp,k −| hHk pc|2,
+
+gi,k is lower bound for fi,k . The equalities are achieved when: 
+
+ϕ◦ 
+
+> c,k
+
+=
+
+√1 + ϑc,k hHk pc
+
+Tc,k 
+
+, ϕ ◦ 
+
+> p,k
+
+=
+
+√1 + ϑp,k hHk pk
+
+Tp,k 
+
+. (14) With (11)–(14), the rate expressions in (5) are equivalently transformed into: 
+
+Ri,k = max  
+
+> ϑi,k ,ϕ i,k
+
+gi,k (P, ϑ i,k , ϕ i,k ), i ∈ { c, p } (15) Define ϑi , [ϑi, 1, ϑ i, 2, . . . , ϑ i,K ], ϕi ,
+
+[ϕi, 1, ϕ i, 2, . . . , ϕ i,K ], i ∈ {c, p } and substitute equation (15) into problem (10), problem (10) is reformulated as: 
+
+max   
+
+> P,c,ϑc,
+> ϑp,ϕc,ϕp
+
+min 
+
+> k∈K
+
+{gp,k (P, ϑ p,k , ϕ p,k ) + ck} − λtr (F−1) (16a) s.t. 1T c ≤ min 
+
+> k∈K
+
+{gc,k (P, ϑ c,k , ϕ c,k )}, (16b) 
+
+(10 c), (10 d), (10 e).
+
+Although problem (16) remains non-convex, it is block-wise convex among variable blocks: {P, c}, {ϑc, ϑp}, {ϕc, ϕp}.However, for the block of {P, c}, the problem remains non-convex due to (10e) and the CRB metric in the objective function. Next, we apply the first-order Taylor approximation to address these non-convexities. Specifically, for constraint (10e), we first equivalently transform it into a simpler form: 
+
+∣∣gHl pc
+
+∣∣2 + ∑
+
+> k∈K
+
+∣∣gHl pk
+
+∣∣2 ≥ ˜El, ∀l ∈ L (17) where ˜El = ςl − ln    
+
+> (Ml
+> (El+Yl)Xl−1
+> )
+> υl
+
+. Then, we substitute 
+
+|gHl pi|2, i ∈ { c, k } with its first-order Taylor expansion: 
+
+|gHl pi|2 ≥ 2ℜ{ (gHl p(t) 
+
+> i
+
+)H gHl pi} − 
+
+∣∣∣gHl p(t)
+
+> i
+
+∣∣∣2
+
+, U (gl, pi, p(t) 
+
+> i
+
+).
+
+(18) Here, p(t) 
+
+> i
+
+is the value of pi at iteration t. With the aid of (18), constraint (10e) is reformulated as 
+
+U (gl, pc, p(t) 
+
+> c
+
+) + ∑
+
+> k∈K
+
+U (gl, pk, p(t) 
+
+> k
+
+) ≥ ˜El, ∀l ∈ L (19) Inspired by the first-order Taylor approximation approach proposed in [13], we obtain that tr (F−1) can be approximated at the point P(t) by: tr (PP H Λ) ≥ 2ℜ{ tr (P(t)PH Λ)} − tr (P(t)P(t)H Λ), (20) where Λ = ζI+ 1 
+
+> 2
+
+(B+BH ), B = κ(φ11 |α|2 ˙AH ˙A+2( φ12 +
+
+j · φ13 )α∗ ˙AH A + ( φ22 + φ33 )AH A), φij denotes the (i, j )-th entry of Φ, Φ = F−2, and ζ is selected to guarantee that Λ is positive semi-definite. The equality of (20) is achieved when 
+
+P = P(t). Readers are referred to [13] for the detailed proof. With (19) and (20), the optimization block of {P, c} for problem (16) with fixed ϑc, ϑp, ϕc, ϕp can be equivalently transformed into a sequence of convex subproblems. For a feasible P(t), the convex subproblem is given as: 
+
+max  
+
+> P,c
+
+min 
+
+> k∈K
+
+{gp,k (P) + ck} + 2 λℜ{ tr (P(t)PH Λ)} (21a) s.t. (10 c), (10 d), (16 b), (19) .
+
+Problem (21) is convex, it can be directly solved using the interior-point method, typically implemented through standard optimization toolboxes such as CVX. Therefore, problem (10) can be addressed by iteratively optimizing the variable blocks {P, c}, {ϑc, ϑp}, and {ϕc, ϕp} in (16). However, this approach incurs significant computational overhead due to the repeated use of CVX in each iteration. 
+
+B. Variational Inequality and The EG Algorithm 
+
+In this subsection, we address problem (21) by proposing a novel extragradient-based method to its Lagrangian dual. This approach circumvents the need for conventional interior-point methods to solve problem (21) directly, thereby eliminating reliance on standard optimization toolboxes such as CVX. Using an auxiliary variable r to represent the MMF rate part, problem (21) is reformulated as: 
+
+max  
+
+> P,c,r
+
+r + 2 λℜ{ tr (P(t)PH Λ)} (22a) s.t. r ≤ ck + gp,k (P), ∀k ∈ K , (22b) 
+
+(10 c), (10 d), (16 b), (19) .
+
+Rather than solving problem (22) directly, we focus on its Lagrangian dual problem. By introducing the Lagrangian dual variables β = [ β1, · · · , β K ]T , ρ = [ ρ1, · · · , ρ K ]T , μ =[μ1, · · · , μ K ]T , ω and η = [ η1, · · · , η L]T , the Lagrangian function for problem (22) is defined as: 
+
+L(P, c, r, β, ρ, μ, ω, η) , r + 2 λℜ{ tr (P(t)PH Λ)}−
+
+> K
+
+∑
+
+> k=1
+
+βk (r − (ck + gp,k (P))) −
+
+> K
+
+∑
+
+> k=1
+
+ρk
+
+( K∑
+
+> j=1
+
+cj − gc,k (P)
+
+)
+
++
+
+> K
+
+∑
+
+> k=1
+
+μk ck − ω(tr (PP H ) − Pt)+
+
+> L
+
+∑
+
+> l=1
+
+ηl(U (gl, pc, p(t) 
+
+> c
+
+) + ∑
+
+> k∈K
+
+U (gl, pk , p(t) 
+
+> k
+
+) − ˜El).
+
+(23) 
+
+The Lagrangian dual problem is then formulated as: 
+
+min  
+
+> β,ρ,μ,ω, η
+
+max  
+
+> P,c,r
+
+L(P, c, r, β, ρ, μ, ω, η) (24a) s.t. β ≥ 0, ρ ≥ 0, μ ≥ 0, ω ≥ 0, η ≥ 0. (24b) Inspired by [15], we next show that (24) is equivalent to a variational inequality problem and can be addressed by the extragradient method. First, by stacking the real and imaginary parts of variables, we define: 
+
+y ,[ℜ{ pcT }, ℑ{ pcT }, ℜ{ p1T }, · · · , ℜ{ pK T },
+
+ℑ{ p1T }, · · · , ℑ{ pK T }, cT , r ]T ,
+
+z ,[βT , ρT , μT , ω, ηT ]T .
+
+(25) Due to the concavity of L(P, c, r, β, ρ, μ, ω, η) in (P, c, r )
+
+and its convexity in (β, ρ, μ, ω, η), the optimal solutions y◦
+
+and z◦ of problem (24) are achieved when: (
+
+∂L 
+
+∂y
+
+∣∣∣∣y=y◦
+
+)T
+
+(y′ − y◦) ≤ 0,
+
+( ∂L 
+
+∂z
+
+∣∣∣∣z=z◦
+
+)T
+
+(z′ − z◦) ≥ 0.
+
+(26) where y′ and z′ denote any other points in the feasible set. To make it closer to the standard form of the classical variational inequality, we further define: 
+
+x , [yT , zT ]T , h(x) ,
+
+[
+
+−
+
+( ∂L 
+
+> ∂y
+
+)T
+
+, ( ∂L 
+
+> ∂z
+
+)T
+
+]T
+
+. (27) Eventually, problem (24) is reformulated into the following variational inequality problem: Find x ∈ S s.t. h(x)T (x′ − x) ≥ 0, ∀x′ ∈ S , (28) where S is the feasible set of problem (24): 
+
+S = {x | P ∈ CNt×K , c ∈ RK , r ∈ R, z ≥ 0}. (29) According to [16], when a mapping h(·) is monotone, extragradient serves as an efficient method to deal with the variational inequality problem. The extragradient algorithm typically involves two iterative steps, responsilble for estimating and adjusting respectively: Step 1: Prediction ¯x(n) = Π S
+
+(
+
+x(n) − σ(n)h
+
+(
+
+x(n))) 
+
+,
+
+(30) Step 2: Correction x(n+1) = Π S
+
+(
+
+x(n) − σ(n)h
+
+(
+
+¯x(n))) 
+
+,
+
+(31) where x(n) is the value of x at iteration n, ΠS (·) denotes the projection operator onto S. Here, we follow [17] and select σ(n) = min 
+
+{
+
+τ ‖x(n) −¯x(n)‖ 
+
+> ‖h(x(n))−h(¯ x(n))‖
+
+, σ 
+
+}
+
+as the step size to guarantee the convergence of the algorithm, where τ ∈ (0 , 1) 
+
+, σ is the initial step size. The detailed prediction and correction steps to update the variables in (28) are detailed as follows. First, utilizing the Wirtinger calculus, the update of P is given by: 
+
+¯p(n) 
+
+> i
+
+= p(n) 
+
+> i
+
++ 2 σ(n) ∂L 
+
+∂p∗
+
+> i
+
+∣∣∣∣x=x(n)
+
+, (32a) 
+
+p(n+1)  
+
+> i
+
+= p(n) 
+
+> i
+
++ 2 σ(n) ∂L 
+
+∂p∗
+
+> i
+
+∣∣∣∣x=¯ x(n)
+
+, (32b) where i ∈ { c, k }, ∂L 
+
+> ∂p∗
+> c
+
+= λq1 + ∑Ll=1 ηlglgHl p(t) 
+
+> c
+
+− ωpc +
+
+∑Kj=1 ρj
+
+(ϕc,j 
+
+√1 + ϑc,j hj − | ϕc,j |2hj hHj pc
+
+), ∂L 
+
+> ∂p∗
+> k
+
+= λqk +
+
+βkϕp,k 
+
+√1 + ϑp,k hk −∑Kj=1 (βj |ϕp,j |2 +ρj |ϕc,j |2)hj hHj pk −
+
+ωpk +∑Ll=1 ηlglgHl p(t) 
+
+> k
+
+, qi is the i-th coloum of ΛP (t). Here, 
+
+¯x(n) is the value of xn by substituting all variables using results calculated in (32a), (33a), and (34a). The updates of ck and r are respectively given by: 
+
+¯f (n) = f (n) + σ(n) ∂L 
+
+∂f 
+
+∣∣∣∣x=x(n)
+
+, (33a) 
+
+f (n+1) = f (n) + σ(n) ∂L 
+
+∂f 
+
+∣∣∣∣x=¯ x(n)
+
+, (33b) where f ∈ { ck, r }, ∂L  
+
+> ∂c k
+
+= βk + μk − ∑Kj=1 ρj , ∂L  
+
+> ∂r
+
+= 1 −
+
+∑Kj=1 βj . Note that the projection operations for P, c and 
+
+r are omitted in (32) and (33) because there are no other constraints on them. The update of z is given by: 
+
+¯z(n) =
+
+(
+
+z(n) − σ(n) ∂L 
+
+∂z
+
+∣∣∣∣x=x(n)
+
+)+
+
+, (34a) 
+
+z(n+1) =
+
+(
+
+z(n) − σ(n) ∂L 
+
+∂z
+
+∣∣∣∣x=¯ x(n)
+
+)+
+
+, (34b) where ∂L  
+
+> ∂z
+
+=
+
+[( ∂L 
+
+> ∂β
+
+)T
+
+,
+
+( ∂L 
+
+> ∂ρ
+
+)T
+
+,
+
+( ∂L 
+
+> ∂μ
+
+)T
+
+, ∂L  
+
+> ∂ω
+
+,
+
+( ∂L 
+
+> ∂η
+
+)T ]T
+
+, 
+
+> ∂L
+> ∂β k
+
+= −(r − ck − gp,k ), ∂L  
+
+> ∂ρ k
+
+= −
+
+(∑Kj=1 cj − gc,k 
+
+)
+
+, 
+
+> ∂L
+> ∂μ k
+
+= ck, ∂L  
+
+> ∂ω
+
+= − (tr (PH P) − Pt
+
+), ∂L  
+
+> ∂η l
+
+= U (gl, pc, p(t) 
+
+> c
+
+) + 
+
+∑ 
+
+> k∈K
+
+U (gl, pk, p(t) 
+
+> k
+
+) − ˜El, (·)+ represents max(0 , ·), which is the simplified result of the projection operation for z
+
+because there is only non-negativity constraint on it. The whole process of the proprosed algorithm is sum-marized in Algorithm 1, where obj (·) denotes the objective function in (10a), ǫ1, ǫ 2, ǫ 3 are the convergence tolerances for each iteration loop, and ‖ · ‖ F is the Frobenius norm. In Algorithm1, we first initiate P, c, r and use them to update 
+
+ϑc, ϑp, ϕc and ϕp using (12) and (14). Then, we optimize 
+
+{P, c} by employing (19) and (20) to transform the original problem into a series of convex subproblems. Finally, a two-step extragradient-based algorithm is designed to obtain an iterative closed-form solution. 
+
+C. Complexity Analysis 
+
+The dominant complexity of Algorithm 1 lies in the gradient calculation for P, scaling at O(K2Nt). Considering the three loops, the complexity of the whole Algorithm 1 is 
+
+O(I1I2I3K2Nt), where I1, I 2, I 3 are the iteration numbers of each loop respectively, and are constants relevant to the tolerance of each loop ǫ1, ǫ 2, ǫ 3. It is evidently more efficient than SCA, which requires a computational complexity of 
+
+O(( KN t)3.5) in each iteration [18]. IV. N UMERICAL RESULTS 
+
+In this section, we provide numerical results to demonstrate the efficiency of our proposed ISCAP-EG algorithm. Three schemes are compared in the results:  
+
+> •
+
+RSMA-assisted ISCAP-EG: This is the algorithm pro-posed in section III for a RSMA-assisted multi-functional ISCAP network.  
+
+> •
+
+SDMA-assisted ISCAP-EG: This applies our proposed ISCAP-EG algorithm to address the problem of aSDMA-assisted multi-functional ISCAP network. This is achieved by turning off pc in our proposed Algorithm 1.  
+
+> •
+
+RSMA-assisted SCA: This refers to the classical FP and SCA based algorithm that addresses problem (21) directly using the CVX toolbox. For the sensing target, we consider a uniform linear array (ULA), with the transmit and receive steering vectors as: 
+
+at(θ) = [e−1j Nt−1   
+
+> 2πsin θ
+
+, e −1j Nt−3    
+
+> 2πsin θ
+
+. . . , e 1j Nt−1   
+
+> 2πsin θ
+
+]T
+
+and ar (θ) has the similar form. The number of ERs is fixed 
+
+Algorithm 1: The proposed ISCAP-EG algorithm.  
+
+> 1
+
+Initialize: P, c, r, α, τ, λ, υ, ς, ǫ 1, ǫ 2, ǫ 3 
+
+> 2
+
+i = 0 , P(i) = P, f (i)1 = obj (P(i)). 
+
+> 3
+
+repeat  
+
+> 4
+
+Update ϑc, ϑp, ϕc and ϕp by (12) and (14).  
+
+> 5
+
+t = 0 , P(t) = P, f (t)2 = obj (P(t)). 
+
+> 6
+
+repeat  
+
+> 7
+
+Update U and Φ by (19), (20).  
+
+> 8
+
+n = 0 , P(n) = P, f (n)3 = obj (P(n)). 
+
+> 9
+
+Initialize: c, r, β, ρ, μ, ω, η, σ  
+
+> 10
+
+repeat  
+
+> 11
+
+Update ¯P(n), ¯c(n), ¯r(n), ¯z(n) by (32a), (33a), (34a).  
+
+> 12
+
+Calculate 
+
+σ(n) = min {β ‖x(n) −¯x(n)‖  
+
+> ‖h(x(n))−h(¯ x(n))‖
+
+, σ }. 
+
+> 13
+
+Update P(n+1) , c(n+1) , r (n+1) , z(n+1) by (32b), (33b), (34b), 
+
+f (n+1) 3 = obj (P(n+1) ), n = n + 1 . 
+
+> 14
+
+until |f (n)3 − f (n−1) 3 | < ǫ 3; 
+
+> 15
+
+Update P(t) = √Pt P(n)  
+
+> ‖P(n)‖F
+
+,
+
+f (t+1) 2 = obj (P(t+1) ), t = t + 1 . 
+
+> 16
+
+until |f (t)2 − f (t−1) 2 | < ǫ 2; 
+
+> 17
+
+Update P = √Pt P(t)  
+
+> ‖P(t)‖F
+
+, f (i+1) 1 = obj (P),
+
+i = i + 1 . 
+
+> 18
+
+until |f (i)1 − f (i−1) 1 | < ǫ 1;
+
+to L = 2 . The noise variance is uniformly set to σ2 
+
+> k
+
+= 1 for all k ∈ K and σ2 
+
+> s
+
+= 1 . The trade-off parameter λ is set to be 0.1. The convergence tolerance for all iteration loops is fixed to 10 −3 for all schemes. All results are averaged over 100 channels.     
+
+> 23456
+> Number of transmit antennas
+> 0.5 11.5 2
+> Objective function
+> RSMA-assisted ISCAP-EG,SNR=25dB
+> RSMA-assisted ISCAP-EG,SNR=15dB
+> RSMA-assisted ISCAP-EG,SNR=5dB
+> RSMA-assisted SCA,SNR=25dB
+> RSMA-assisted SCA,SNR=15dB
+> RSMA-assisted SCA,SNR=5dB
+
+(a) Objective function versus Nt.    
+
+> 23456
+> Number of IRs
+> 0.7 0.8 0.9 11.1 1.2 1.3
+> Objective function
+> RSMA-assisted ISCAP-EG,SNR=25dB
+> RSMA-assisted ISCAP-EG,SNR=15dB
+> RSMA-assisted ISCAP-EG,SNR=5dB
+> RSMA-assisted SCA,SNR=25dB
+> RSMA-assisted SCA,SNR=15dB
+> RSMA-assisted SCA,SNR=5dB
+
+(b) Objective function versus K.
+
+Fig. 2: The objective function versus number of transmit antennas and IRs In Fig. 2, we compare the objective function of RSMA-assisted ISCAP-EG and RSMA-assisted SCA schemes with respect to the number of transmit antennas Nt and IRs K,respectively. In Fig. 2(a), we show the comparison of the two schemes under different SNRs while setting K = 4 , E l =6 mW , l ∈ { 1, 2}. In Fig. 2(b), we show the comparison considering Nt = 4 , E l = 6 mW , l ∈ { 1, 2}. Both subfigures demonstrate that our proposed algorithm achieves the same performance as the conventional SCA-based algorithm. Both algorithms guarantee convergence to a suboptimal solution of the original problem.     
+
+> 23456
+> Number of transmit antennas
+> 10 1
+> 10 2
+> CPU Time(s)
+> 91.51%
+> RSMA-assisted ISCAP-EG
+> RSMA-assisted SCA
+
+(a) CPU time versus Nt.    
+
+> 23456
+> Number of IRs
+> 10 0
+> 10 1
+> 10 2
+> CPU Time(s)
+> 90.24%
+> RSMA-assisted ISCAP-EG
+> RSMA-assisted SCA
+
+(b) CPU time versus K.
+
+Fig. 3: The CPU time versus the number of transmit antennas and the number of IRs. SNR= 15 dB, K=4 in (a), Nt=4 in (b). In Fig. 3, we compare the CPU time of RSMA-assisted ISCAP-EG and RSMA-assisted SCA schemes with respect to 
+
+Nt and K, under SNR=15 dB, El = 6 mW , l ∈ { 1, 2}. In both Fig. 3(a) and Fig. 3(b), we observe that our proposed algorithm takes less CPU time than the conventional SCA al-gorithm. Compared with SCA, ISCAP-EG reduces the average CPU time by 91 .51% in Fig. 3(a) and 90 .24% in Fig. 3(b).     
+
+> 23456
+
+Energy harvested threshold (mW) 
+
+> 11.05 1.1 1.15 1.2 1.25 1.3 1.35 1.4 1.45
+> MMF Rate (bit/s/Hz)
+> 0.06 0.08 0.1 0.12 0.14 0.16 0.18
+> CRB
+> RSMA-assisted ISCAP-EG
+> SDMA-assisted ISCAP-EG
+> RSMA-assisted ISCAP-EG
+> SDMA-assisted ISCAP-EG
+
+Fig. 4: The MMF Rate and CRB versus energy harvested threshold El. Nt = 4 , K = 4 , SNR= 25 dB. Fig. 4 shows the MMF rate and CRB for RSMA-assisted ISCAP-EG and SDMA-assisted ISCAP-EG schemes versus the energy harvested threshold El. We observe that the MMF rate of RSMA-assisted scheme is always higher than that of the SDMA-assisted scheme, while the CRB of RSMA-assisted scheme is always lower than that of SDMA-assisted scheme. This demonstrates that RSMA possesses a significantly en-hanced capability to simultaneously support communication, sensing, and power transfer. This advantage mainly attributes to the employment of common stream. The common stream fulfills three key roles: (1) interference management among communication users, (2) a dedicated radar sequence, and (3) an unified waveform for wireless power transfer. This integrated approach inherently mitigates inter-functionality interference. V. C ONCLUSION 
+
+This paper proposes an advanced RSMA-enabled multi-functional ISCAP network. Within this novel system model, we study the beamforming optimization problem to explore the performance trade-offs among communication, sensing, and power transfer functionalities. To solve the beamforming problem efficiently, we develop a novel ISCAP-EG algorithm, which transforms the original problem into a sequence of convex subproblems, reformulates its dual problem as a varia-tional inequality, and solves it using the extragradient method. Numerical results demonstrate that the proposed ISCAP-EG algorithm achieves performance equivalent to that of the conventional SCA-based method, while significantly reducing simulation time. Furthermore, the proposed RSMA-assisted multi-functional ISCAP network outperforms conventional SDMA-based scheme, showing that RSMA is a promising technique for advancing multi-functional ISCAP development for 6G. REFERENCES [1] B. Clerckx et al. , “Multiple access techniques for intelligent and multifunctional 6G: Tutorial, survey, and outlook,” Proc. IEEE , vol. 112, no. 7, pp. 832–879, Jul. 2024. [2] Y. Chen et al. , “ISAC meets SWIPT: Multi-functional wireless systems integrating sensing, communication, and powering,” IEEE Trans. Wire-less Commun. , vol. 23, no. 8, pp. 8264–8280, Aug. 2024. [3] H. Hua et al. , “Optimal transmit beamforming for integrated sensing and communication,” IEEE Trans. Veh. Technol. , vol. 72, no. 8, pp. 10 588–10 603, Aug. 2023. [4] Y. Chen et al. , “Integrated sensing, communication, and powering (ISCAP): Towards multi-functional 6G wireless networks,” Jan. 2024. [Online]. Available: https://arxiv.org/abs/2401.03516 [5] A. Magbool et al. , “Multi-functional RIS for a multi-functional system: Integrating sensing, communication, and wireless power transfer,” IEEE Network , vol. 39, no. 1, pp. 71–79, Jan. 2025. [6] Y. Mao et al. , “Rate-splitting multiple access: Fundamentals, survey, and future research trends,” IEEE Commun. Surv. Tutor. , vol. 24, no. 4, pp. 2073–2126, Jul. 2022. [7] B. Clerckx et al. , “A primer on rate-splitting multiple access: Tutorial, myths, and frequently asked questions,” IEEE J. Sel. Areas Commun. ,vol. 41, no. 5, pp. 1265–1308, Feb. 2023. [8] R.-J. Reifert et al. , “Comeback kid: Resilience for mixed-critical wire-less network resource management,” IEEE Transactions on Vehicular Technology , vol. 72, no. 12, pp. 16 177–16 194, Dec. 2023. [9] C. Xu et al. , “Rate-splitting multiple access for multi-antenna joint radar and communications,” IEEE J. Sel. Top. Signal Process. , vol. 15, no. 6, pp. 1332–1347, Nov. 2021. [10] K. Chen et al. , “Rate-splitting multiple access for simultaneous multi-user communication and multi-target sensing,” IEEE Trans. Veh. Tech-nol. , vol. 73, no. 9, pp. 13 909–13 914, Apr. 2024. [11] Y. Mao et al. , “Rate-splitting for multi-user multi-antenna wireless information and power transfer,” in Proc. IEEE 20th Int. Workshop Signal Process. Adv. Wireless Commun (SPAWC) , Jul. 2019, pp. 1–5. [12] R. Zhang et al. , “Energy efficiency maximization in RIS-assisted SWIPT networks with RSMA: A PPO-based approach,” IEEE J. Sel. Areas Commun. , vol. 41, no. 5, pp. 1413–1430, May 2023. [13] T. Fang et al. , “Low-complexity Cram´ er-Rao lower bound and sum rate optimization in ISAC systems,” Feb. 2025. [Online]. Available: https://arxiv.org/abs/2502.03162 [14] K. Shen and W. Yu, “Fractional programming for communication systems—part I: Power control and beamforming,” IEEE Trans. Signal Process. , vol. 66, no. 10, pp. 2616–2630, May 2018. [15] C. Zhang et al. , “Ultra-low-complexity algorithms with structurally optimal multi-group multicast beamforming in large-scale systems,” 
+
+IEEE Trans. Signal Process. , vol. 71, pp. 1626–1641, Apr. 2023. [16] M. Razaviyayn et al. , “Nonconvex min-max optimization: Applications, challenges, and recent theoretical advances,” IEEE Signal Process Mag. ,vol. 37, no. 5, pp. 55–66, Sep. 2020. [17] P. Marcotte, “Application of Khobotov’s algorithm to variational in-equalities and network equilibrium problems,” INFOR: Inf. Syst. Oper. Res. , vol. 29, no. 4, pp. 258–270, Jan. 1991. [18] Y. Mao et al. , “Energy efficiency of rate-splitting multiple access, and performance benefits over SDMA and NOMA,” in Proc. 15th Int. Symp. Wireless Commun. Syst. (ISWCS) , Aug. 2018, pp. 1–5.

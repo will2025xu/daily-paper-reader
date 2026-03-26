@@ -1,0 +1,3038 @@
+Title: Implicit Neural Representation for Multiuser Continuous Aperture Array Beamforming
+
+URL Source: https://arxiv.org/pdf/2603.16053v1
+
+Published Time: Wed, 18 Mar 2026 00:31:17 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# Implicit Neural Representation for Multiuser Continuous Aperture Array Beamforming 
+
+Shiyong Chen, Student Member, IEEE, Jia Guo, Member, IEEE, and Shengqian Han, Senior Member, IEEE 
+
+Abstract —Implicit neural representations (INRs) can param-eterize continuous beamforming functions in continuous aper-ture arrays (CAPAs) and thus enable efficient online inference. Existing INR-based beamforming methods for CAPAs, however, typically suffer from high training complexity and limited gen-eralizability. To address these issues, we first derive a closed-form expression for the achievable sum rate in multiuser multi-CAPA systems where both the base station and the users are equipped with CAPAs. For sum-rate maximization, we then develop a functional weighted minimum mean-squared error (WMMSE) algorithm by using orthonormal basis expansion to convert the functional optimization into an equivalent parameter optimization problem. Based on this functional WMMSE algo-rithm, we further propose BeamINR, an INR-based beamforming method implemented with a graph neural network to exploit the permutation-equivariant structure of the optimal beamforming policy; its update equation is designed from the structure of the functional WMMSE iterations. Simulation results show that the functional WMMSE algorithm achieves the highest sum rate at the cost of high online complexity. Compared with baseline INRs, BeamINR substantially reduces inference latency, lowers training complexity, and generalizes better across the number of users and carrier frequency. 
+
+Index Terms —Continuous aperture array (CAPA), beamform-ing, WMMSE, implicit neural representation. 
+
+I. I NTRODUCTION 
+
+# MASSIVE multi-input-multi-output (MIMO) is a key technology for improving spectral and energy effi-ciency [1]. However, traditional MIMO systems based on spatially discrete arrays (SPDAs) face two major scalability limitations. First, each antenna requires dedicated hardware, such as a radio-frequency port in fully digital arrays, which leads to high fabrication cost and energy consumption. Second, maintaining half-wavelength spacing between antennas results in large array sizes and creates implementation challenges [2]. To address these limitations, alternative array architectures such as holographic MIMO (HMIMO) [3]–[5] and recon-figurable intelligent surfaces [6], [7] use low-cost radiating elements on compact metasurfaces and allow denser element deployment. A continuous aperture array (CAPA) can be viewed as the limiting case of a HMIMO system with infinitely many radiating elements and coupled circuits. Under this model, beamforming design shifts from finite-dimensional beamforming vectors to continuous current distributions over                 
+
+> Shiyong Chen is with the School of Electronics and Information Engineering, Beihang University, Beijing 100191, China (email: shiy-ongchen@buaa.edu.cn). Jia Guo is with the School of Electronic Engineering and Computer Science, Queen Mary University of London, London E1 4NS, U.K. (email: jia.guo@qmul.ac.uk). Shengqian Han is with the School of Electronics and Information Engineer-ing, Beihang University, Beijing 100191, China (email: sqhan@buaa.edu.cn).
+
+the aperture. The resulting optimization problems are therefore nonconvex functional problems that are difficult to solve with conventional methods [8]. Developing efficient beamforming algorithms is therefore essential to fully exploit the potential of CAPAs. Existing numerical methods for CAPA beamforming can be broadly di-vided into approximation-based methods and direct functional methods. Approximation-based methods represent channel and beamforming functions with finite orthogonal Fourier bases and then solve an equivalent finite-dimensional problem [9]– [11]. Although convenient, this strategy introduces approxi-mation loss. Moreover, the number of required Fourier bases grows with the carrier frequency and aperture size, which increases the problem dimension and online complexity in large-scale CAPA systems [12]–[14]. Direct functional meth-ods based on the calculus of variations avoid approximation loss [15], [16], but they still require iterative functional updates and repeated integral evaluations, which limits their real-time applicability. 
+
+A. Related Works 1) Learning Beamforming Policy for CAPA: Recent stud-ies have explored deep neural networks (DNNs) to reduce the computational cost of CAPA beamforming. The main challenge is that CAPA beamforming is inherently func-tional: both the channel response and the beamforming vari-ables are continuous functions, which leads to an infinite-dimensional formulation, whereas standard DNN mappings are finite-dimensional. In the multiuser single-CAPA down-link, where a CAPA-equipped BS serves multiple single-antenna users, the optimal beamforming function admits a weighted-sum representation of channel-response functions, which enables indirect learning through a finite-dimensional weight vector [17]. However, this structure does not extend to multi-CAPA systems with CAPA-based receivers, in which the weights themselves become functions. For the single-user multi-CAPA system, where both the BS and the user are equipped with CAPAs, an implicit neural representation (INR) was employed to directly parameterize the beamforming function [18]. However, that INR is implemented with a fully connected neural network (FNN), which leads to low learning efficiency, high training complexity, and limited generalizabil-ity with respect to the number of users. 
+
+2) Methods to Improve Learning Efficiency: Improving DNN learning efficiency requires both reducing training com-plexity and enhancing generalization. One effective strategy is to exploit mathematical properties of the target policy, such as PE, to constrain the hypothesis space. This idea has 
+
+> arXiv:2603.16053v1 [eess.SP] 17 Mar 2026 2
+
+been used to design GNNs for power allocation [19]–[21], user scheduling [22], [23], and beamforming [24]. Prior work shows that exploiting PE can substantially improve learning efficiency. For example, the GNNs in [20]–[23] reduce train-ing complexity and, in some cases, improve generalization by incorporating PE into the policy design. Similarly, [19] shows that GNNs can be more learning-efficient than con-ventional DNNs: although they may require longer training in some cases, they generalize better across problem scales and therefore reduce the need for retraining. However, the benefits of PE are not universal. In [22], [23], although PE-aware GNNs reduce training complexity, they still exhibit poor generalization performance. Another effective way to improve learning efficiency is to incorporate mathematical models into model-driven DNNs [5], [25]–[27], which simplifies the mapping that the network needs to learn. Existing methods mainly fall into three cat-egories: deep unfolding [28]–[30], designing the DNN output based on the structure of the optimal solution [25], [31], [32], and using mathematical models to guide the design of each DNN layer [5], [26], [27], [33]. Deep unfolding learns spe-cific operations or parameters within iterative algorithms, or introduces additional learnable parameters into each iteration. For example, [28], [29] unfolds the WMMSE algorithm for beamforming optimization, thereby reducing the complexity of matrix inversion, while [30] unfolds projected gradient descent by learning step sizes for hybrid beamforming. Although deep unfolding networks can converge faster than conventional iterative algorithms, they inherit the numerical computations of the original algorithms, resulting in high training and inference complexity. Another line of work exploits the structure of the optimal policy to simplify learning. In [25], [31], [32], beamforming learning is reduced to power allocation learning. This improves learning performance and reduces training complexity, but remains problem-specific because it relies on the structure of the optimal solution. Mathematical models can also directly guide DNN design. For instance, [26] develops a GNN based on the iterative Taylor expansion of the matrix pseudo-inverse, improving both learning and generalization performance. Similarly, [5], [27], [33] design GNN update equations according to the iterative equations of gradient-based beamforming optimization algorithms. Although these model-driven GNNs show strong generalization in SPDA systems, they are tailored to specific problem settings and are not directly applicable to CAPA systems. 
+
+B. Motivation and Contributions 
+
+Existing INR-based methods for CAPA beamforming typ-ically suffer from high training complexity and limited gen-eralization. To address these limitations, we aim to design an INR framework for CAPA beamforming with higher learning efficiency. Specifically, we first develop a functional WMMSE algorithm for sum-rate maximization, and then design Beam-INR based on this functional WMMSE algorithm. BeamINR is implemented as a GNN to exploit the PE property of the optimal beamforming policy, while its update rule is designed by leveraging the iterative structure of the functional WMMSE algorithm.    
+
+> Fig. 1. Illustration of the downlink CAPA system Lx
+> B,Ly
+> B.
+
+The main contributions are summarized as follows. 1 
+
+> •
+
+We consider a multiuser multi-CAPA system and, to the best of our knowledge, derive the first explicit closed-form expression for its achievable sum rate.  
+
+> •
+
+Based on this formulation, we develop a functional WMMSE algorithm for multiuser multi-CAPA beam-forming. Specifically, we first transform the sum-rate maximization problem into an equivalent sum-MSE mini-mization problem, and then use orthonormal basis expan-sion to convert it into a parameter optimization problem. By deriving the first-order optimality conditions of this parameter optimization problem and mapping them back to the functional domain, we obtain the update equations of the proposed functional WMMSE algorithm.  
+
+> •
+
+Building on the functional WMMSE algorithm, we de-sign a new INR, termed BeamINR, to parameterize the continuous beamforming function. Specifically, Beam-INR is implemented as a GNN to exploit PE, and its update rule is designed using the iterative structure to aggregate and combine the channel response function.  
+
+> •
+
+Simulation results validate the proposed methods. The functional WMMSE algorithm achieves the highest sum rate but incurs high online inference complexity. In contrast, BeamINR achieves substantially lower inference latency and generalizes better than baseline INRs across different numbers of users. 
+
+Notations: (·)T, (·)H, (·)∗, and ∥ · ∥ denote the transpose, Hermitian transpose, conjugate, and Frobenius norm of a matrix, respectively. | · | denotes the magnitude of a complex value, and Iz is the identity matrix of size z × z.II. S YSTEM MODEL 
+
+Consider a downlink multiuser multi-CAPA system in which a BS equipped with a CAPA serves K users, each also equipped with a CAPA, as illustrated in Fig. 1. In a Cartesian coordinate system, the BS CAPA is modeled as a rectangular aperture lying on the xy -plane and centered at the origin, with side lengths Lx 
+
+> B
+
+and Ly 
+
+> B
+
+along the x- and y-axes, respectively. A point on the BS aperture is denoted by s = [ sx, s y , 0] T, and 
+
+> 1Portions of this work, specifically the derivation of the functional WMMSE algorithm, were reported in our conference paper [34]. The present journal manuscript substantially extends [34] in three aspects: it derive a closed-form expression for the achievable sum rate in multiuser multi-CAPA systems, de-signs BeamINR to learn the continuous beamforming function which exploits the PE property of the optimal beamforming policy and the iterative structure of the functional WMMSE algorithm. It also provides additional simulation results for both the numerical optimization and the INR-based approaches. 3
+
+the set of all such points is denoted by SB. The k-th user CAPA is centered at location rk,o and has side lengths Lx 
+
+> U
+
+and Ly
+
+> U
+
+. Its orientation is specified by the rotation angles ωkx , ωky , and ωkz
+
+about the x-, y-, and z-axes, respectively, with corresponding rotation matrices Rx(ωkx ), Ry (ωky ), and Rz (ωkz ). To describe points on the k-th user CAPA, we introduce a local coordinate system whose origin is rk,o and whose xy -plane coincides with the user CAPA. In this local coordinate system, a point on the k-th user CAPA is denoted by ¯rk = [¯ rkx, ¯rky , 0] T, and the set of all such points is denoted by ¯Sk
+
+> U
+
+. Each point can be mapped to the global coordinate system as 
+
+r = Rx(ωkx )Ry (ωky )Rz (ωkz )¯ rk + rk,o , ¯rk ∈ ¯Sk
+
+> U
+
+, (1) where r denotes the corresponding point in the global coordi-nate system and Sk 
+
+> U
+
+denotes the set of all such points. The BS transmits d data streams to each user. Let vk(s) = [vk 
+
+> 1
+
+(s), . . . , v kd (s)] ∈ C1×d denote the beamforming function on the BS CAPA for user k, and let xk = [ xk 
+
+> 1
+
+, . . . , x kd ] ∈ C1×d
+
+denote the corresponding data symbols, where vki (s) conveys symbol xki with E{| xki |2} = 1 . The received signal at point r
+
+on the k-th user CAPA is given by 
+
+yk(r) = 
+
+> K
+
+X
+
+> i=1
+
+Z
+
+> SB
+
+hk (r, s) vi(s)xT 
+
+> i
+
+ds + nk(r), r ∈ S k
+
+> U
+
+, (2) where hk(r, s) denotes the continuous channel kernel 2 from point s on the BS CAPA to point r on the k-th user CAPA, and nk(r) ∼ CN (0 , σ 2
+
+> n
+
+) is additive white Gaussian noise with variance σ2
+
+> n
+
+.As widely assumed in the literature [16], [17], we consider uni-polarized CAPAs under line-of-sight conditions, where both the BS and the user CAPAs are polarized along the y-axis. The channel response function hk(r, s) is then expressed as 
+
+hk(r, s) = Λk, T
+
+> R
+
+−jηe −j 2πλ ∥r−s∥
+
+2λ∥r−s∥
+
+
+
+I3 − (r−s)( r−s)T
+
+∥r − s∥2
+
+
+
+ΛT, (3) where r ∈ Sk
+
+> U
+
+, s ∈ SB, ΛT = [0 , 1, 0] T and Λk 
+
+> R
+
+=
+
+Rx(ωkx )Ry (ωky )Rz (ωkz )ΛT are unit polarization vectors, η is the intrinsic impedance, and λ is the signal wavelength. To fo-cus on beamforming optimization, we assume perfect channel state information at the BS. To obtain the continuous channel, prior work has explored parametric estimation methods [35], [36], which estimate a finite set of channel parameters and then reconstruct the channel response functions. III. P ROBLEM FORMULATION 
+
+We aim to optimize the beamforming functions to maximize the system sum rate. Prior work has derived closed-form achievable-rate expressions for the multiuser single-CAPA system [11], [13] and the single-user multi-CAPA system [16], where only inter-user interference or only intra-user interfer-ence is present. In contrast, the considered multiuser multi-CAPA system involves both intra-user and inter-user interfer-ence. We therefore first derive a closed-form expression for its achievable sum rate and then formulate the corresponding     
+
+> 2In functional analysis, a two-variable function used in an integral operator, such as hk(r,s)in (2), is referred to as the kernel of that operator.
+
+optimization problem. To this end, we begin by defining the inverse of a continuous kernel. 
+
+Definition 1 (Inverse of a Continuous Kernel) . For a continu-ous kernel G(r, s), a kernel G−1(z, r) is defined as the inverse of G(r, s) if it satisfies [13] 
+
+Z
+
+> S
+
+G−1(z, r)G(r, s)d r = δ(z − s), (4) 
+
+for all r, s, z ∈ S , where δ(·) is the Dirac delta function. 
+
+Proposition 1. The achievable sum rate of a multiuser multi-CAPA system is given by 
+
+R = PKk=1 log det  Id + Qk
+
+ (5) 
+
+where 
+
+Qk = RR 
+
+> SU
+
+aH
+
+> kk
+
+(r1) J −1¯k (r1, r2) akk (r2) d r2 dr1, (6a) 
+
+J¯k(r1, r2) = KP 
+
+> j=1 ,j ̸=k
+
+akj (r1) aH 
+
+> kj
+
+(r2)+ σ2
+
+> n
+
+δ(r1 − r2), (6b) 
+
+akj (r) = R 
+
+> SB
+
+hk(r, s) vj (s) d s. (6c) 
+
+Here, SU = SKk=1 Sk 
+
+> U
+
+and hk(r, s) is zero for r /∈ S k
+
+> U
+
+.Proof: See Appendix A. With Proposition 1, the sum-rate maximization problem is formulated as 
+
+max  
+
+> vk(s)
+
+PKk=1 log det  Id + Qk
+
+, (7a) s.t. PKk=1 
+
+R 
+
+> SB
+
+∥vk(s)∥2ds ≤ Cmax , (7b) (6a) , (6b) , (6c) ,
+
+where Cmax denotes the maximum current budget at the BS. IV. F UNCTIONAL WMMSE A LGORITHM 
+
+In this section, we develop a functional WMMSE algorithm for beamforming design. Instead of solving (7) directly, we first reformulate it as an equivalent sum-MSE minimization problem and then represent the continuous functions in the equivalent problem with complete orthonormal basis expan-sions. These reformulations convert the original functional sum-rate maximization problem into an equivalent optimiza-tion over coefficient matrices, which facilitates the derivation of the functional WMMSE algorithm. 
+
+A. Equivalent MSE Minimization Problem 
+
+We first reformulate problem (7) as an equivalent sum-MSE minimization problem. Specifically, by applying the combining function uk(r) ∈ C1×d to the received signal, the 
+
+k-th user estimates its transmitted signal as 
+
+ˆxk =
+
+Z
+
+> Sk
+> U
+
+uH 
+
+> k
+
+(r) yk (r)d r. (8) With (8), the MSE matrix Ek can be derived as 
+
+Ek = Ex,n 
+
+(ˆ xk − xk)(ˆ xk − xk)H
+
+≜ Id −Bkk −BH 
+
+> kk
+
++
+
+> K
+
+X
+
+> j=1
+
+Bkj BH 
+
+> kj
+
++σ2
+
+> n
+
+Z
+
+> Sk
+> U
+
+uH 
+
+> k
+
+(r)uk(r) d r,
+
+(9) 4
+
+where 
+
+Bkj =
+
+Z
+
+> Sk
+> U
+
+uH 
+
+> k
+
+(r) akj (r)d r. (10) 
+
+Proposition 2. Problem (7) is equivalent to the following problem, in the sense that the globally optimal solution vk(s)
+
+is identical for both problems. 
+
+min    
+
+> {Wk,uk(r),vk(s)}
+
+XKk=1 Tr ( WkEk) − log det( Wk) (11a) 
+
+s.t. (9) , (10) , (6c) , (7b) ,
+
+where Wk ⪰ 0 is the weight matrix of user k.Proof: See Appendix B. To establish the equivalence between problem (7) and the MSE-based formulation in Proposition 2, we need to handle inverse kernels consisting of a continuous kernel plus an outer-product term. The following lemma provides a functional Woodbury identity for this purpose and is used in the proof of Proposition 2. 
+
+Lemma 1 (Functional Woodbury Identity) . Let J ( r1, r2) be a continuous invertible kernel, a(r1) ∈ C1×d and b(r1) ∈
+
+Cd×1 for r1, r2 ∈ S . If the term J ( r1, r2) + a(r1)b (r2) is invertible, then 
+
+(J ( r1, r2) + a(r1)b (r2)) −1
+
+= J −1 (r1, r2) − ψ(r1) ( Id + G)−1 ϕ(r2), (12) 
+
+where G = RR  
+
+> S
+
+b (r1) J −1(r1, r2) a(r2)d r1dr2 and 
+
+ψ(r1) = R 
+
+> S
+
+J−1 (r1, r2) a(r2)d r2,
+
+ϕ(r2) = R 
+
+> S
+
+b (r1) J −1(r1, r2) d r1. (13) 
+
+Proof: See Appendix C. For the beamforming functions vk (s), ∀k, let β (s) = [β1 (s) , . . . , β Ns (s)] ∈ C1×Ns denote orthonormal basis func-tions with Ns → ∞ , which satisfy the orthonormality condition 
+
+Z
+
+> SB
+
+βH (s) β (s)d s = INs . (14) Then, each beamforming function vk (s) can be expressed as a linear combination of these basis functions [37], i.e., 
+
+vk (s) = β (s) Vk, (15) where Vk ∈ CNs×d denotes the coefficient matrix, obtained through the projection 
+
+Vk =
+
+Z
+
+> SB
+
+βH (s) vk (s)d s. (16) Similarly, for uk (r), consider another set of orthonormal basis functions denoted by αk (r) = αk 
+
+> 1
+
+(r) , . . . , αkNr (r) ∈
+
+C1×Nr with Nr → ∞ , which satisfy 
+
+Z
+
+> Sk
+> U
+
+αH 
+
+> k
+
+(r) αk (r)d r = INr . (17) Accordingly, uk (r) can be represented as 
+
+uk (r) = αk (r) Uk, (18) where Uk ∈ CNr ×d is the corresponding coefficient matrix, obtained as 
+
+Uk =
+
+Z
+
+> Sk
+> U
+
+αH 
+
+> k
+
+(r) uk (r)d r. (19) Since β (s) and αk (r) form complete orthonormal sets over SB and Sk
+
+> U
+
+, respectively, the continuous channel kernel 
+
+hk (r, s) can be represented as [16] 
+
+hk (r, s) = αk (r) HkβH (s) , (20) where Hk ∈ CNr ×Ns is the channel coefficient matrix, ob-tained as 
+
+Hk =
+
+Z
+
+> Sk
+> U
+
+Z
+
+> SB
+
+αH 
+
+> k
+
+(r) hk (r, s) β (s)d sdr. (21) Substituting (15), (18), and (20) into problem (11), we obtain 
+
+min   
+
+> Wk,Uk,Vk
+> K
+
+X
+
+> k=1
+
+(Tr ( WkEk) − log det( Wk)) (22a) s.t. Ek = Id −Bkk −BH
+
+> kk
+
++ XKj=1 Bkj BH 
+
+> kj
+
++ σ2
+
+> n
+
+UH 
+
+> k
+
+Uk, (22b) 
+
+Bkj = UH 
+
+> k
+
+Hk Vj , (22c) 
+
+> K
+
+X
+
+> k=1
+
+Tr  VH 
+
+> k
+
+Vk
+
+ ≤ Cmax . (22d) Problem (22) optimizes the coefficient matrices Vk and Uk
+
+together with the weight matrices Wk. Although the problem can be solved by the conventional WMMSE algorithm, the computational complexity becomes prohibitive as Ns → ∞ 
+
+and Nr → ∞ . Therefore, instead of directly optimizing Vk
+
+and Uk, the next subsection derives their optimality conditions and uses them to construct the corresponding optimal functions 
+
+vk(s) and uk(r).
+
+B. Derivation of the Functional WMMSE Algorithm 
+
+This subsection derives the update equations for uk(r), Wk,and vk(s).
+
+1) Update of uk(r): From problem (22), the first-order optimality condition for Uk is 
+
+ KX
+
+> j=1
+
+HkVj VH 
+
+> j
+
+HH 
+
+> k
+
++ σ2INr
+
+
+
+Uk − HkVk = 0 . (23) Multiplying both sides of (23) by αk (r1) yields 
+
+αk(r1) HkVk = αk(r1)
+
+ KX
+
+> j=1
+
+HkVj VH 
+
+> j
+
+HH 
+
+> k
+
++σ2
+
+> n
+
+INr
+
+
+
+Uk. (24) Using the orthonormality condition in (14), the term 
+
+αk(r1) HkVk can be rewritten as 
+
+αk (r1) HkVj =
+
+Z
+
+> SB
+
+αk (r1) Hkβ (s)H
+
+| {z } 
+
+> hk(r1,s)
+
+β (s) Vj
+
+| {z } 
+
+> vj(s)
+
+ds
+
+=
+
+Z
+
+> SB
+
+hk (r1, s) vj (s)d s ≜ akj (r1) ,
+
+(25) 5
+
+where the second equality follows from (20) and (15). Substi-tuting (25) into (24) gives 
+
+akk (r1) = 
+
+ KX
+
+> j=1
+
+akj (r1)VH 
+
+> j
+
+HH 
+
+> k
+
++σ2
+
+> n
+
+αk(r1)
+
+
+
+INr Uk. (26) With (17), the right-hand side of (26) can be further ex-pressed as 
+
+Z
+
+> Sk
+> U
+
+ KX
+
+> j=1
+
+akj (r1)VH 
+
+> j
+
+HH 
+
+> k
+
+αH 
+
+> k
+
+(r)
+
+| {z }
+
+> aH
+> kj (r)
+
++σ2
+
+> n
+
+αk(r1)αH 
+
+> k
+
+(r)
+
+
+
+αk(r)Ukdr
+
+=
+
+Z
+
+> Sk
+> U
+
+ KX
+
+> j=1
+
+akj (r1) aH 
+
+> kj
+
+(r) + σ2
+
+> n
+
+δ (r1 − r)
+
+
+
+uk (r)d r, (27) where αk(r1)αH 
+
+> k
+
+(r) = δ (r1 − r) holds due to the orthonor-mality of αk(r), and αk(r)Uk equals uk(r) by (18). Using (27) to replace the right-hand side of (26), the functional optimality condition for uk(r) is 
+
+akk (r1)= 
+
+Z
+
+> Sk
+> U
+
+ KX
+
+> j=1
+
+akj (r1) aH 
+
+> kj
+
+(r)+ σ2
+
+> n
+
+δ (r1−r)
+
+
+
+uk(r)d r. (28) Defining Jk(r1, r) ≜ PKj=1 akj (r1) aH 
+
+> kj
+
+(r) + σ2
+
+> n
+
+δ (r1 − r), (28) can be rewritten as akk (r1) = R
+
+> Sk
+> U
+
+Jk(r1, r)uk (r)d r, from which uk(r) is obtained as 
+
+uk (r) = 
+
+Z
+
+> Sk
+> U
+
+J−1 
+
+> k
+
+(r, r1)akk (r1) d r1, (29) where J−1 
+
+> k
+
+(r, r1) denotes the inverse of Jk(r1, r2), as defined in Definition 1. 
+
+2) Update of Wk: From problem (22), the optimal Wk is 
+
+Wk =  Id − UH 
+
+> k
+
+HkVk
+
+−1 . (30) With (17), (30) can be rewritten as 
+
+Wk =
+
+
+
+Id −
+
+Z
+
+> Sk
+> U
+
+UH 
+
+> k
+
+αH 
+
+> k
+
+(r)
+
+| {z } 
+
+> uH
+> k(r)
+
+αk (r) HkVk
+
+| {z } 
+
+> akk (r)
+
+dr
+
+−1
+
+,
+
+=
+
+
+
+Id −
+
+Z
+
+> Sk
+> U
+
+uH 
+
+> k
+
+(r) akk (r) d r
+
+−1
+
+,
+
+(31) where the second equality follows from (18) and (25). 
+
+3) Update of vk(s): Similar to the derivation of uk(r), the first-order optimality condition for Vk can be derived as 
+
+ KX
+
+> j=1
+
+HH 
+
+> j
+
+Uj Wj UH 
+
+> j
+
+Hj + μI
+
+
+
+Vk − HH 
+
+> k
+
+UkWk = 0 , (32) where μ is the Lagrange multiplier introduced to satisfy the constraint in (7b), which can be obtained via bisection. Multiplying both sides of (32) by β (s1) yields 
+
+ KX
+
+> j=1
+
+β (s1) HH 
+
+> j
+
+Uj Wj UH 
+
+> j
+
+Hj +μβk (s1) I
+
+
+
+Vk
+
+= β (s1) HH 
+
+> k
+
+Uk.
+
+(33) Using the orthonormality condition in (17), the term 
+
+β (s1) HH 
+
+> k
+
+Uk can be rewritten as 
+
+β (s1) HH 
+
+> k
+
+Uk =
+
+Z
+
+> Sk
+> U
+
+β (s1) HH 
+
+> k
+
+αH 
+
+> k
+
+(r)
+
+| {z } 
+
+> hH
+> k(r,s1)
+
+αk (r) Uk
+
+| {z } 
+
+> uk(r)
+
+dr
+
+=
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s1) uk (r)d r ≜ ck (s1) .
+
+(34) where the second equality follows from (20) and (18). Substi-tuting (34) into (33) gives 
+
+ck (s1) Wk=
+
+ KX
+
+> j=1
+
+cj (s1) Wj UH 
+
+> j
+
+Hj +μβ (s1)
+
+
+
+Vk. (35) Applying (14), the right-hand side of (35) can be further written as 
+
+ KX
+
+> j=1
+
+cj (s1)Wj UH 
+
+> j
+
+Hj + μ β(s1)
+
+
+
+INs Vk
+
+=
+
+Z
+
+> SB
+
+ KX
+
+> j=1
+
+cj (s1)Wj UH 
+
+> j
+
+Hj βH(s)
+
+| {z } 
+
+> cH
+> j(s)
+
++
+
+μβ(s1)βH(s)
+
+
+
+β(s)Vkds.
+
+(36) Using (36) to replace the right-hand side of (35), the functional optimality condition for vk(s) is 
+
+ck (s1) Wk =
+
+Z
+
+> SB
+
+ KX
+
+> j=1
+
+cj (s1) Wj cH 
+
+> j
+
+(s)+ μδ (s1−s)
+
+
+
+vk (s)d s, (37) where β(s1)βH(s) = δ (s1 − s) holds due to the orthonormal-ity of β(r), and β(s)Vk equals vk (s) based on (15). Defining 
+
+Tk (s1, s) ≜ PKj=1 cj (s1)Wj cH 
+
+> j
+
+(s)+ μδ (s1 −s), the functional update equation of vk(s) is derived as 
+
+vk (s) = 
+
+Z
+
+> SB
+
+T−1 
+
+> k
+
+(s1, s)ck (s1) Wkds1. (38) where T−1 
+
+> k
+
+(s1, s) denotes the inverse of Tk(s1, s).The proposed functional WMMSE algorithm is summarized in Table I. 
+
+Remark 1. Unlike Fourier-based discretization methods, which iteratively optimize finite-dimensional coefficient matrices and then reconstruct the continuous beamforming functions from truncated Fourier expansions [10], [11], the proposed approach yields closed-form functional update equations and updates the beamforming functions directly in the continuous domain. It therefore avoids the approximation errors introduced by truncating the Fourier expansion. V. INR OF BEAMFORMING FUNCTION 
+
+In this section, we employ an INR to learn the beamform-ing policy. We first analyze the PE property of the policy and implement the INR as a GNN to exploit it. We then relate the functional WMMSE algorithm to the conventional GNN update rule and, based on which, derive a new GNN update equation. 6   
+
+> TABLE I PSEUDOCODE OF THE PROPOSED FUNCTIONAL WMMSE A LGORITHM
+
+1 Initialize vk (s) such that PKk=1 
+
+R 
+
+> SB
+
+∥vk (s)∥2ds ≤ Cmax ,and set Wk = Id, ∀ k
+
+2 repeat 
+
+3 Update uk (r) with (29), ∀ k
+
+4 Update Wk with (31), ∀ k
+
+5 Update vk (s) with (38), ∀ k
+
+6 until the change in KP
+
+> k=1
+
+log det( Wk ) is less than a tolerance ε.   
+
+> Fig. 2. Illustration of the undirected graph with K= 4 .
+
+A. Permutation-Equivariant INR via GNNs 
+
+Substituting (1) into (6c), then into (6a), and integrating over 
+
+SU show that Qk depends on the user geometry matrix Po =[pT 
+
+> 1
+
+, · · · , pT 
+
+> K
+
+]T ∈ RK×6, where pk = [ rk, T 
+
+> 0
+
+, ω kx , ω ky , ω kz ] ∈
+
+R1×6 collects the location and orientation of user k. Con-sequently, the beamformer V(s) = [ vT 
+
+> 1
+
+(s), . . . , vT 
+
+> K
+
+(s)] T ∈
+
+CK×d is determined by Po and s. We therefore define the optimal beamforming policy as the mapping from (s, Po) to the optimal beamformer, which is denoted as 
+
+V⋆(s) = Fb(s, Po), s ∈ S B, (39) where V⋆(s) denotes the optimal beamformer for the input 
+
+(s, Po).The policy in (39) exhibits a one-dimensional PE (1D-PE) property w.r.t the user dimension, as stated in the follow-ing proposition. 
+
+Proposition 3. When the policy input is permuted as ΠTPo,then the beamforming function ΠTV⋆(s) is optimal, i.e. 
+
+ ΠTV⋆(s) = Fb
+
+ s, ΠTPo
+
+, (40) 
+
+where Π ∈ RK×K is a permutation matrix on the user indices. Proof: See Appendix D. To parameterize the policy in (39), we employ an INR given by 
+
+V(s) = Pθ (s, Po), s ∈ S B, (41) where Pθ (·) denotes the INR parameterized by θ. To exploit the 1D-PE property in (40), we implement Pθ (·) as a GNN de-fined on a vertex graph. Specifically, following [38], the graph contains K user vertices with pairwise edges, as illustrated in Fig. 2. For vertex k, the feature consists of the geometry vector 
+
+pk and the spatial coordinate s, while the action is vk(s). No features or actions are assigned to the edges. A GNN updates vertex representations by aggregating in-formation from neighboring vertices and combining it with the representation of the target vertex. Specifically, for user vertex k, the hidden representation in the (l + 1) -th layer 
+
+d(l+1)  
+
+> k
+
+(s) = [ d(l+1)  
+
+> k, 1
+
+(s), . . . , d (l+1)  
+
+> k,C l+1
+
+(s)] T, where Cl+1 is the representation dimension, is updated as 
+
+d(l+1)  
+
+> k
+
+(s) = σ S(l) ¯d(l) 
+
+> k
+
+(s) + 
+
+> aggregation
+
+z }| {
+
+W(l)
+
+> K
+
+X
+
+> i=1 ,i ̸=k
+
+d(l) 
+
+> i
+
+(s)
+
+| {z }
+
+> combination
+
+!
+
+, (42) where the neighboring representations d(l) 
+
+> i
+
+(s), ∀i̸ = k, are aggregated through the trainable matrix W(l) ∈ RCl+1 ×Cl ,and the resulting aggregated information is combined with the representation of vertex k, namely d(l) 
+
+> k
+
+(s), through S(l) ∈
+
+RCl+1 ×Cl . In (42), σ(·) denotes the activation function, and the initial and final hidden representations, d(0)  
+
+> k
+
+(s) and d(L) 
+
+> k
+
+(s),correspond to the vertex features and actions, respectively, where L is the total number of GNN layers. From (42), the aggregation and combination processes have the following characteristics: 1) In the aggregation term, the neighboring hidden rep-resentations d(l) 
+
+> i
+
+(s), ∀i̸ = k, are aggregated using a shared trainable matrix W(l), without additional weights to differentiate their contributions. 2) In the combination term, d(l) 
+
+> k
+
+(s) is combined with the aggregated information through S(l).3) The update of d(l+1)  
+
+> k
+
+(s) uses only the information at point 
+
+s from layer l.As reported in [39], for related beamforming tasks in SPDA systems, exploiting the PE property alone does not necessarily ensure generalization to unseen problem scales and incorporating mathematical structure into update-equation design can improve learning efficiency by enhancing general-izability. Motivated by these observations, we next design a new aggregation and combination mechanism by relating the recursion of the proposed functional WMMSE algorithm to the update equation of a conventional GNN. 
+
+B. Update Equation Design of GNN 
+
+To relate the proposed functional WMMSE algorithm to the conventional GNN update equation, it is useful to express the beamforming iteration in Table I explicitly as a recursion with respect to the previous beamforming iterate, as stated in the following proposition. 
+
+Proposition 4. Given the beamforming functions {v(l) 
+
+> j
+
+(s)}Kj=1 
+
+at iteration l, the beamforming iteration equation in the proposed functional WMMSE algorithm can be equivalently written as 
+
+v(l+1)  
+
+> k
+
+(s) = 
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s) a(l) 
+
+> kk
+
+(r) d rΘ k
+
++
+
+> K
+
+X
+
+> i=1
+> K
+
+X
+
+> j=1 (i,j )̸=( k,k )
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> i
+
+(r, s) a(l) 
+
+> ij
+
+(r) d rΣ kij ,
+
+(43) 
+
+where a(l) 
+
+> ij
+
+(r)= R
+
+> SB
+
+hi (r, s1) v(l) 
+
+> j
+
+(s1) d s1 and Θk, Σkij ∈ Rd×d.Proof: See Appendix E. 7
+
+Comparing (43) with (42) shows that the functional WMMSE recursion and the conventional GNN update share the similar iterative paradigm. In both cases, either the beam-former v(l+1)  
+
+> k
+
+(s) in (43) or the hidden representation d(l+1)  
+
+> k
+
+(s)
+
+in (42) is obtained through an aggregation step followed by a combination step. Specifically, (42) aggregates neighboring hidden representations d(l) 
+
+> i
+
+(s) and combines the result with the hidden representation of user k, whereas (43) aggregates the channel kernels hH 
+
+> i
+
+(r, s) weighted by a(l) 
+
+> ij
+
+(r) and combines them with the self term hH 
+
+> k
+
+(r, s) weighted by a(l)
+
+> kk
+
+(r).This structural correspondence motivates a new GNN update equation. Relative to (42), (43) exhibits four key differences in aggregation and combination: 1) The aggregated terms are the channel kernels hH 
+
+> i
+
+(r, s),rather than neighboring hidden representations d(l) 
+
+> i
+
+(s).2) Each kernel contribution is weighted by a specific co-efficient a(l) 
+
+> ik
+
+(r), instead of sharing a common aggrega-tion weight. 3) The combination term is the kernel hH 
+
+> k
+
+(r, s) with co-efficient a(l)
+
+> kk
+
+(r), rather than the previous-layer hidden representations d(l) 
+
+> k
+
+.4) The update at s in (43) depends on information over the entire aperture, as the combination and aggregation involved integrals over SB.These observations motivate a new aggregation and combi-nation design. Interpreting v(l) 
+
+> k
+
+(s) in (43) as the l-th layer hidden representation ¯d(l) 
+
+> k
+
+(s) ∈ CCl×1, and viewing the summation terms as aggregation and the additive structure as combination, we design the following GNN update equation 
+
+d(l+1)  
+
+> k
+
+(s) = 
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s) a(l) 
+
+> kk
+
+(r) d rS (l)+
+
+> K
+
+X
+
+> i=1
+> K
+
+X
+
+> j=1 (i,j )̸=( k,k )
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> i
+
+(r, s) a(l) 
+
+> ij
+
+(r)d rW (l)
+
+(44) where a(l) 
+
+> ij
+
+(r) = R 
+
+> SB
+
+hi (r, s) d(l) 
+
+> j
+
+(s)d s, and the matrices Θk
+
+and Σkij in (43) are absorbed into the trainable parameter matrices S(l) and W(l).The update equation can be further simplified by exploiting the graph topology. Consider vertex k aggregates information only from its neighbors, i.e., the vertices connected to k,then (44) reduces to 
+
+d(l+1)  
+
+> k
+
+(s) = 
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s) a(l) 
+
+> kk
+
+(r) d rS (l)+
+
+> K
+
+X
+
+> i=1 ,i ̸=k
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s) a(l) 
+
+> ki
+
+(r)d rW (l).
+
+(45) The INR with the update equation in (45) is referred to as BeamINR. 
+
+C. Training of BeamINR 
+
+BeamINR is trained in an unsupervised manner using the negative objective in (7a) as the loss. Since this objective involves continuous integrals over the BS and user CAPAs, direct evaluation is intractable. We therefore approximate all integrals using Gauss–Legendre (GL) quadrature. Specifically, for a continuous function f (·) defined on SB, the integral is approximated as [16] 
+
+R 
+
+> SB
+
+f (s)d s ≈
+
+> MB,G
+
+P
+
+> m=1
+> MB,G
+
+P  
+
+> n=1
+> ξB
+> mξB
+> nAB
+> 4
+
+f (sm,n ), sm,n ∈ S B, (46) where sm,n =  ϕB 
+
+> mLx
+> B
+> 2
+
+, ϕB  
+
+> nLy
+> B
+> 2
+
+, 0T denotes a sampling point, 
+
+AB = Lx
+
+> B
+
+Ly 
+
+> B
+
+is the area of SB, MB,G is the quadrature order, and {ϕB
+
+> m
+
+}MB,G 
+
+> m=1
+
+and {ξB
+
+> m
+
+}MB,G 
+
+> m=1
+
+denote the roots and weights of the Legendre polynomial, respectively. With (46), we construct a GL-based training dataset for BeamINR. Each sample consists of a fixed set of quadrature points on the BS CAPA and an independently generated user geometry matrix. Specifically, the same M 2B,G points 
+
+{sm,n }MB,G 
+
+> m,n =1
+
+are shared across all samples, whereas the user geometry varies across samples. The resulting training dataset is defined as 
+
+DB,G =
+
+n 
+
+{sm,n }MB,G 
+
+> m,n =1
+
+, P(t)
+
+> o
+
+o |D B,G|
+
+> t=1
+
+, (47) where P(t) 
+
+> o
+
+denotes the user geometry matrix of the t-th sample and |D B,G| is the dataset size. The loss over DB,G is computed using GL quadrature. For the t-th sample, the beamforming function is obtained as 
+
+V(t)(sm,n ) = Pθb (sm,n , P(t) 
+
+> o
+
+), sm,n ∈ S B. (48) Using this result, the integral in (6c) is approximated by 
+
+a(t) 
+
+> kj
+
+(r(t)) ≈
+
+> MB,G
+
+P
+
+> m=1
+> MB,G
+
+P  
+
+> n=1
+> ξB
+> mξB
+> nAB
+> 4
+
+·h(r(t), sm,n )·v(t) 
+
+> j
+
+(sm,n ), (49) where h(r(t), sm,n ) depends on P(t) 
+
+> o
+
+via (1). Similarly, the integral in (6a) is approximated as 
+
+¯Q(t) 
+
+> k
+
+(r) ≈
+
+> MU,G
+
+X
+
+> m=1
+> MU,G
+
+X
+
+> n=1
+
+ξU
+
+> m
+
+ξU 
+
+> n
+
+AU
+
+4 aH
+
+> kk
+
+(r)J −1¯k (r, r(t)
+
+> k,m,n
+
+)akk (r(t)
+
+> k,m,n
+
+),
+
+(50a) 
+
+Q(t) 
+
+> k
+
+≈
+
+> MU,G
+
+X
+
+> m=1
+> MU,G
+
+X
+
+> n=1
+
+ξU
+
+> m
+
+ξU 
+
+> n
+
+AU
+
+4 · ¯Q(t) 
+
+> k
+
+(r(t)
+
+> k,m,n
+
+), (50b) where AU = Lx
+
+> U
+
+Ly 
+
+> U
+
+is the area of Sk
+
+> U
+
+, MU,G is the quadrature order on Sk
+
+> U
+
+, {ξU
+
+> m
+
+}MU,G 
+
+> m=1
+
+are the corresponding GL weights, and r(t) 
+
+> k,m,n
+
+are the user-side quadrature points in the t-th sample. To obtain r(t)
+
+> k,m,n
+
+, we first generate local quadrature points {¯rm,n }MU,G 
+
+> m,n =1
+
+on ¯Sk 
+
+> U
+
+using the GL roots {ϕU
+
+> m
+
+}MU,G 
+
+> m=1
+
+,and then map them to the global coordinate system via 
+
+r(t) 
+
+> k,m,n
+
+= ¯ rm,n +r(t)
+
+> k,o
+
+, where r(t) 
+
+> k,o
+
+is the location of user k in the 
+
+t-th sample. Substituting Q(t) 
+
+> k
+
+into (7a) yields the achievable sum rate of the t-th sample. The loss is defined as the negative sum rate and denoted by L(t)B,G. The average loss over dataset 
+
+DB,G is then computed as LB,G = 1
+
+> |D B,G|
+
+P|D B,G| 
+
+> t=1
+
+L(t)B,G.8
+
+The same GL approximation is also applied to the integrals in each GNN update layer. Specifically, for the t-th sample, the hidden representation of the l-th layer d(l+1)  
+
+> k
+
+(s) is updated by 
+
+d(l+1)  
+
+> k
+
+(s) ≈
+
+> MU,G
+
+X
+
+> m=1
+> MU,G
+
+X
+
+> n=1
+
+ξU
+
+> m
+
+ξU 
+
+> n
+
+AU
+
+4 hH 
+
+> k
+
+(r(t)
+
+> k,m,n
+
+, s)e(l)
+
+> kk
+
+(r(t)
+
+> k,m,n
+
+)S(l)
+
++
+
+> K
+
+X
+
+> i=1
+> i̸=kMU,G
+
+X
+
+> m=1
+> MU,G
+
+X
+
+> n=1
+
+ξU
+
+> m
+
+ξU 
+
+> n
+
+AU
+
+4 hH 
+
+> k
+
+(r(t)
+
+> k,m,n
+
+, s)e(l) 
+
+> ki
+
+(r(t)
+
+> k,m,n
+
+)W(l)
+
+, (51) where e(l) 
+
+> kj
+
+(r(t)) ≈
+
+> MB,G
+
+P
+
+> m=1
+> MB,G
+
+P  
+
+> n=1
+> ξB
+> mξB
+> nAB
+> 4
+
+·hk(r(t), sm,n )·d(l) 
+
+> j
+
+(sm,n ).Although GL quadrature yields accurate integral approxi-mations, using only the fixed GL sampling nodes in DB,G
+
+may cause BeamINR to overfit to these specific coordinates and thereby limit generalization over the BS CAPA [40]. To alleviate this issue, we adopt a hybrid training strategy that combines deterministic GL quadrature with sample-wise randomized sampling [18]. Specifically, in addition to the GL-based dataset DB,G, we construct an auxiliary dataset using points generated by an Owen-scrambled Sobol se-quence [41], and train BeamINR with the combined loss over the two datasets. For the auxiliary dataset, we generate MB,S randomized sampling points for each sample using the Owen-scrambled Sobol sequence. The resulting sampling points s(t) 
+
+> i
+> MB,S
+> i=1
+
+,together with the corresponding user geometry matrix P(t) 
+
+> o
+
+,form the auxiliary dataset 
+
+DB,S =
+
+n s(t) 
+
+> i
+> MB,S
+> i=1
+
+, P(t)
+
+> o
+
+o |D B,S|
+
+> t=1
+
+, (52) where |D B,S| denotes the dataset size. For the t-th sample in DB,S, the loss L(t)B,S is computed in the same way as L(t)B,G, except that the integral over 
+
+SB is approximated using the randomized sampling points 
+
+{s(t) 
+
+> i
+
+}MB,S 
+
+> i=1
+
+, i.e., 
+
+R 
+
+> SB
+
+f (s) d s ≈ PMB,S   
+
+> i=1
+> f(s(t)
+> i)
+> MB,S
+
+AB. (53) The average loss over DB,S is given by LB,S =
+
+> 1
+> |D B,S|
+
+P|D B,S| 
+
+> t=1
+
+L(t)B,S.
+
+Finally, the overall training loss of BeamINR is defined as 
+
+LB = (1 − α) · L B,G + α · L B,S, (54) where α ∈ [0 , 1] is a factor controlling the importance of LB,S.VI. S IMULATION RESULTS 
+
+In this section, we evaluate the proposed functional WMMSE algorithm and BeamINR and compare them with relevant baselines. 
+
+A. Simulation Setup 
+
+Unless otherwise specified, the following simulation setup is used. The number of users is K = 3. The BS and user CAPAs have side lengths Lx 
+
+> B
+
+= Ly 
+
+> B
+
+= 2 m and 
+
+Lx 
+
+> U
+
+= Ly 
+
+> U
+
+= 0 .5 m, respectively. The position of user k is given by rko = [ rkx, r ky , r kz ]T, where rkx, r ky ∈ [−5, 5] m and 
+
+rkz ∈ [20 , 30] m are uniformly distributed. The rotation angles are independently and uniformly distributed as ωkx , ω ky , ω kz ∈
+
+[− π 
+
+> 2
+
+, π 
+
+> 2
+
+]. The wavelength is set to λ = 0 .125 m (corresponding to a carrier frequency of 2.4 GHz), and the intrinsic impedance is η = 120 πΩ. To maximize the multiplexing gain, the number of data streams is set to d = min {dB, d U}, where 
+
+dB =  2 Lx
+
+> B
+> λ
+
+ + 1   2 Ly
+
+> B
+> λ
+
+ + 1  and dU =  2 Lx
+
+> U
+> λ
+
+ +1  2 Ly
+
+> U
+> λ
+
+ + 1 , as derived in [16]. The maximum current budget is set to Cmax = 1000 mA 2, and the noise variance is 
+
+σ2 
+
+> n
+
+= 5 .6 × 10 −3 V2.The hyperparameters of BeamINR are set as follows. We use six hidden layers with dimensions 
+
+[64 , 128 , 512 , 512 , 128 , 64] , and apply the tanh activation function to all hidden layers. BeamINR is trained in an unsupervised manner, where the loss is defined as the negative of the objective in (54). Training is performed using the Adam optimizer with an initial learning rate of 10 −3 and a batch size of 32 . We generate 500,000 samples in each of 
+
+DB,G and DB,S for training. Each sample in DB,G contains 
+
+M 2B,G = 100 fixed GL sampling points on SB, while each sample in DB,S contains MB,S = 100 randomized Sobol sampling points. To ensure a consistent sampling density across both CAPAs, the numbers of sampling points are scaled according to the CAPA areas. Accordingly, the number of GL sampling points on Sk 
+
+> U
+
+is set to MU,G =
+
+l Lx
+
+> U
+> Lx
+> B
+
+MB,G
+
+m
+
+.The factor in (54) is set to α = 0 .1. For testing, we generate an additional 10,000 samples in DB,G. To obtain accurate integral approximations during testing, a higher-resolution GL sampling grid with M 2B,G = 400 is used. 
+
+B. Learning Performance 
+
+We compare the proposed functional WMMSE algorithm and BeamINR with the following baselines:  
+
+> •
+
+ConINR : An INR baseline using the conventional GNN update equation in (42).  
+
+> •
+
+VarINR : A variant of BeamINR with the update equation in (42), without exploiting the underlying graph topology.  
+
+> •
+
+Fourier : The Fourier-basis method in [9], which truncates beamforming functions into finite Fourier coefficients for optimization.  
+
+> •
+
+SPDA : The discretization-based method in [11], which approximates CAPAs by finite array elements. Fig. 3 shows that the achievable sum rate increases with the transmit current budget. As shown in the figure, both func-tional WMMSE and the learning-based methods consistently outperform the Fourier and SPDA methods because they avoid discretization loss. BeamINR further outperforms ConINR and VarINR, mainly due to the proposed update equation in (45), which incorporates both the iterative structure of the functional WMMSE algorithm and the topology of the CAPA graph. Among all methods, functional WMMSE achieves the highest sum rate. Similar trends are observed in Fig. 4, where functional WMMSE and BeamINR maintain gains over all baselines across all user counts, indicating more effective multiuser interference mitigation. Moreover, the advantage of functional WMMSE becomes more pronounced as the number of users increases. 910 1 10 2 10 3 10 4                    
+
+> 010 20 30 40 50
+> 6000 8000 10000 35 40 45
+> Fig. 3. Sum rate versus current budget. 23456710 20 30 40 50
+> 22.5 320 25
+> Fig. 4. Sum rate versus number of users. 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 10 20 30 40 50
+> 0.7 0.75 0.8 40 45
+> Fig. 5. Sum rate versus CAPA size.
+
+In Fig. 5, we consider square user CAPAs with Lx 
+
+> U
+
+= Ly
+
+> U
+
+.For all schemes, enlarging the user aperture increases the achievable sum rate by providing additional spatial degrees of freedom (DoFs). The proposed functional WMMSE algo-rithm and BeamINR consistently outperform the baselines, suggesting that they exploit the additional DoFs offered by larger apertures more effectively. Fig. 6 further shows that the achievable rate increases with the carrier frequency, which is consistent with the fact that higher frequencies support a larger number of spatial DoFs [42]. 
+
+C. Generalizability 
+
+In this subsection, we evaluate the generalizability of the learning-based methods with respect to the number of users, 1 2 3 4 5 6 7010 20 30 40 50 60 70    
+
+> 55.5 645 50
+> Fig. 6. Sum rate versus frequency.
+
+CAPA size, and carrier frequency. Table II reports the generalization performance of the learning-based methods with respect to the number of users. All methods are trained with K = 5 and evaluated for K
+
+ranging from 2 to 8. The performance metric is the ratio of the sum rate achieved by each learning-based method to that achieved by the proposed functional WMMSE method. As shown in Table II, BeamINR and VarINR consistently achieve higher sum-rate ratios than ConINR, indicating im-proved generalizability across different user counts due to the incorporation of the underlying mathematical structure.                              
+
+> TABLE II USER GENERALIZABILITY
+> K2345678BeamINR (%) 52.76 76.48 90.71 94.30 92.97 90.31 86.51 VarINR (%) 37.75 42.91 69.33 93.71 76.16 59.83 58.23 ConINR (%) 45.98 81.77 85.73 89.95 85.99 81.23 78.37
+
+For generalization with respect to the BS CAPA size, all learning-based models are trained with AB = 4 m 2 and tested over AB ∈ [2 , 6] m 2. For generalization with respect to the user CAPA size, the models are trained with AU = 0 .5 m 2
+
+and tested over AU ∈ [0 .3, 0.7] m 2. The performance metric is the ratio of the sum rate achieved by each learning-based method to that achieved by the functional WMMSE algorithm. As shown in Table III, all INRs maintain more than 96% of the functional WMMSE performance across AB, indicating strong generalizability with respect to the BS CAPA area. They also generalize well to larger user CAPA sizes.                                            
+
+> TABLE III CAPA S IZE GENERALIZABILITY
+> AB(m 2)23456BeamINR (%) 96.62 96.92 98.76 97.35 96.56 VarINR (%) 95.34 95.93 97.01 96.84 95.54 ConINR (%) 95.21 95.67 96.87 96.32 95.01
+> AU(m 2)0.3 0.4 0.5 0.6 0.7 BeamINR (%) 93.51 94.87 97.39 96.32 95.02 VarINR (%) 91.07 93.36 96.52 95.07 93.60 ConINR (%) 86.35 91.07 95.83 94.32 92.93
+
+Table IV reports the generalization of the learning-based methods with respect to carrier frequency. All INRs are trained at a fixed carrier frequency f = 2 .4 GHz and tested over 
+
+f ∈ [1 .8, 3] GHz. As shown in Table IV, ConINR maintains 10 
+
+more than 90% of the functional WMMSE performance only for f ∈ [2 .2, 2.6] GHz, indicating good generalizability only within a relatively narrow band. In contrast, BeamINR and VarINR maintain high performance across the entire tested range. This behavior is expected because the channel kernel depends on the wavelength λ and hence on the carrier fre-quency f , as implied by (3). By using the designed update equations in (44) and (45), BeamINR and VarINR primarily learn the aggregation and combination coefficients and then apply them to the frequency-dependent channel terms to con-struct the beamforming function, thereby improving frequency generalizability.                              
+
+> TABLE IV FREQUENCY GENERALIZABILITY
+> f(GHz) 1.8 22.2 2.4 2.6 2.8 3BeamINR (%) 90.84 92.20 95.82 98.26 95.64 92.31 90.52 VarINR (%) 88.92 90.26 93.06 97.23 94.59 90.01 89.35 ConINR (%) 83.16 88.56 92.73 96.19 93.02 86.96 80.23
+
+D. Inference and Training Complexity 
+
+Table V compares the inference time and training com-plexity of the considered methods. Training complexity is evaluated in terms of sample, time, and space requirements, all measured under the condition that the method achieves 95% 
+
+of the sum rate attained by the functional WMMSE algorithm. As shown in Table V, the learning-based methods achieve substantially lower inference latency than the numerical base-lines. Among the learning-based approaches, BeamINR attains the lowest training complexity. Its inference latency is slightly higher than that of ConINR because the designed update equation introduces additional computation.                        
+
+> TABLE V INFERENCE TIME AND TRAINING COMPLEXITY
+> Name Inference time Training Complexity Sample Time Space
+> BeamINR 0.052 s 10 K 1.62 h 3.68 M
+> VarINR 0.082 s 25 K 51.2 h 4.72 M
+> ConINR 0.033 s 50 K 3.68 h 8.63 M
+> WMMSE 1.378 s
+> Fourier 10.88 s
+> SPDA 9.590 s
+> Note: “K” and “M” represent thousand and million, respectively.
+
+VII. C ONCLUSIONS 
+
+This paper develops an INR-based approach, termed Beam-INR, for beamforming learning in multiuser multi-CAPA systems. We first derive a closed-form expression for the achievable sum rate and then propose a functional WMMSE algorithm for beamforming optimization. Building on this algorithm, we design BeamINR as a GNN that exploits the PE property of the optimal beamforming policy, with an update equation designed by exploiting the iterative structure of the functional WMMSE algorithm. Simulation results show that, although the functional WMMSE algorithm achieves the highest sum rate, it incurs high online complexity. In contrast, BeamINR achieves lower inference latency, lower training complexity, and better generalization w.r.t. the number of users and carrier frequency than the baseline INRs. APPENDIX APROOF OF PROPOSITION 1From (2), the achievable sum rate of user k is the mutual in-formation between the data vector and the received signal, i.e., 
+
+Rk = H(yk(·)) − H(yk(·)|xk), (A.1) where yk(·) denotes the received-signal function on Sk
+
+> U
+
+, and 
+
+H(·) and H(·|· ) denote the differential entropy and conditional differential entropy, respectively. In (A.1), both yk(r) and nk(r) are Gaussian processes. To evaluate their differential entropies, we employ the Karhunen– Lo` eve expansion (KLE), which represents a Gaussian process in an orthonormal basis and yields a sequence of statistically independent Gaussian random variables. Thus, the entropy of the process can be characterized through the entropy of these Gaussian coefficients as the number of basis functions tends to infinity. Let αk(r) = [ αk 
+
+> 1
+
+(r), . . . , αkNr (r)] ∈ C1×Nr denote an orthonormal basis on Sk 
+
+> U
+
+with Nr → ∞ , satisfying 
+
+R
+
+> Sk
+> U
+
+αH 
+
+> k
+
+(r)αk(r)d r = INr . (A.2) Under this basis, the noise process nk(r) admits the expansion 
+
+nk(r) = αk(r)nk, (A.3) where nk ∈ CNr ×1 satisfies nk ∼ CN (0, σ 2
+
+> n
+
+INr ). Since 
+
+αk(r) is complete on Sk
+
+> U
+
+, each aki (r) admits the expansion 
+
+aki (r) = αk(r)Aki (A.4) where Aki ∈ CNr ×d is obtained by projection, 
+
+Aki = R
+
+> Sk
+> U
+
+αH 
+
+> k
+
+(r)aki (r)d r. (A.5) Substituting (A.3) and (A.4) into (2) yields 
+
+yk(r) = XKi=1 αk(r)Aki xT 
+
+> i
+
++ αk(r)nk,
+
+= αk(r)
+
+ X Ki=1 Aki xT 
+
+> i
+
++ nk
+
+
+
+≜ αk(r)yk.
+
+(A.6) For a linear transformation ˜y = Ay , the differential entropy and conditional differential entropy satisfy h(˜ y) = h(y) + log | det( A)| and h(˜ y | x) = h(y | x) + log | det( A)|, respec-tively [43]. With (A.6), applying these identities to (A.1) yields 
+
+Rk =H(yk) + log | det( αk(·)) |− (H(yk | xk) + log | det( αk(·)) |). (A.7) Since yk is a Gaussian random vector, its entropy and condi-tional entropy are given by 
+
+H(yk) = lim  
+
+> Nr→∞
+
+logdet  (πe )Nr(PKi=1 Aki AH 
+
+> ki
+
++σ2
+
+> n
+
+INr ), (A.8a) 
+
+H(yk|xk)=lim  
+
+> Nr→∞
+
+logdet  (πe )Nr(PKi=1 
+
+> i̸=k
+
+Aki AH 
+
+> ki
+
++σ2
+
+> n
+
+INr). (A.8b) Substituting (A.8) into (A.7) yields 
+
+Rk = H(yk) − H(yk | xk) = lim  
+
+> Nr→∞
+
+logdet  Id+ ˜Qk
+
+, (A.9) where ˜Qk ≜ AH
+
+> kk
+
+  P Ki=1 
+
+> i̸=k
+
+Aki AH 
+
+> ki
+
++ σ2
+
+> n
+
+INr )−1Akk 
+
+.Next, we convert (A.9) from the coefficient domain to the functional domain using (A.2)–(A.4). Define ˜Ak =11 
+
+[Aki ]i̸=k ∈ CNr ×(K−1) d. Applying the Woodbury matrix identity gives 
+
+˜Qk = AH
+
+> kk
+
+  ˜Ak ˜AH 
+
+> k
+
++ σ2
+
+> n
+
+INr )−1Akk 
+
+= 1
+
+> σ2
+> n
+
+AH
+
+> kk
+
+Akk − 1
+
+> σ4
+> n
+
+AH 
+
+> kk
+
+˜Ak(I(K−1) d + 1
+
+> σ2
+> n
+
+˜AH 
+
+> k
+
+˜Ak)−1˜AH 
+
+> k
+
+Akk .
+
+(A.10) Using (A.2)–(A.4), each matrix product in (A.10) can be converted into a functional integral. For example, 
+
+AH
+
+> kk
+
+Akk =
+
+Z
+
+> Sk
+> U
+
+AH
+
+> kk
+
+αH 
+
+> k
+
+(r)
+
+| {z } 
+
+> aH
+> kk (r)
+
+αk (r) Akk 
+
+| {z } 
+
+> akk (r)
+
+dr
+
+= R
+
+> Sk
+> U
+
+aH 
+
+> kk
+
+(r) akk (r)d r.
+
+(A.11) Applying the same conversion to the remaining terms in (A.10) yields 
+
+˜Qk = RR 
+
+> Sk
+> U
+
+aH 
+
+> kk
+
+(r1) E k (r1, r2)akk (r) d r1dr2, (A.12) where Ek (r1, r2) = Y( r1, r2)−ψ(r1)  I(K−1) d +G−1ϕ(r2),
+
+G = RR  
+
+> SU
+
+˜aH 
+
+> k
+
+(r)Y ( r1, r2) ˜ ak(r)d r1dr2, and the auxiliary functions are defined as Y ( r1, r2) = 1
+
+> σ2
+> n
+
+δ(r1 − r2), ˜ak(r) = [aki (r)] i̸=k ∈ C1×(K−1) d, and 
+
+ψ(r1) = R 
+
+> SU
+
+Y ( r1, r2) ˜ ak(r)d r, (A.13a) 
+
+ϕ(r1) = R 
+
+> SU
+
+˜aH 
+
+> k
+
+(r)Y ( r1, r2) d r. (A.13b) Using Lemma 1, Ek (r1, r2) simplifies to 
+
+Ek (r1, r2) = Y −1 (r1, r2) + ˜ ak(r)˜ aH 
+
+> k
+
+(r)= PKi=1 
+
+> i̸=k
+
+aki (r1) aH
+
+> ki
+
+(r2)+ σ2
+
+> n
+
+δ(r1 − r2) (A.14) Substituting (A.14) into (A.12) shows that ˜Qk = Qk, where 
+
+Qk is defined in (6a). Substituting this result into (A.9) and summing over k completes the proof. APPENDIX BPROOF OF PROPOSITION 2From the first-order optimality condition of problem (11) w.r.t. uk (r), the optimal combining function is 
+
+uopt  
+
+> k
+
+(r) = R
+
+> Sk
+> U
+
+J−1 
+
+> k
+
+(r, r1) akk (r1)d r1, (B.1) where Jk(r, r1) ≜ PKj=1 akj (r) aH 
+
+> kj
+
+(r1) + σ2 
+
+> n
+
+δ(r − r1) and 
+
+J−1 
+
+> k
+
+(r, r1) denotes its inverse as defined in Definition 1. Likewise, the first-order optimality condition with respect to 
+
+Wk gives 
+
+Wopt  
+
+> k
+
+= E−1 
+
+> k
+
+. (B.2) Substituting uopt  
+
+> k
+
+(r) and Wopt  
+
+> k
+
+into (11) yields the optimiza-tion problem w.r.t. vk(s),
+
+max  
+
+> vk(s)
+
+XKk=1 log det    Eopt 
+
+> k
+
+−1 (B.3a) s.t. Eopt  
+
+> k
+
+= Id −
+
+Z Z 
+
+> Sk
+> U
+
+aH
+
+> kk
+
+(r1)J −1 
+
+> k
+
+(r1, r2) akk (r2)d r1dr2, (B.3b) 
+
+akj (r) = R 
+
+> SB
+
+hk(r, s) vj (s) d s, (B.3c) 
+
+PKk=1 
+
+R 
+
+> SB
+
+∥vk(s)∥2ds ≤ Cmax . (B.3d) Applying Lemma 1 to the inverse kernel in (B.3b) gives 
+
+J−1 
+
+> k
+
+(r1, r2) =  J¯k (r1, r2) + akk (r1)aH 
+
+> kk
+
+(r2)−1
+
+= J −1¯k (r1, r2) − ψk(r1) ( Id + Gk)−1 ϕk(r2), (B.4) where Gk = RR 
+
+> Sk
+> U
+
+aH 
+
+> kk
+
+(r1) J ¯k (r1, r2) akk (r2)d r1dr2, and 
+
+J¯k(r1, r2), ψk (r1) and ϕk(r2) are defined as 
+
+J¯k(r1, r2)= PKj=1 ,j ̸ =kakj (r1)aH 
+
+> kj
+
+(r2)+ σ2
+
+> n
+
+δ(r1 −r2), (B.5a) 
+
+ψk (r1) = R
+
+> Sk
+> U
+
+J−1¯k (r1, r2) akk (r2)d r2, (B.5b) 
+
+ϕk(r2) = R
+
+> Sk
+> U
+
+aH 
+
+> kk
+
+(r1) J ¯k (r1, r2) d r1. (B.5c) Substituting (B.4) and (B.5) into (B.3b) yields 
+
+(Eopt  
+
+> k
+
+)−1 =  Id − Gk (Id + Gk)−1 −1
+
+= Id + Gk
+
+= Id +RR 
+
+> Sk
+> U
+
+aH
+
+> kk
+
+(r1) J −1¯k (r1, r2) akk (r2) d r2 dr1. (B.6) Combining (B.6) with (B.3) completes the proof. APPENDIX CPROOF OF LEMMA 1By Definition 1, it suffices to verify the identity 
+
+Z
+
+> S
+
+   J−1 (r1, r) − ψ(r1) ( Id + G)−1 ϕ(r)·
+
+(J ( r, r2) + a(r)b (r2)) dr
+
+= δ (r1 −r2)− ψ(r1) ( Id + G)−1
+
+Z
+
+> S
+
+ϕ(r)a(r)d r
+
+| {z }
+
+> G
+
+· b (r2) −
+
+ψ(r1)( Id +G)−1
+
+Z
+
+> S
+
+ϕ(r)J ( r,r2)d r
+
+| {z }
+
+> b(r2)
+
++
+
+Z
+
+> S
+
+J−1(r1,r) a(r)d r
+
+| {z }
+
+> ψ(r1)
+
+· b(r2) .
+
+(C.1) Using the definitions in (13), the right-hand side of (C.1) simplifies to (C.1) = δ (r1 − r2) − ψ(r1) ( Id + G)−1 Gb (r2)
+
+− ψ(r1) ( Id + G)−1 b (r2) + ψ(r1)b (r2)= δ(r1 −r2)−ψ(r1) (Id + G)−1G+( Id + G)−1−Id
+
+b (r2)= δ (r1 − r2) , (C.2) where (Id + G)−1 G + ( Id + G)−1 = Id. Hence, by Defini-tion 1, the proof is complete. APPENDIX DPROOF OF PROPOSITION 3Consider the Lagrangian of problem (7), given by 
+
+L(H(r, s), V(s), λ ) = Rsum 
+
+− λ  KX
+
+> k=1
+
+Z
+
+> SB
+
+∥vk(s)∥2ds − Cmax 
+
+, (D.1) where Rsum denotes the objective in (7a), λ is the dual variable associated with the power constraint, and H(r, s) = [h1(r, s), · · · , h K (r, s)] collects the channel kernels deter-mined by Po. The corresponding stationarity condition is 
+
+gV(s) (H(r, s), V(s), λ ) = ∇V∗(s)Rsum (H(r,s), V(s)) 
+
+− λ
+
+> K
+
+X
+
+> k=1
+
+vk(s). (D.2) 12 
+
+Let V⋆(s) be an optimal solution of problem (7) for the input H(r, s), and let λ⋆ ≥ 0 denote the corresponding optimal dual variable. Then (H(r, s), V⋆(s)) satisfies the Karush– Kuhn–Tucker (KKT) conditions 
+
+gV(s) (H(r, s), V⋆(s), λ ⋆) = 0 , (D.3a) 
+
+λ⋆  KX
+
+> k=1
+
+Z
+
+> SB
+
+∥v⋆k(s)∥2ds − Cmax 
+
+ = 0 . (D.3b) Now permute V⋆(s) and H(r, s) as ΠTV⋆(s) and ΠTH(r, s),respectively. The KKT conditions in (D.3) remain satisfied under this permutation. Therefore, ΠTV⋆(s) is an optimal solution for the permuted channel collection ΠTH(r, s). Since 
+
+ΠTH(r, s) corresponds to ΠTPo, it follows that ΠTV⋆(s) is optimal for the input ΠTPo in (40). This completes the proof. APPENDIX EPROOF OF PROPOSITION 4To prove Proposition 4, we first apply Lemma 1 to the inverse kernels in (38) and (29), and then substitute the resulting expression of (29) into (38). Define m (s) ≜ [c1(s) , · · · , cK (s)] ∈ C1×Kd and n (s) ≜
+
+c1 (s) WH 
+
+> 1
+
+, · · · , cK (s) WH
+
+> K
+
+H ∈ CKd ×1, so that 
+
+Tk (s1, s) = μδ (s1 − s) + m (s1) n (s) . (E.1) Substituting (E.1) into (38) and applying Lemma 1 gives 
+
+vk (s) = 
+
+Z
+
+> SB
+
+ 1
+
+μ δ (s1 − s) −
+
+1
+
+μ m (s) ( IKd + G)−1 1
+
+μ n (s1)
+
+
+
+ck (s1) Wkds1
+
+= 1
+
+μ ck (s) Wk− 1
+
+μ2 m (s) ( IKd +G)−1
+
+Z
+
+> SB
+
+n (s1) ck (s1) Wkds1
+
+≜ 1
+
+μ ck (s) Wk − m (s) Dk, (E.2) where Dk ≜ 1 
+
+> μ2
+
+(IKd + G)−1 R 
+
+> SB
+
+n(s)ck(s)Wkds and G =
+
+> 1
+> μ
+
+R 
+
+> SB
+
+n (s) m (s) d s. Since Dk ∈ CKd ×d, it can be partitioned into K stacked block matrices as Dk =  ¯DT
+
+> k1
+
+, . . . , ¯DT
+
+> kK
+
+T
+
+with ¯Dki ∈ Cd×d, ∀i. Using the definition of m(s)
+
+in (E.1), (E.2) can be rewritten as 
+
+vk(s) = 1
+
+μ ck (s) Wk − XKi=1 ci(s) ¯Dki 
+
+= XKi=1 ci(s)Fki ,
+
+(E.3) where Fkk = 1 
+
+> μ
+
+Wk − ¯Dkk and Fki = − ¯Dki for i̸ = k.Substituting the definition of ci(s) in (34) into (E.3) yields 
+
+vk(s) = XKi=1 
+
+ Z
+
+> Si
+> U
+
+hH 
+
+> i
+
+(r, s)ui(r) d r
+
+
+
+Fi. (E.4) To handle the inverse kernel Jk(r1, r2) in (29), define 
+
+ok (r) ≜ [ak1 (r) , · · · , akK (r)] ∈ C1×Kd , so that 
+
+Jk(r1, r2) = σ2
+
+> n
+
+δ (r1 − r) + ok (r1) oH 
+
+> k
+
+(r2) . (E.5) Substituting (E.5) into (29) and applying Lemma 1 gives 
+
+uk (r) = 
+
+Z
+
+> Sk
+> U
+
+ 1
+
+σ2
+
+> n
+
+δ (r1 − r) −
+
+1
+
+σ4
+
+> n
+
+ok (r)  IKd + ¯Gk
+
+−1 oH 
+
+> k
+
+(r1)
+
+
+
+akk (r1) d r1
+
+= 1
+
+σ2
+
+> n
+
+akk (r)− 1
+
+σ4
+
+> n
+
+ok(r)( IKd +Gk)−1
+
+Z
+
+> Sk
+> U
+
+oH 
+
+> k
+
+(r1) akk (r1) d r1
+
+≜ 1
+
+σ2
+
+> n
+
+akk (r)− 1
+
+σ4
+
+> n
+
+ok(r) Zk, (E.6) where Zk ≜ (IKd +Gk)−1R
+
+> Sk
+> U
+
+oH 
+
+> k
+
+(r1) akk (r1) d r1 and 
+
+Gk = 1
+
+> σ2
+> n
+
+R
+
+> Sk
+> U
+
+oH 
+
+> k
+
+(r) ok (r) d r. Since Zk ∈ CKd ×d, it can be partitioned into K stacked block matrices as Zk =¯ZT
+
+> k1
+
+, . . . , ¯ZT
+
+> kK
+
+T with ¯Zki ∈ Cd×d, ∀i. Using the definition of o(r) in (E.5), (E.6) can be rewritten as 
+
+uk(r) = 1
+
+σ2
+
+> n
+
+akk (r) − XKi=1 aki (r)¯Zki 
+
+= XKi=1 aki (r)Lki ,
+
+(E.7) where Lkk = 1
+
+> σ2
+> n
+
+Id − ¯Zkk and Lki = −¯Zki for i̸ = k.Using (E.7) and (E.4), the updates of u(l+1)  
+
+> k
+
+(r) and 
+
+v(l+1)  
+
+> k
+
+(s) at iteration (l + 1) in Table I can be written as 
+
+u(l+1)  
+
+> k
+
+(r) = XKi=1 a(l) 
+
+> ki
+
+(r)L(l) 
+
+> ki
+
+, (E.8a) 
+
+v(l+1)  
+
+> k
+
+(s) = XKi=1 
+
+Z
+
+> Si
+> U
+
+hH 
+
+> i
+
+(r, s)u(l+1)  
+
+> i
+
+(r) d r
+
+
+
+F(l+1)  
+
+> i
+
+, (E.8b) where a(l) 
+
+> ij
+
+(r)= R
+
+> SB
+
+hi (r, s1) v(l) 
+
+> j
+
+(s1) d s1, and L(l) 
+
+> ki
+
+and F(l) 
+
+> i
+
+are the corresponding coefficient matrices at iteration (l + 1) .Substituting (E.8a) into (E.8b) gives 
+
+v(l+1)  
+
+> k
+
+(s) = 
+
+> K
+
+X
+
+> i=1
+
+Z
+
+> Si
+> U
+
+hH 
+
+> i
+
+(r, s)  X Kj=1 a(l) 
+
+> ij
+
+(r)L(l)
+
+> ij
+
+ dr F (l+1) 
+
+> i
+
+=
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> k
+
+(r, s) a(l) 
+
+> kk
+
+(r) d rΘ k
+
++
+
+> K
+
+X
+
+> i=1
+> K
+
+X
+
+> j=1 (i,j )̸=( k,k )
+
+Z
+
+> Sk
+> U
+
+hH 
+
+> i
+
+(r, s) a(l) 
+
+> ij
+
+(r) d rΣ kij , (E.9) where Θk = L(l+1)  
+
+> kk
+
+F(l+1)  
+
+> k
+
+and Σkij = L(l+1)  
+
+> ij
+
+F(l+1)  
+
+> i
+
+. This is exactly (43), which completes the proof. REFERENCES [1] E. G. Larsson, O. Edfors, F. Tufvesson, and T. L. Marzetta, “Massive MIMO for next generation wireless systems,” IEEE Commun. Mag. ,vol. 52, no. 2, pp. 186–195, 2014. [2] E. Bj¨ ornson, E. G. Larsson, and T. L. Marzetta, “Massive MIMO: ten myths and one critical question,” IEEE Commun. Mag. , vol. 54, no. 2, pp. 114–123, 2016. [3] C. Huang, S. Hu, G. C. Alexandropoulos, A. Zappone, C. Yuen, R. Zhang, M. D. Renzo, and M. Debbah, “Holographic MIMO surfaces for 6G wireless networks: Opportunities, challenges, and trends,” IEEE Wirel. Commun. , vol. 27, no. 5, pp. 118–125, 2020. [4] S. Bahanshal, Q.-U.-A. Nadeem, and M. Jahangir Hossain, “Holographic MIMO: How many antennas do we need for energy efficient communi-cation?” IEEE Trans. Wireless Commun. , vol. 24, no. 1, pp. 118–133, 2025. 13 
+
+[5] S. Chen and S. Han, “Learning-based multiuser beamforming for holographic mimo systems,” arXiv preprint arXiv:2504.19522 , 2026. [6] Y. Liu, X. Liu, X. Mu, T. Hou, J. Xu, M. Di Renzo, and N. Al-Dhahir, “Reconfigurable intelligent surfaces: Principles and opportunities,” IEEE Commun. Surv. Tutor. , vol. 23, no. 3, pp. 1546–1577, 2021. [7] E. Basar, M. Di Renzo, J. De Rosny, M. Debbah, M.-S. Alouini, and R. Zhang, “Wireless communications through reconfigurable intelligent surfaces,” IEEE Access , vol. 7, pp. 116 753–116 773, 2019. [8] B. Zhao, C. Ouyang, X. Zhang, and Y. Liu, “Continuous-aperture ar-ray (CAPA)-based wireless communications: Capacity characterization,” 
+
+IEEE Trans. Wireless Commun. , 2025, early access. [9] L. Sanguinetti, A. A. D’Amico, and M. Debbah, “Wavenumber-division multiplexing in line-of-sight holographic MIMO communications,” 
+
+IEEE Trans. Wireless Commun. , vol. 22, no. 4, pp. 2186–2201, Apr. 2023. [10] M. Qian, L. You, X.-G. Xia, and X. Gao, “On the spectral efficiency of multi-user holographic MIMO uplink transmission,” IEEE Trans. Wireless Commun. , vol. 23, no. 10, pp. 15 421–15 434, Oct. 2024. [11] Z. Zhang and L. Dai, “Pattern-division multiplexing for multi-user continuous-aperture MIMO,” IEEE J. Sel. Areas Commun. , vol. 41, no. 8, pp. 2350–2366, Aug. 2023. [12] Z. Wang, C. Ouyang, and Y. Liu, “Beamforming optimization for continuous aperture array (CAPA)-based communications,” IEEE Trans. Wireless Commun. , 2025, early access. [13] ——, “Optimal beamforming for multi-user continuous aperture array (CAPA) systems,” IEEE Trans. Commun. , 2025, early access. [14] Y. Liu, C. Ouyang, Z. Wang, J. Xu, X. Mu, and Z. Ding, “CAPA: Continuous-aperture arrays for revolutionizing 6G wireless communica-tions,” arXiv:2412.00894 , 2024. [15] M. Qian, X. Mu, L. You, and M. Matthaiou, “Continuous aper-ture array (CAPA)-based multi-group multicast communications,” 
+
+arXiv:2505.01190 , 2025. [16] Z. Wang, C. Ouyang, and Y. Liu, “Beamforming design for continuous aperture array (CAPA)-based MIMO systems,” arXiv:2504.00181 , 2025. [17] J. Guo, Y. Liu, and A. Nallanathan, “Multi-user continuous-aperture array communications: How to learn current distribution?” in Proc. IEEE 43rd Glob. Commun. Conf. , 2024, pp. 1–6. [18] S. Chen, J. Guo, and S. Han, “Implicit neural representation of beamforming for continuous aperture array systems,” IEEE Trans. Veh. Technol. , 2026, early Access. [19] M. Eisen and A. Ribeiro, “Optimal wireless resource allocation with random edge graph neural networks,” IEEE Trans. Signal Process. ,vol. 68, pp. 2977–2991, 2020. [20] J. Guo and C. Yang, “Learning power allocation for multi-cell-multi-user systems with heterogeneous graph neural networks,” IEEE Trans. Wireless Commun. , vol. 21, no. 2, pp. 884–897, Teb. 2021. [21] Y. Shen, Y. Shi, J. Zhang, and K. B. Letaief, “Graph neural networks for scalable radio resource management: Architecture design and theoretical analysis,” IEEE J. Sel. Areas Commun, , vol. 39, no. 1, pp. 101–115, 2021. [22] M. Lee, G. Yu, and G. Y. Li, “Graph embedding-based wireless link scheduling with few training samples,” IEEE Trans. Wireless Commun. ,vol. 20, no. 4, pp. 2282–2294, 2021. [23] Z. Zhang, T. Jiang, and W. Yu, “Learning based user scheduling in reconfigurable intelligent surface assisted multiuser downlink,” IEEE J. Sel. Topics Signal Process. , vol. 16, no. 5, pp. 1026–1039, 2022. [24] B. Zhao, J. Guo, and C. Yang, “Understanding the performance of learn-ing precoding policies with graph and convolutional neural networks,” 
+
+IEEE Trans. Commun. , vol. 72, no. 9, pp. 5657–5673, 2024. [25] S. He, J. Yuan, Z. An, W. Huang, Y. Huang, and Y. Zhang, “Joint user scheduling and beamforming design for multiuser MISO downlink systems,” IEEE Trans. Wireless Commun. , vol. 22, no. 5, pp. 2975–2988, 2023. [26] J. Guo and C. Yang, “A model-based GNN for learning precoding,” 
+
+IEEE Trans. Wireless Commun. , vol. 23, no. 7, pp. 6983–6999, 2024. [27] L. Zhang, S. Han, and C. Yang, “Gradient-driven graph neural networks for learning digital and hybrid precoder,” IEEE Trans. Commun. , vol. 74, pp. 706–722, 2026. [28] Q. Hu, Y. Cai, Q. Shi, K. Xu, G. Yu, and Z. Ding, “Iterative algorithm induced deep-unfolding neural networks: Precoding design for multiuser MIMO systems,” IEEE Trans. Wireless Commun. , vol. 20, no. 2, pp. 1394–1410, 2021. [29] A. Chowdhury, G. Verma, A. Swami, and S. Segarra, “Deep graph unfolding for beamforming in MU-MIMO interference networks,” IEEE Trans. Wireless Commun. , vol. 23, no. 5, pp. 4889–4903, 2024. [30] O. Lavi and N. Shlezinger, “Learn to rapidly and robustly optimize hybrid precoding,” IEEE Trans. Commun. , vol. 71, no. 10, pp. 5814– 5830, 2023. [31] Y. Yuan, G. Zheng, K.-K. Wong, B. Ottersten, and Z.-Q. Luo, “Transfer learning and meta learning-based fast downlink beamforming adapta-tion,” IEEE Trans. Wireless Commun.s , vol. 20, no. 3, pp. 1742–1755, 2021. [32] J. Kim, H. Lee, S.-E. Hong, and S.-H. Park, “A bipartite graph neural network approach for scalable beamforming optimization,” IEEE Trans. Wireless Commun. , vol. 22, no. 1, pp. 333–347, 2023. [33] S. Chen, S. Han, and Y. Li, “Gradient-based information aggregation of GNN for precoder learning,” in Proc. IEEE 97th Veh. Technol. Conf. ,Dec. 2023, pp. 1–6. [34] S. Chen, S. Han, and J. Guo, “Functional WMMSE algorithm for multiuser continuous aperture array systems,” in Proc. IEEE 24th Int. Conf. Commun. , 2026, pp. 1–6. [35] M. Ghermezcheshmeh and N. Zlatanov, “Parametric channel estimation for LoS dominated holographic massive MIMO systems,” IEEE Access ,vol. 11, pp. 44 711–44 724, May 2023. [36] A. Pizzo, L. Sanguinetti, and T. L. Marzetta, “Fourier plane wave series expansion for holographic MIMO communications,” IEEE Trans. Wireless Commun. , vol. 21, no. 9, pp. 6890–6905, Sept. 2022. [37] H. F. Davis, Fourier Series and Orthogonal Functions . New York: Dover Publications, 1953. [38] Y. Peng, J. Guo, and C. Yang, “Learning resource allocation policy: Vertex-GNN or edge-GNN?” IEEE Trans. Mach. Learn. Commun. Netw. , vol. 2, pp. 190–209, 2024. [39] J. Guo and C. Yang, “Recursive gnns for learning precoding policies with size-generalizability,” IEEE Trans. Mach. Learn. Commun. Netw. ,vol. 2, pp. 1558–1579, Oct. 2024. [40] P. J. Davis and P. Rabinowitz, Methods of Numerical Integration .Courier Corporation, 2007. [41] B. Burley, “Practical hash-based owen scrambling,” J. Comput. Graph. Tech. , vol. 9, no. 4, pp. 1–20, 2020. [42] E. Bj¨ ornson, F. Kara, N. Kolomvakis, A. Kosasih, P. Ramezani, and M. B. Salman, “Enabling 6G performance in the upper mid-band by transitioning from massive to gigantic MIMO,” IEEE Open J. Commun. Soc. , 2025. [43] T. M. Cover and J. A. Thomas, Elements of Information Theory , 2nd ed. Hoboken, NJ, USA: John Wiley & Sons, 2006.

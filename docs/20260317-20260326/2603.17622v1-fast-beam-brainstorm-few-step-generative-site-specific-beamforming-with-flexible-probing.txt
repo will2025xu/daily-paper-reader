@@ -1,0 +1,922 @@
+Title: Fast Beam-Brainstorm: Few-Step Generative Site-Specific Beamforming with Flexible Probing
+
+URL Source: https://arxiv.org/pdf/2603.17622v1
+
+Published Time: Thu, 19 Mar 2026 01:11:48 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# Fast Beam-Brainstorm: Few-Step Generative Site-Specific Beamforming with Flexible Probing 
+
+Zihao Zhou, Graduate Student Member, IEEE , Zhaolin Wang, Member, IEEE , and Yuanwei Liu, Fellow, IEEE 
+
+Abstract —A novel generative site-specific beamforming (GenSSBF) approach, termed fast beam-brainstorm (F-BBS), is proposed to address the practical bottlenecks of slow beam gener-ation and fixed channel probing lengths in existing GenSSBF. To accelerate beam generation, F-BBS utilizes a two-stage distillation strategy that learns an average velocity field, instead of an instantaneous one, to guide the beam generative process. This strategy enables larger generation steps, realizing few-step or even one-step beam generation. Furthermore, to accommodate flexible channel probing lengths, a stochastic masking mechanism and a beam index-aware masked condition encoder are proposed, enabling a single trained model to operate with variable-length channel probing observations without retraining. Therefore, F-BBS achieves the fast generation of high-fidelity communication beams from coarse and variable-length channel probing feed-back, i.e., reference signal received power (RSRP), from user equipments. Simulation results on accurate ray-tracing datasets show that 1) F-BBS achieves comparable performance while reducing the beam generation cost by over 90% compared with diffusion-based GenSSBF solutions, 2) F-BBS realizes robust performance across variable channel probing length, and 3) F-BBS offers a desirable trade-off between beamforming gain and beam probing overhead. 
+
+Index Terms —Beamforming, flow matching, generative AI, site-specific learning, 6G. 
+
+I. I NTRODUCTION 
+
+# MULTIPLE-antenna technology has become a corner-stone of modern wireless communication systems [1], and beamforming is a key technique that enables such systems to leverage spatial degrees of freedom, thereby improving coverage, reliability, and throughput [2]. The importance of beamforming is even more pronounced for networks operating at millimeter wave (mmWave) or terahertz (THz) frequencies, where directional transmission is indispensable to combat severe propagation and penetration losses [3], [4]. In theory, optimal beamforming relies on accurate, timely, and perfect channel state information (CSI). In practice, however, due to the complexity of the wireless propagation environment, the high dimensionality of massive antenna arrays, and user mobility, acquiring perfect CSI in real time is often infeasible. In the current fifth generation new radio (5G NR), beam-forming is implemented based on beam probing, measur-ing and reporting [5]. Specifically, the base station (BS) performs beam probing over a pre-defined codebook (e.g., discrete Fourier transform (DFT) or oversampled-DFT (O-DFT) codebook) by transmitting reference signals (RSs) such as synchronization signal blocks(SSBs) and CSI-RSs. The user equipment (UE) then reports beam quality matrices or 
+
+The authors are with the Department of Electrical and Computer En-gineering, The University of Hong Kong, Hong Kong (e-mail: eezi-haozhou@connect.hku.hk,zhaolin.wang@hku.hk,yuanwei@hku.hk) 
+
+candidate beam indices. Building on this framework, various sweeping methods have been proposed in recent years [6]– [9]. The advantage of this “sweeping-measuring-reporting” framework is clear: it is robust, straightforward, applicable to both time-division duplexing (TDD) and frequency-division duplexing (FDD) systems, and does not require full CSI esti-mation. However, the reliance on exhaustive search over a pre-defined codebooks of the existing methods introduces funda-mental limitations: First, such codebooks are environmentally unaware . More particularly, they are designed to cover all pos-sible angular directions based on mathematical orthogonality, rather than adapting to the specific propagation characteristics of the deployment site (e.g., dominant angle distributions and scatterer geometries). Consequently, this site-agnostic design leads to prolonged beam probing and unnecessary overhead. Second, these methods suffer from performance bottleneck .On the one hand, the beams in DFT or O-DFT codebooks are inherently single-lobe, which limits the beamforming gain especially in non line-of-sight (NLoS) scenarios. On the other hand, the “grid-mismatch” problem [10] still remains in these codebook-based methods. Last but not least, traditional site-agnostic codebook exhibits limited scalability , the beam search space–and thus the beam probing overhead–grows with the antenna array size. This issue becomes particularly acute in extremely large-scale MIMO (XL-MIMO) with hundreds or even thousands of antennas [11]. The aforementioned limitations motivate site-specific beam-forming (SSBF) , which exploits prior knowledge of the prop-agation environment to reduce online sweeping burden [12]. Recent years have witnessed increasing interest in SSBF, es-pecially deep learning (DL)-assisted SSBF. One representative idea is parameterizing the probing codebook by a complex-valued neural network (NN), so that the learned model weights instantiate the beamforming vectors in this created codebook [13]. Building on this “NN-as-codebook” principle, an end-to-end learning framework was proposed that jointly learns a site-specific probing codebook and a beam selector [14]. In [15], this framework was further extended to hierarchical beam alignment by learning multi-tier probing codebooks together with next-stage selectors and predictors, enabling a coarse-to-fine search that improves the overhead-accuracy tradeoff. The authors of [16] investigated reinforcement learning (RL)-assisted SSBF, where the codebook was learnt online using only the receive-power measurements. In addition, a Wolper-tinger -variant architecture was adopted to handle the large discrete beam-search space. In [17], a computer vision (CV)-based site-specific codebook design method was proposed, where the codebook was learnt from the images captured 
+
+> arXiv:2603.17622v1 [eess.SP] 18 Mar 2026 2
+
+at the BS for LoS users, and from features extracted from the 3D point cloud for NLoS users. Moreover, the concept of SSBF has also been incorporated into emerging network architectures. In a reconfigurable intelligent surface (RIS)-aided MIMO mmWave system, a multi-agent RL framework was proposed to jointly design the active beam codebook at the BS and the passive reflection codebook at the RIS [18]. The authors of [19] studied the codebook design and beam alignment problem in an intelligent omni-surface (IOS)-assisted system, where an IOS-tailored codebook consisting of multiple codewords was designed to cover both the near- and far-field regions. In the aforementioned works, the codebooks were learnt from partial channel information [13] or real-time received power measurements [16], [18]. However, such learning process typically requires a relatively large number of iterations to converge, resulting in high training overhead. In [20], a site-specific digital twin was developed to generate synthetic channels for codebook learning. For line-of-sight (LoS) and non-LoS (NLoS) users, the codebooks were learnt separately by leveraging the geometric information provided by the constructed digital twin. Although a more “meaningful” codebooks can be obtained via the aforementioned approaches, the “grid mismatch” issue still remains. Therefore, in [21], a grid-free SSBF framework was proposed where the probing codebooks and a multi-layer perceptron (MLP)-based beam synthesizers were jointly trained. Similarly, the application of NN for beam synthesis is seen in [10] for hybrid beamforming and in [22] for joint transmit- and receive beamforming in full-duplex system. However, it is noticed that most existing SSBF pipelines are fundamentally using discriminative models : they map input (i.e., coarse CSI measurements) to beam index or beamforming vector. Although discriminative model has proven effective in some domains, for SSBF, this paradigm presents the following lim-itations. First, conditional discriminative models often strug-gle to capture multimodal distributions [23]. Specifically, in SSBF, such multimodality naturally arises under multipath propagation, blockage uncertainty, and noisy feedback, where multiple beam hypotheses may all be plausible for the same input [24], [25]. From a learning perspective, standard point-estimation objectives tend to collapse this multimodality [23]. For example, under a minimum mean squared error (MMSE) objective, the predictor is driven toward the conditional mean, which may lie between several valid beam patterns and become physically suboptimal. Moreover, the existing DL-based SSBF solutions typically output a single prediction. When faced with ambiguous input, the model will still have one deterministic output during inference, which can lead to poor beam decisions and subsequent error propagation [24]. In addition, discriminative model-based SSBF essentially belongs to the category of “ unstructured beam prediction ” [23], as it assumes conditional independence among all elements of the beamforming vector given the input. This assumption, however, fails to account for the fact that these elements are highly correlated and collectively determine whether the signals combine constructively or destructively at the receiver [26]. Consequently, these limitations lead us to formulate the beamforming problem as a generative modeling task, which naturally learns a multimodal conditional distribution, rather than a single deterministic mapping. This paradigm has recently emerged as generative site-specific beamforming (GenSSBF) [24], [25], [27]. Specifically, in [25], a beam-brainstorm (BBS) solution was proposed via conditional dif-fusion model with compact reference signal received power (RSRP) vectors as the “wireless prompts”. Simulation results demonstrated that mild brainstorming can yield near-optimal beamforming gain with much lower beam probing overhead. The authors of [27] designed a site information-maximizing (SIM) codebook and used the RSRP vectors obtained from this codebook to guide the flow matching-based beam generation model. Despite this progress, two deployment-oriented challenges remain: how to achieve fast beam generation , and how to accommodate variable-length conditioning . For the first ques-tion, high-fidelity beam generation for both diffusion model [28] and standard flow matching [29] often relies on iterative sampling; when the steps are aggressively reduced for real-time operation, errors may accumulate and degrade beam quality significantly. For the second question, many condi-tional generative models assume fixed-dimensional prompts [25], [27], whereas practical systems frequently vary probing budget according to signaling load, latency targets, mobility, and feedback availability. A model tied to one fixed prob-ing length/pattern is therefore difficult to deploy in adaptive networks. Motivated by the above challenges, this paper proposes fast beam-brainstorm (F-BBS) , a new GenSSBF solution targeting high-fidelity one or few-step beam gen-eration under variable-length conditioning. F-BBS preserves the uncertainty-modeling strength of generative SSBF while explicitly optimizing for practical runtime and conditioning flexibility. The main contributions are summarized as follows:  
+
+> •
+
+We propose Fast Beam-BrainStorm (F-BBS), a practical solution for GenSSBF. With a simple RSRP vector as wireless prompt, F-BBS learns the average velocity field of the beamforming vector evolution process through a two-stage strategy. Stage I learns the instantaneous veloc-ity field that transports samples from a prior distribution to the target beam distribution following an optimal-transport path; Stage II distills this model to an average-velocity predictor via interval-splitting consistency, such that one or few-step iteration can effectively approximate full-trajectory transport  
+
+> •
+
+We propose a budget-aware on-the-fly stochastic masking strategy to address the fixed-length probing constraint. Without increasing the size of the dataset, this strategy is achieved through in-batch mixing of full and partial conditions during training, thus enabling a single model to support flexible probing lengths at inference without retraining. Furthermore, the integration of beam index-aware semantics, combined with cardinality-normalized masked aggregation, ensures that the conditions obtained from UE remain both interpretable and stable across varying sparsity levels.  
+
+> •
+
+Extensive simulations on accurate ray-tracing datasets 3
+
+covering diverse indoor/outdoor and LoS/NLoS environ-ments validate the effectiveness of the proposed F-BBS solution. The results demonstrate that 1) F-BBS achieves a superior gain-overhead-speed tradeoff over exhaustive beam probing, discriminative beam prediction, and ex-isting GenSSBF baselines, 2) learning average velocity field for beam evolution, rather than instantaneous local dynamics, is crucial for reliable few-step beam genera-tion, 3) the advantage of F-BBS is most pronounced in the low-overhead regime, where mild brainstorming with compact RSRP measurements already captures most of the achievable performance gain, and 4) F-BBS exhibits strong generalization across different probing budgets. The remainder of this paper is organized as follows. The system model and problem formulation are described in Section II. In Section III, the proposed F-BBS solution is introduced. The datasets employed and the simulation results are provided in Section IV. Section V concludes the paper. 
+
+Notations: Scalars, vectors, and matrices are denoted by italic, bold lowercase, and bold uppercase letters, respectively, while calligraphic symbols denote sets or operators when needed. The superscripts (·)T and (·)H represent the transpose and Hermitian transpose, respectively. Moreover, R and C de-note the real and complex fields, and E[·] denotes expectation. For a positive integer n, {0, 1}n denotes the set of all binary vectors of length n; Finally, ⊙ denotes the Hadamard product. II. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+Consider a downlink communication system in which a BS equipped with an Nt-element antenna array communicates with a single-antenna user. A general ray-based channel with 
+
+L propagation paths is adopted and modeled as 
+
+h =
+
+> L
+
+X
+
+> l=1
+
+αla(ϕDl , θ Dl ), (1) where αl is the complex gain of the l-th path, the azimuth and elevation angles of departure are denoted as ϕDl and 
+
+θDl , respectively, and a(ϕDl , θ Dl ) represents the array steering vector. For clarity of exposition, a uniform linear array (ULA) is considered and the beam steering is restricted to the azimuth domain. Accordingly, for an azimuth AoD ϕ, the steering vector is written as 
+
+a(ϕl) = 1
+
+√Nt
+
+h
+
+1, ej 2πd λ sin( ϕl), · · · , ej(Nt−1) 2πd λ sin( ϕl)iT
+
+, (2) with λ and d being the carrier wavelength and antenna spacing, respectively. Due to the cost and power consumption of fully digital beamforming, especially at high-frequency bands, the BS typically employs analog-only or hybrid beamforming [14]. In this work, a single-RF-chain analog architecture is assumed, where a network of phase shifters implements the transmit beamformer. Hence, the beamforming vector w ∈ CNt×1 for the UE can be expressed as 
+
+w = 1
+
+√Nt
+
+[e jθ 1 , ejθ 2 , · · · , ejθ Nt ]T, (3) where w satisfies the power constraint and each element of it adheres the constant modulus constraint. Denote s as the transmitted symbol for the UE with the average power constraint E[|s|2] = 1 . Therefore, the received signal at this UE can be given as 
+
+y(w) = pPT hHws + n, (4) where PT is the transmit power at BS, and n ∼ CN (0 , σ 2) is the complex additive noise with noise power σ2. The signal-to-noise ratio (SNR) at the UE can be expressed as 
+
+SNR = PT |hHw|2
+
+σ2 . (5) The ultimate goal is to design a beamforming vector that can maximize the SNR. However, in practical 5G implemen-tations, acquiring instantaneous full CSI is often costly and time consuming. As a result, codebook-based beam alignment is commonly used, where the BS selects a beam from a predefined codebook W ∈ CNt×NW (e.g., a DFT codebook). The beam selection for the UE is then formulated as 
+
+i∗
+
+> W
+
+= argmax  
+
+> i=1 ,2,··· ,N W
+
+PT |hHwi|2
+
+σ2
+
+!
+
+= argmax  
+
+> i=1 ,2,··· ,N W
+
+(|hHwi|2), (6) where wi denotes the i-th codeword in the codebook. How-ever, regardless of being site-agnostic or site-specific, such a common codebook is shared by all other UEs in a site, and the achievable beamforming gain is inherently bounded by the codebook resolution. Instead of restricting w to a common codebook, the objective here is to directly synthesize a site-specific and customized beamforming vector for each UE without requiring full CSI during deployment. Specifically, we adopt RSRP as a coarse CSI prompt, since it is inherently reported by UEs in existing protocols, making the proposed framework readily compatible with 3GPP standards. There-fore, given limited and variable-length RSRP observations ck
+
+using a small set of DFT probing beams, a beam generator 
+
+f (·) is optimized to map ck to a feasible beamformer. This yields the following problem formulation: 
+
+max  
+
+> f
+
+|hHk f (ck)|2 (7a) 
+
+s.t. ∥f (ck)∥2 = 1 , (7b) 
+
+f (ck) ∈ S , (7c) 
+
+dim( ck) ∈ Q p, (7d) where hk ∈ CNt×1 denotes the channel vector between the BS and UE k. Constraint (7b) enforces the normalized power limit on the generated beamforming vector, while S in (7c) represents the feasible set imposed by hardware constraint, e.g., the unit modulus constraint on each element in (3). The 
+
+Qp in constraint (7d) denotes the probing budget set for the 
+
+k-th UE, indicating that the probing budget can vary across different UEs and may also change over time for the same UE. III. T HE PROPOSED FAST BEAM -B RAINSTORM 
+
+This section details the proposed F-BBS framework. First, Section III-A introduces the core few-step beam generation strategy. Section III-B then presents a conditional velocity predictor based on modified 1D-DiT model. Section III-C ex-tends F-BBS to variable-length RSRP conditioning, enabling a single well-trained model to flexibly accommodate different 4
+
+probing budgets. Finally, the complete training and inference procedures are summarized in Section III-D. 
+
+A. Velocity Field Learning for Beam Evolution 
+
+The essence of GenSSBF is to learn an beam evolution strategy . Regardless of whether this strategy takes the form of progressive beamformer denoising in diffusion models [25] or velocity field-guided beam generation [27], the ultimate objective is to evolve an initial beamforming vector into a desired one. To facilitate this beam evolution, we begin by specifying the site profile , since it determines the target sample space on which the generative beamforming model should operate. In the GenSSBF framework [25], the site profile is intended to provide a database which captures the site-dependent structural regularities of beamformers induced by the local propagation environment. In this work, we construct the site profile from user-specific beam targets derived from maximum ratio transmission (MRT) strategy. Specifically, for user k with channel hk ∈ CNt×1, its MRT beamformer can be obtained as 
+
+wk 
+
+> 1
+
+= 1
+
+√Nt
+
+h
+
+ej∠hk [1] , ej∠hk [2] , · · · , ej∠hk [Nt]iT
+
+, (8) where ∠ represents the phase of a complex number. Rather than directly performing beam evolution in spatial domain, we exploit the sparsity of far-field wireless channels in the angular domain and transform the channel into its DFT representation 
+
+hA 
+
+> k
+
+= F(hk), with F(·) being the DFT operator. Accordingly, the target sample associated with UE k is defined as 
+
+Xk 
+
+> 1
+
+=
+
+∠hA 
+
+> k
+
+[1] ∠hA 
+
+> k
+
+[2] · · · ∠hA 
+
+> k
+
+[Nt]
+
+|hA 
+
+> k
+
+[1] | |hA 
+
+> k
+
+[2] | · · · |hA 
+
+> k
+
+[Nt]|
+
+
+
+(9) where | · | denotes the amplitude of a complex number 1.Let q(X1) denote the probability density function (PDF) of these site-specific target samples. Importantly, the proposed F-BBS does not explicitly parameterize or estimate q(X1)
+
+itself. Instead, it learns a transport field that progressively maps samples drawn from a simple prior distribution p0(X0)
+
+to the target distribution q(X1). To this end, we adopt the flow matching method based on split average velocity [30], [31]. Specifically, a probability density path pt(Xt) is constructed for 0 ≤ t ≤ 1 to connect the source distribution p0(X0)
+
+(e.g., a standard normal distribution) and the target distribution 
+
+p1(X1), where p1(X1) ≈ q(X1). The evolution of data samples along this path is governed by a time-dependent velocity field v(Xt, t ), which serves as the fundamental trans-port object to be learnt. Therefore, the generative process is fully characterized once this velocity field is obtained. In the following, we first elaborate on the learning of the 
+
+instantaneous velocity field . Subsequently, we detail how the model is distilled to effectively learn the average velocity field ,thereby enabling the generation of high-fidelity beamforming vectors in only one or a few steps. 
+
+1) Learning Instantaneous Velocity Field: As discussed above, to transport the source distribution p0(X0) to the final distribution p1(X1), we need to learn the underlying velocity   
+
+> 1The amplitude of hA
+> kcan be properly scaled to improve training stability and efficiency.
+
+field. To this end, we employ a neural network parameterized by ϑ to model the instantaneous velocity field vϑ(Xt, t ),which dictates the instantaneous motion of each sample Xt
+
+along the probability density path. This formulation naturally defines the trajectory of each data sample via the ordinary differential equation (ODE) as 
+
+ddt Xt = vϑ(Xt, t ). (10) Once the instantaneous velocity field is learnt, generation starts from a prior sample X0 ∼ p0(X0) at t = 0 , and the learnt field is integrated from t = 0 to t = 1 to obtain the generated sample. Crucially, this deterministic ODE-based sampling is efficient, leading to significantly faster inference compared with conventional diffusion models that rely on stochastic differential equations (SDEs), which typically need hundreds or thousands of iterative steps to produce a single sample. However, learning v(Xt, t ) directly is an ill-posed problem because there is no available target for this instantaneous velocity field. In fact, there are infinitely many paths to transport p0(X0) to p1(X1), each corresponding to a different velocity field. To make the optimization problem well-posed, we must first specify how the probability density evolves over time, i.e., we need to define a specific probability density path pt(Xt), t ∈ [0 , 1] that connects p0(X0) and p1(X1).Therefore, the problem reduces to designing a tractable prob-ability density path , and then learning the corresponding instantaneous velocity field . For the first stage, a tractable choice is the conditional optimal-transport path, which defines the trajectory of each sample via a linear interpolation between the source sample X0 ∼ p0(X0) and the final sample 
+
+X1 ∼ p1(X1). In this work, we adopt the standard forward-time parameterization of the transport path. Specifically, the path is written as 
+
+Xt = (1 − t)X0 + tX1, t ∈ [0 , 1] , (11) where t = 0 corresponds to the prior sample X0 ∼ p0(X0)
+
+and t = 1 corresponds to the target sample X1 ∼ q(X1).This forward-time parameterization aligns both training and generation with the same temporal direction. For this condi-tional path, the corresponding velocity field v(Xt, t |X1) can be computed as the training target, which is given by 
+
+v(Xt, t |X1) = X1 − X0. (12) Finally, the conditional flow matching loss can be expressed as 
+
+Liv (ϑ) = Et, X0,X1
+
+∥vϑ(Xt, t ) − (X1 − X0)∥2 , (13) where t ∼ U [0 , 1] , X0 ∼ p0(X0), and X1 ∼ q(X1). Training 
+
+vϑ(Xt, t ) by minimizing this loss enables the model to learn the marginal instantaneous velocity field associated with the prescribed probability path. The corresponding generation process is iteratively executed according to 
+
+Xt+∆ t ← Xt + ∆ tvϑ(Xt, t ), (14) where t starts from 0 and increases to 1. We discretize the time interval [0 , 1] into T uniform steps, with a step size of 
+
+∆t = 1 /T . After T forward updates, the target sample is obtained. 
+
+2) Learning Average Velocity Field: For a model that predicts the instantaneous velocity field, numerical integration 5Start   
+
+> point Endpoint
+> Error
+> Instantaneous
+> velocity 0t=
+
+1t = 
+
+> Start
+> point
+> Endpoint
+> Average velocity 0t=
+
+1t =
+
+(a)  (b) Instantaneous trajectory  
+
+> Fig. 1. Comparisons of the discretization error in one-step generation, (a) learning instantaneous velocity and (b) learning average velocity.
+
+is required to evolve the sample trajectory. When the number of integration steps T is sufficiently large, solvers such as the Euler method in (14) can produce satisfactory samples. However, when T is small, the time discretization becomes coarse, making the numerical approximation less accurate and causing substantial error accumulation along the trajectory. As a result, the quality of the generated beamforming vectors may deteriorate noticeably. This quality-efficiency tradeoff becomes particularly pronounced in aggressive one-step beam generation, where one starts from the prior sample X0 at 
+
+t = 0 and applies only a single forward update over the whole interval: 
+
+X1 ← X0 + vϑ(X0, 0) . (15) This is because the instantaneous velocity evaluated only at the interval start cannot faithfully represent the overall trans-formation over the whole interval, which leads to significant discretization error as illustrated in Fig. 1. To address this issue, we shift the learning object from instantaneous velocity to the average velocity over a time interval, whose forward-time formulation is directly compatible with explicit few-step generation. We therefore define the forward interval-average velocity field with respect to the interval-start state Xr as 
+
+u(Xr , r, t ) ≜ Xt − Xr
+
+t − r
+
+= 1
+
+t − r
+
+Z tr
+
+v(Xτ , τ )dτ, 0 ≤ r < t ≤ 1.
+
+(16) By definition, the associated exact interval update is 
+
+Xt = Xr + ( t − r)u(Xr , r, t ). (17) Eq. (16) reveals the connection between the average and instantaneous velocities, and the latter can be viewed as the limit of the average velocity as the time interval length approaches zero: 
+
+lim  
+
+> r→t
+
+u(Xr , r, t ) = v(Xt, t ). (18) However, directly learning (16) is intractable, as it requires access to the full trajectory of the data sample. Inspired by [31], we introduce an intermediate time step s such that r < s < t , thus, based on the additivity of definite integrals, we have 
+
+(t − r)u(Xr , r, t ) = ( s − r)u(Xr , r, s ) + ( t − s)u(Xs, s, t ).
+
+(19) Equation (19) defines a self-consistent constraint that the average velocity field must satisfy across any partition of the time interval. Therefore, although the ground-truth average velocity is inaccessible, we can train a model uϑ(Xr , r, t )2Transformer Block  
+
+> Latent Representation
+> Time steps 12
+
+,t t 
+
+> Sinusoidal Encoding
+> & Linear Layers
+> Condition
+> (RSRP
+> vector )
+
+c  
+
+> Condition Embedding
+> (Linear Layers)
+> Modulation Signal
+> (adaLN  Params)
+> Modulation Signal
+> (adaLN Params)
+> Layer Norm
+> shift, scale
+> gate
+> shift, scale
+> gate
+> Multi -head
+> Self -attention block
+> (with RoPE )
+> Layer Norm
+> Pointwise
+> Feedforward Skip connection  Skip connection
+> Layer Norm shift,
+> scale
+> Linear & Reshape
+> Input t
+
+XL+++
+
+> Predicted velocity
+> 1D Conv
+> SiLU
+> Layer Norm
+> Linear Layer
+
+e 
+
+> Fig. 2. The architecture of the 1D-DiT.
+
+by enforcing this consistency during training. By rearranging (19), we obtain 
+
+u(Xr , r, t ) = (1 − κ)u(Xr , r, s ) + κu(Xs, s, t ), (20) where κ = ( t−s)/(t−r) ∈ [0 , 1] . Hence, the split-consistency target becomes 
+
+¯u(Xr , r, t ) = (1 − κ)uϑ(Xr , r, s ) + κuϑ(Xs, s, t ). (21) Accordingly, the loss for average-velocity learning is written as 
+
+Lav (ϑ) = Er,s,t, X0,X1
+
+∥uϑ(Xr , r, t ) − sg [ ¯u(Xr , r, t )] ∥2 ,
+
+(22) where sg( ·) denotes the stop-gradient operator. The integration of wireless prompts as conditional inputs will be described in the next subsection. 
+
+B. Model Architecture 
+
+The architecture of the velocity predictor in the proposed F-BBS framework is illustrated in Fig. 2. To realize the beam evolution strategy introduced in Section III-A, we develop a customized one-dimensional diffusion transformer (DiT)-style backbone that operates on beam representations and supports both instantaneous- and interval-conditioned velocity prediction. Given the current beam state Xr ∈ RB×C×Nt ,the time interval (r, t ), and the RSRP vector ck, the model outputs a velocity tensor with the same dimensionality as Xr ,where B is the batch size, C denotes the number of input channels (e.g., amplitude and phase components), and Nt is the number of transmit antenna elements. This backbone is shared by both learning stages of F-BBS: in Stage I, it operates 6
+
+in instantaneous mode and predicts uϑ(Xr , r, r, ck); in Stage II, it operates in interval mode and predicts uϑ(Xr , r, t, ck).The backbone consists of a stack of L transformer blocks, each containing a multi-head self-attention module and afeed-forward network (FFN). This design is adopted because beam evolution is inherently a structured sequence modeling problem: the desired update at one beam component depends not only on its local value, but also on its interaction with other components across the entire beam vector. To cap-ture such dependencies, rotary position embedding (RoPE) is incorporated into the self-attention module, enabling the network to encode relative positional relationships along the one-dimensional beam sequence while preserving sensitivity to global structural patterns. Conditioning is injected through adaptive layer normaliza-tion (adaLN) [32], as shown by the orange line in Fig. 2, where the normalization parameters are modulated by the total embedding vector etotal = etime (r, t ) + econd . Here, etime (r, t )
+
+denotes the embedding of the time interval (r, t ), while econd 
+
+denotes the condition embedding defined in Section III-C. This vector is then linearly projected to six modulation parameters, namely β1, γ1, and α1 for the attention branch, and β2, γ2, and 
+
+α2 for the FFN branch. These parameters control feature-wise shifting, scaling, and gating inside each transformer block, allowing the wireless prompt and time interval to modulate feature extraction throughout the entire network. After passing through the L transformer blocks, a final adaLN layer and a linear projection are applied to map the latent representation back to the original channel dimension C, yielding the pre-dicted velocity tensor. 
+
+C. Stochastic Masking Strategy for Variable-Length RSRP Measurements 
+
+A key limitation of the existing GenSSBF methods is that they typically assume a fixed-length condition. Consequently, a model trained with Qtrain RSRP measurements can usually be applied only when inference uses the same probing budget and the same set of probing beams. This assumption is restrictive in practical systems. On the one hand, the base station may need to adjust the probing budget according to latency, beam probing overhead, and reliability requirements. On the other hand, in practice the measurement feedback may be missing or delayed due to channel impairments or interference, so the BS cannot always obtain a complete set of power measurements, yielding an incomplete conditioning input at inference. However, training a separate model for every possible probing budget is therefore computationally inefficient and operationally undesirable. To address this issue, we introduce a stochastic masking strategy that enables a single F-BBS model to be trained on and operate with variable-length RSRP measurements. 
+
+1) Budget-Aware Stochastic Masking: To remove the fixed-length conditioning constraint in beam generation, we train the model with a budget-aware stochastic masking strategy applied to the RSRP vector. Let c ∈ RQmax denote the complete probing feedback (here Qmax = Nt in our setting), and let m ∈ { 0, 1}Qmax be a binary availability mask. For Complete condition   
+
+> (RSRP vector )Masked condition
+> Condition  Embedding
+> Masked feature map
+> Point -wise positional embedding
+> Point -wise value embedding
+
++    
+
+> Point -wise Linear
+> Point -wise Linear
+> ⋯⋯
+> ⋯⋯
+> ⋯⋯
+> Linear & masking Pooling
+> Randomly assigned probing budget
+> Embedded condition
+> dataset
+> Fig. 3. Stochastic prompt masking and the proposed beam index-aware masked condition encoder.
+
+each mini-batch of size B, a sparsity controller pfull ∈ (0 , 1] 
+
+specifies the fraction of samples that retain the full condi-tioning information. This controller can operate under either a constant or a dynamic sparsity schedule. In particular, the former maintains a fixed sparsity level throughout training, while the latter sets sparsity pfull as an explicit function of the training epoch. Therefore, we select Bfull = ⌊pfull B⌋ samples as full-condition anchors ( m = 1). For the remaining B −Bfull 
+
+samples in this batch, we randomly assign probing budgets for them and apply corresponding masks. This design is motivated by the following considerations: First, full-condition samples provide a high-information supervision anchor, preventing the model from drifting toward solutions tailored only to overly sparse conditions. Second, they stabilize optimization in both Stage I and II in Section III-A by reducing gradient variance induced by aggressive masking and by improving the reliability of split-interval distillation targets. Third, they preserve calibration to the high-information regime, ensuring that the same model remains competitive when larger probing budgets are available at inference. The active probing indices are selected by uniform spacing over the codebook grid, which preserves global angular cov-erage under reduced feedback. The masked condition is thus given by 
+
+˜c = m ⊙ c, (23) where ⊙ denotes the Hadamard product. Consequently, in Stage I of training, the model learns the instantaneous velocity by minimizing 
+
+Liv (ϑ) = E
+
+h
+
+uϑ(Xr , r, r, ˜c, m) − (X1 − X0) 22
+
+i
+
+. (24) In Stage II, the masked condition is used for average-velocity learning with split-time consistency: 
+
+Lav (ϑ) = E
+
+h
+
+uϑ(Xr , r, t, ˜c, m) − sg[¯ u(Xr , r, t, ˜c, m)] 22
+
+i
+
+.
+
+(25) Therefore, a single trained model supports variable-length 7
+
+RSRP at inference, i.e., the BS can choose probing budget on demand without retraining. 
+
+2) Beam Index-Aware Masked Condition Encoder: 
+
+Variable-length RSRP measurements cannot be handled reli-ably by a plain fixed-length MLP, because zero-padded inputs do not explicitly preserve which probing beams are actually observed. To address this issue, we propose a beam index-aware masked condition encoder that maps partial RSRP ob-servations into a fixed-dimensional conditioning vector while retaining beam-index information. As shown in Fig. 3, for each probing index i, the scalar measurement is first projected into the embedding space as 
+
+vi = Wv ˜ci + bv , i = 1 , 2, · · · , Q max , (26) where Wv and bv are the weights and bias of the point-wise linear layer. To preserve the semantic meaning of the probing-beam index, we then inject a sinusoidal index embedding pi
+
+and apply a position-wise nonlinear projector: 
+
+ei = fpos (vi + pi). (27) Masking is subsequently enforced in the embedding space: 
+
+˜ei = mi ei. (28) Next, we aggregate valid elements by cardinality-normalized masked mean pooling :
+
+¯e = 1
+
+PQmax  
+
+> i=1
+
+miQmax X
+
+> i=1
+
+˜ei, (29) followed by an output MLP to obtain the final condition embedding econd .Compared with directly applying an MLP to a masked vec-tor, this design has three practical advantages. First, it explic-itly preserves codebook-index semantics, so sparse measure-ments remain spatially interpretable. Second, normalization by the number of valid entries avoids scale drift across different probing budgets, which improves conditioning stability under variable Q. Third, the output dimensionality is fixed regardless of the mask sparsity, allowing seamless integration with the same DiT backbone and adaLN-based modulation used in Section III-B. The final modulation vector is therefore written as 
+
+etotal = etime (r, t ) + econd . (30) Hence, the proposed conditioning module is not a simple input-dropout trick, but a structured set-to-vector encoder tailored to partial codebook observations. At deployment, the base station can freely choose the probing budget Qinfer 
+
+without retraining the model. A small Qinfer is suitable for low-latency operation with minimal sweeping overhead, whereas a larger Qinfer provides richer conditioning when the system can afford more measurements. Intermediate probing budgets can also be selected adaptively according to user mobility, channel dynamics, or QoS requirements. 
+
+D. Training and Deployment 
+
+This subsection summarizes the complete offline training and online deployment procedures of the proposed F-BBS framework. The offline training pipeline is outlined in Algo-rithm 1, while the online inference procedure for the k-th UE 
+
+Algorithm 1 Offline Training of F-BBS  
+
+> 1:
+
+Input: dataset D = {(hd, Xd
+
+> 1
+
+, cd)}Dd=1 , total epochs “MAX EPOCHS”, stage-I epochs E1, hyperparameter p
+
+and pfull , probing-budget set Qp, batch size B, model parameters ϑ 
+
+> 2:
+
+Output: trained parameters ϑ 
+
+> 3:
+
+for epoch = 1 to “MAX EPOCHS” do  
+
+> 4:
+
+for mini-batch (X(B)1 , c(B)) ∼ D do  
+
+> 5:
+
+Sample prior batch X(B)0 ∼ p0 
+
+> 6:
+
+Generate mask batch m(B): keep ⌊pfull B⌋ full-condition samples; for each remaining sample, in-dependently draw Q ∈ Q p and retain Q uniformly spaced probing entries  
+
+> 7:
+
+Form masked condition ˜c(B) = m(B) ⊙ c(B) 
+
+> 8:
+
+if epoch ≤ E1 then  
+
+> 9:
+
+Sample t ∈ [0 , 1] B 
+
+> 10:
+
+Obtain X(B) 
+
+> t
+
+based on (11)  
+
+> 11:
+
+Compute Liv based on (24)  
+
+> 12:
+
+else  
+
+> 13:
+
+Sample (r, t) with 0 ≤ r ≤ t ≤ 1; enforce a proportion p of entries to satisfy r = t 
+
+> 14:
+
+Sample κ ∈ [0 , 1] B 
+
+> 15:
+
+Set s = (1 − κ) ⊙ t + κ ⊙ r 
+
+> 16:
+
+Obtain X(B) 
+
+> r
+
+based on (11)  
+
+> 17:
+
+Predict ˆur,t = uϑ(X(B) 
+
+> r
+
+, r, t, ˜c(B), m(B)) 
+
+> 18:
+
+Predict ˆur,s = uϑ(X(B) 
+
+> r
+
+, r, s, ˜c(B), m(B)) 
+
+> 19:
+
+Obtain X(B) 
+
+> s
+
+based on (17)  
+
+> 20:
+
+Predict ˆus,t = uϑ(X(B) 
+
+> s
+
+, s, t, ˜c(B), m(B)) 
+
+> 21:
+
+Form split target ¯u(B) = (1 − κ)ˆ ur,s + κˆus,t  
+
+> 22:
+
+Compute Lav = ˆur,t − sg ¯u(B) 22 
+
+> 23:
+
+end if  
+
+> 24:
+
+Update ϑ by gradient descent  
+
+> 25:
+
+end for  
+
+> 26:
+
+end for  
+
+> 27:
+
+return ϑ
+
+is summarized in Algorithm 2. For notational simplicity, the superscript (B) denotes a batched quantity associated with a mini-batch of size B.In the offline training, the site-specific dataset is denoted by D = (hd, Xd
+
+> 1
+
+, cd)Dd=1 , where D is the total number of activated points in the site. For each activated UE, the corresponding channel vector hd is obtained through the ray-tracing simulator, Xd 
+
+> 1
+
+is constructed according to (9), and cd is formed from noiseless RSRP measurements 2. During training, the dataset is divided into mini-batches of size B, and the budget-aware stochastic masking strategy in Section III-C is applied on-the-fly to generate the masked condition and the corresponding availability mask for each sample. The offline training is carried out in two stages. In Stage I, covering the first E1 epochs of the total “MAX EPOCHS” epochs, the model is trained as an instantaneous-velocity predictor. Specifically, each target sample is paired with a prior sample drawn from p0, and an interpolated state is constructed along the conditional optimal-transport path in 
+
+> 2It is assumed that no prior information about the noise is available during offline training phase. 8
+
+(11). The predictor is then optimized using the loss in (24). In Stage II, spanning the remaining epochs, the Stage-I model is further distilled into an interval-conditioned average-velocity predictor. For each sample, three strictly ordered time points 
+
+(r, s, t ) with 0 ≤ r < s < t ≤ 1 are generated, and the model is trained with the forward split-consistency objective in (25). Importantly, the same stochastic masking mechanism is retained in both stages, so the model learns few-step transport dynamics and robustness to variable-length RSRP conditions jointly within a unified framework. At deployment, the BS first determines the probing budget 
+
+Qk according to the latency, signaling, or reliability require-ment of the k-th UE. It then probes the selected Qk DFT beams and obtains the corresponding RSRP measurements. Based on the probing indices, the BS infers the availability mask mk and constructs the full-length masked condition 
+
+˜ck by placing the measured entries at the observed positions and zero-padding the remaining entries. Conditioned on this wireless prompt, F-BBS draws M independent initial samples from the prior distribution and evolves them from t = 0 to 
+
+t = 1 through T interval-wise explicit forward updates of the learned average velocity field 3. Each terminal latent sample 
+
+Zk,m  
+
+> 1
+
+is then mapped to a candidate beamforming vector based on 
+
+wk,m  
+
+> 1
+
+[n] = 1
+
+√Nt
+
+ej∠F−1  
+
+> 
+> Zk,m
+> 1[2 ,n ]e jZk,m
+> 1[1 ,n ]
+> 
+
+(31) Finally, the beam that yields the highest received power among the M generated candidates will be chosen. Therefore, the brainstorming number M serves as a practical control knob between online overhead and beamforming robustness: a small M is suitable for latency-sensitive access, whereas a moderately larger M is beneficial when the system can afford slightly more verification cost to pursue higher beamforming gain. 
+
+Remark 1. The proposed F-BBS framework is inherently compatible with the “sweeping-measuring-reporting” beam-forming procedure adopted in current 5G standard. Since the probing beams used to acquire wireless prompts are selected from the DFT codebook, they can be naturally transmitted through always-on SSBs. The subsequently generated user-specific beams can then be conveyed via CSI-RSs. As a result, the proposed F-BBS can be seamlessly integrated into existing 5G systems without requiring any modification to the standardized signaling protocols. IV. D ATASET AND SIMULATION RESULTS 
+
+A. Dataset 
+
+To comprehensively evaluate the proposed F-BBS under diverse propagation conditions, three ray-tracing datasets are considered in this work. Specifically, two public scenarios, namely I2 28B and O1B 28, are adopted from the Deep-MIMO dataset [33]. We further construct HKU 28, a cam-pus dataset of The University of Hong Kong (HKU) using SionnaRT [34]. These three datasets cover both indoor and outdoor environments, as well as LoS and NLoS propagation   
+
+> 3For F-BBS, Tis typically set to a very small value, e.g., 1, 2 or 3.
+
+Algorithm 2 Online Inference of F-BBS  
+
+> 1:
+
+Input: probing budget Qk, generation steps T , brainstorm number M , trained predictor uϑ(·) 
+
+> 2:
+
+/* Wireless prompting */ : 
+
+> 3:
+
+Uniformly select Qk probing beams from the DFT code-book and obtain the corresponding RSRP vector ck 
+
+> 4:
+
+Infer the availability mask mk from the selected probing indices and construct ˜ck ∈ RQmax by placing the measured RSRP entries at the observed indices and zero-padding the others  
+
+> 5:
+
+Set ∆ = 1 /T  
+
+> 6:
+
+for m = 1 to M do  
+
+> 7:
+
+Sample an initial state Zk,m  
+
+> 0
+
+∼ N (0, I) 
+
+> 8:
+
+for n = 0 to T − 1 do  
+
+> 9:
+
+τr ← n∆, τt ← (n + 1)∆  
+
+> 10:
+
+Zk,m τt ← Zk,m τr + uϑ(Zk,m τr , τ r , τ t, ˜ck, mk)∆  
+
+> 11:
+
+end for  
+
+> 12:
+
+Recover the beamforming vector wk,m  
+
+> 1
+
+from Zk,m 
+
+> 1
+
+based on (31)  
+
+> 13:
+
+end for  
+
+> 14:
+
+Probe the candidate set {wk,m  
+
+> 1
+
+}Mm=1 and obtain the cor-responding receive powers  
+
+> 15:
+
+Select ˆw⋆k = arg max m RSRP( wk,m  
+
+> 1
+
+) 
+
+> 16:
+
+return ˆw⋆k
+
+conditions, thereby providing a comprehensive testbed for assessing the robustness and practical effectiveness of the proposed F-BBS. 
+
+1) DeepMIMO I2 28B Scenario: The DeepMIMO I2 28B dataset 4 models an indoor scenario where none of the users has a LOS connection with the BS, as illustrated in Fig. 4(a). The BS is placed on the inside wall of the room, and a total of 140901 users are distributed in the brown-colored area located behind the blockage. The carrier frequency is 28 GHz. 
+
+2) DeepMIMO O1B 28 Scenario: The DeepMIMO O1B 28 dataset 5 models an outdoor street environment with blockage and reflections, as illustrated in Fig. 4(b). Specifically, a portion of the O1 28 dataset corresponding to BS #3 and user grid #1 is selected. Therefore, the total population of 484264 users consists of those with LoS links to the BS and those with NLoS links. The carrier frequency is 28 GHz. 
+
+3) HKU 28 Scenario: As shown in Fig. 4(c), we created the HKU 28 dataset, which models the campus environment of HKU and features a mix of high-rise buildings, streets, and open spaces. Specifically, the 3D model of the HKU campus was constructed by importing OpenStreetMap (OSM) data into Blender. Subsequently, ray-tracing simulations were performed on this scene using Sionna RT to generate the dataset. The BS is located at a height of 15 meters, and a total of 82169 users are activated in this scenario. The carrier frequency is 28 GHz. 
+
+B. Simulation Setup 
+
+In this section, we evaluate the performance of the proposed F-BBS solution under the scenarios described in Section IV-A.  
+
+> 4https://www.deepmimo.net/scenarios/v4/i2 28b
+> 5https://www.deepmimo.net/scenarios/v4/o1b 28 9(a)
+> (b)
+> (c)
+> Fig. 4. Illustration of the ray-tracing environments, (a) I2 28B, (b) O1B 28 and (c) HKU 28.
+
+For each scenario, up to 100k user samples are randomly selected, with 80k used for training and the remainder for testing. As introduced in Section III-B, the velocity predictor is implemented by a customized 1D-DiT with embedding dimension 512, 5 transformer blocks, and 16 attention heads, and is trained for 300 epochs using AdamW with learning rate 2 × 10 −4, weight decay 0.1, and batch size 32. The training follows a two-stage strategy: the first 150 epochs learn the standard flow-matching teacher, and the remaining 150 epochs distill the split-mean-flow student under the forward split-consistency objective in Section III-A with p = 0.7.To support variable probing budgets, 80% of the training samples in each batch use the full 64-dimensional prompt, while for the remaining 20%, only Q uniformly spaced RSRP measurements are retained and the others are masked out. Additionally, exponential moving average (EMA) is adopted to update the parameters of the model with decay coefficient                        
+
+> TABLE I SIMULATION PARAMETERS
+> Name of scenario I2 28B, O1B 28, HKU 28 Carrier frequency fc28 GHz Bandwidth BW 100 MHz Number of antennas Nt64 Antenna array ULA Antenna spacing Half-wavelength spacing UE antenna Single Antenna element Isotropic Number of paths 5Learning rate 2×10 −4
+> AdamW Weight decay 0.1 Batch size B32 Number of epochs 300 Stage I epochs 150
+> p0.7
+> pfull 0.8 EMA decay coefficient 0.995
+
+0.995. The detailed parameters are summarized in Table I. 
+
+C. Intuition Behind the Generated Beams 
+
+Before performing the quantitative evaluation, we first pro-vide an intuitive inspection of the generated beam pattern to extract potential design insights. Fig. 5 compares the beam patterns produced by the proposed F-BBS under two inference settings (generation step = 1 and 3) with those of the MRT, a discriminative DNN baseline, and the 64-beam DFT codebook baseline across the I2 28B, O1B 28, and HKU 28 scenarios. For F-BBS, the beam generation process can be interpreted as follows: Starting from an initial sample drawn from a Gaussian distribution, the model predicts a velocity field that guides the trajectory of this sample through ODE integration, ultimately yielding the desired beamforming vector. As shown in the second and third column of Fig. 5, the proposed F-BBS attains near-optimal beam patterns with only one or a few generation steps. This observation provides empirical evidence that learning the average velocity can substantially improves the ODE integration accuracy in the low-step regime. Moreover, even with a single generation step, F-BBS still preserves a clear dominant-lobe structure, exhibiting only moderate degradation relative to the case when generation step is 3, indicating strong robustness under aggressive step reduction. The improvement from step = 1 to step = 3 is mainly reflected in more effective sidelobe suppression. Furthermore, unlike the 64-beam DFT baseline, which is essentially constrained to single-lobe beamforming vector, the proposed F-BBS can synthesize multi-lobe beam patterns when needed. This capability is particularly useful in NLoS or blockage-dominant channels, where multiple reflected paths may carry significant energy and a single-lobe beam can be suboptimal. 
+
+D. Trade-off Between Beamforming Gain and Overhead 
+
+Qualitative analysis helps visually examine whether the proposed F-BBS is capable of generating meaningful beams, whereas quantitative analysis is needed to more clearly reveal the actual performance gain it can achieve. In this work, the 10 O1B_28  I2_28B HKU_28 
+
+Optimal  F-BBS, Step=3  F-BBS, Step=1  64 -beam DFT  DNN  
+
+> Fig. 5. Beam pattern comparisons.
+
+Exhaustive Search (DFT) 
+
+Discriminative Beam Prediction 
+
+F-BBS (Step=3, M=5) 
+
+F-BBS (Step=3, M=8) 
+
+F-BBS (Step=3, M=11) 
+
+> +66.75%
+
+-67.1% 
+
+-14.2% 
+
++35.5% 
+
+Beam Probing Overhead  
+
+> Fig. 6. Tradeoff between normalized beamforming gain and beam probing overhead in I2 28B scenario.
+
+normalized beamforming gain is used as the main metric since it is positively associated with SNR. It can be calculated as 
+
+¯g = 10log 10 
+
+|hHw|2
+
+|hHwMRT |2
+
+!
+
+, (32) where wMRT denotes the beamforming vector obtained by MRT, which serves as the optimal solution. Figs. 6–8 compare the normalized beamforming gain versus the total beam prob-ing overhead in the I2 28B, O1B 28, and HKU 28 scenarios, respectively 6. A highly consistent trend is observed across all three environments: the proposed F-BBS achieves the most favorable gain-overhead tradeoff among all compared methods. For a fixed beam probing budget, the proposed F-BBS attains higher normalized beamforming gain than both the discriminative beam prediction baseline and the exhaustive DFT codebook search. Conversely, for achieving a similar beamforming gain level, F-BBS substantially reduces the beam probing overhead. This result directly validates the core     
+
+> 6It should be noted that the beam probing overhead of F-BBS is Q+M.
+
+Exhaustive Search (DFT) 
+
+Discriminative Beam Prediction 
+
+F-BBS (Step=3, M=5) 
+
+F-BBS (Step=3, M=8) 
+
+F-BBS (Step=3, M=11) 
+
++32.1% 
+
+-48.4% 
+
+> +40.4%
+
+-53.1% 
+
+Beam Probing Overhead  
+
+> Fig. 7. Tradeoff between normalized beamforming gain and beam probing overhead in O1B 28 scenario.
+
+motivation of the proposed framework: instead of spending the online overhead on probing a large number of predefined codewords, the BS can first acquire a compact wireless prompt through a small number of probing beams and then synthesize high-quality user-specific beamformers in a site-aware manner. The superiority of F-BBS is particularly evident in the low-overhead regime. When the available probing budget is small, exhaustive search suffers from severe angular resolution loss because only a limited number of DFT beams can be tested, and the selected beam is therefore more likely to deviate from the dominant propagation directions. The discriminative beam prediction method improves over exhaustive search in some operating points, but its performance quickly saturates because it relies on a deterministic one-shot mapping from sparse RSRP observations to a single beamformer. In contrast, F-BBS can effectively exploit the same limited prompt information to generate multiple plausible beam candidates and select a much better solution. The annotations in the three figures further highlight this two-fold advantage: depending on the 11 Exhaustive Search (DFT) 
+
+Discriminative Beam Prediction 
+
+F-BBS (Step=3, M=5) 
+
+F-BBS (Step=3, M=8) 
+
+F-BBS (Step=3, M=11) 
+
+-34.3% 
+
+> +56.4%
+
+-31.2% 
+
++42.9% 
+
+Beam Probing Overhead  
+
+> Fig. 8. Tradeoff between normalized beamforming gain and beam probing overhead in HKU 28 scenario.
+
+operating point and scenario, F-BBS yields beamforming gain improvements on the order of 30%–67% at comparable over-head, or equivalently reduces the required sweeping overhead by roughly 14%–67% for a comparable beamforming gain. We next examine the impact of the brainstorming number 
+
+M . Under the same few-step generation setting (e.g., step = 3 ), increasing M from 5 to 11 consistently improves the beam-forming gain. This observation also reflects a key advantage of the proposed generative paradigm: for the same UE and the same wireless prompt, F-BBS can produce multiple plausible beamforming vectors rather than a single deterministic output. Such candidate diversity improves robustness against ambigu-ity and uncertainty in sparse RSRP observations, since the final beam can be selected from several high-quality hypotheses instead of relying on one potentially mismatched prediction. However, we also notice that the benefit gradually diminishes as M becomes larger, especially in the medium- and high-overhead regimes where the gain curves start to saturate. This indicates that mild brainstorming is already sufficient to harvest most of the performance improvement, and that F-BBS provides a practical knob to balance latency and beamforming accuracy: a small M is suitable for fast access, whereas a moderately larger M is beneficial when the system can afford slightly more overhead to pursue higher gain .Another noteworthy result is that, within each scenario, F-BBS preserves a favorable gain-overhead tradeoff across multiple probing budgets using only one trained model. This is in clear contrast to conventional conditional generative beamforming pipelines, where different prompt lengths typ-ically require separate training. In the proposed framework, budget-aware stochastic masking is adopted during training, and each mini-batch randomly uses probing budgets drawn from Q ∈ { 9, 15 , 21 , 32 , 64 } (In Section IV-F, we will further analyze the extrapolation capability to unseen values of Q
+
+during training). Therefore, the strong performance observed at different operating points in the figures does not come from maintaining multiple budget-specific models, but from a single site-specific F-BBS model that has learned to handle variable-length RSRP prompts. This property is practically important, Standard Flow 
+
+Matching 
+
+Diffusion F-BBS 
+
+> +65.6%
+
+-94%      
+
+> +68.5% 32 Q=15 Q=
+> Fig. 9. Tradeoff between normalized beamforming gain and generation step in I2 28B scenario. 32 Q=15 Q=+80.8 %
+
+-98.5 %
+
+> +85.6 %
+
+Standard Flow 
+
+Matching 
+
+Diffusion F-BBS  
+
+> Fig. 10. Tradeoff between normalized beamforming gain and generation step in O1B 28 scenario.
+
+since it enables the BS to adapt the probing budget online according to latency or signaling constraints without retraining the beam generator. 
+
+E. Trade-off Between Beamforming Gain and Generation Step 
+
+Besides reducing the online beam probing overhead, apractical GenSSBF framework should also achieve high beam-forming gain with very few generation steps. Figs. 9–11 compare the normalized beamforming gain versus the number of generation steps in the I2 28B, O1B 28, and HKU 28 scenarios under two probing budgets, i.e., Q = 15 and Q = 32 .A clear and consistent trend is observed across all three scenarios: the proposed F-BBS achieves the most favorable gain-step tradeoff among all compared generative methods. A satisfactory beamforming gain can be achieved by the pro-posed F-BBS with only one generation step, which indicates that learning the average velocity effectively compresses the beam evolution process. The comparison with standard flow matching based GenSSBF solution reveals why such a design is necessary. Standard flow matching learns the instantaneous 12 +82. 2%
+
+-99.4 %
+
+Diffusion -based 
+
+GenSSBF 
+
+F-BBS 
+
+> +86.7 %
+
+Standard Flow 
+
+Matching 32 Q =15 Q = 
+
+> Fig. 11. Tradeoff between normalized beamforming gain and generation step in HKU 28 scenario.
+
+velocity field, but the beam generation performance relies on accurate numerical integration of the underlying ODE, which in turn requires sufficiently fine discretization. Therefore, when the number of generation steps is aggressively reduced, the re-sulting integration error becomes significant, leading to severe degradation in beamforming quality (as demonstrated in Fig. 1). This trend is consistently observed in all three scenarios: standard flow matching suffers a pronounced performance drop in the one-step regime, and even with two or three steps it still remains noticeably below F-BBS. By contrast, F-BBS is distilled to predict an interval-wise average velocity, so each update better reflects the overall transport over a finite time interval rather than a purely local instantaneous direction. Con-sequently, F-BBS remains stable and effective under extremely coarse discretization, validating the central motivation of the proposed few-step design. The advantage over diffusion [25] is even more pronounced from the perspective of generation efficiency. Although the diffusion baseline gradually improves as more backward denoising steps are allowed, it still requires tens or even hundreds of denoising steps before entering the high-gain region that F-BBS already reaches with only 1–3 steps. Therefore, for a similar generation-step budget (e.g., less than 100), F-BBS delivers significantly higher normalized beamforming gain, whereas for a target gain level it requires dramatically fewer sampling iterations than diffusion. Since the horizontal axis is plotted on a logarithmic scale, the large separation between the F-BBS and diffusion curves further highlights the order-of-magnitude efficiency advantage of the proposed approach. 
+
+F. Generalization Across Different Probing Budgets 
+
+Finally, we examine the generalization capability of the proposed F-BBS under different probing budgets. Fig. 12 compares two training strategies: in the first one, the prob-ing budget used during training is restricted to a sparse representative set, i.e., Qtrain ∈ {9, 15 , 21 , 32 , 64 }; in the second one, Qtrain is randomly sampled from a dense integer-valued budget set within the interval [6 , 64] . Several important observations can be made. (a)             
+
+> (b)
+> (c) train {9,15, 21,32,64} Qtrain [9,64] Qtrain {9,15, 21,32,64} Qtrain [9,64] Qtrain {9,15, 21,32,64} Qtrain [9,64] Q
+> Fig. 12. Generalization of F-BBS across different probing budgets under two training strategies.
+
+First, the model trained on the sparse representative set, shown by the blue line in Fig. 12, performs particularly well at the probing budgets explicitly seen during training, namely 
+
+Q = 9 , 15 , 21 , 32 , and 64 . This indicates that these budgets act as effective supervision anchors, leading to stronger per-formance at predefined operating points. At the same time, despite being trained with only five probing budgets, the same model still preserves the overall gain trend over many unseen intermediate budgets, confirming that the proposed budget-aware stochastic masking strategy enables the model to learn a budget-robust mapping rather than merely memorizing several isolated prompt lengths. Second, the model trained with densely sampled probing budgets, shown by the purple line in Fig. 12, yields a smoother and generally stronger curve, with the gain being most pronounced in the low-overhead regime. When the probing budget is small, the RSRP prompt is highly sparse and the conditional mapping becomes more ambiguous. In this regime, denser budget sampling provides richer supervision across different sparsity levels and therefore improves calibration to varying probing budgets. Third, the performance gap between the two training strategies gradually narrows as the probing budget increases. This suggests that once sufficient prompt information is available, beam gener-ation becomes less sensitive to the exact budget distribution used during training. From an engineering perspective, this means that sparse-budget training is suitable when the operat-ing budgets are fixed and known in advance, whereas dense-budget training is preferable when the probing budgets may vary during deployment. 
+
+G. The Impact of Noisy Wireless Prompts 
+
+In this subsection, we evaluate the robustness of F-BBS under noisy wireless prompts with the inference setting fixed as Q = 32 , M = 8 , and step = 3 . Specifically, the noise power is determined from the median received power of the probing DFT beams and the target SNR. Table II reports the normalized beamforming gain at different SNR levels in the I2 28B, O1B 28, and HKU 28 scenarios. As expected, the performance degrades as the SNR decreases because the 13 
+
+TABLE II IMPACT OF SNR ON NORMALIZED BEAMFORMING GAIN                            
+
+> -5 dB 0 dB 5 dB 10 dB 15 dB 20 dB 25 dB I2 28B -1.97 -1.64 -1.36 -1.35 -1.19 -1.34 -1.29 O1B 28 -2.08 -1.68 -1.37 -1.3 -1.18 -1.31 -1.21 HKU 28 -3.74 -3.13 -2.24 -1.75 -1.68 -1.75 -1.35
+
+noisy RSRP prompt provides less reliable guidance for beam generation. Among the three datasets, HKU 28 suffers the most severe degradation in the low-SNR regime, indicating that the more complex propagation environment makes F-BBS more sensitive to prompt corruption. Nevertheless, F-BBS remains reasonably robust over a wide SNR range, which supports its practical applicability under imperfect RSRP feed-back. These observations also indicate that the robustness of F-BBS is ultimately tied to the quality of the wireless prompt, motivating future work on noise-aware prompt design and noise-augmented training strategies. V. C ONCLUSION 
+
+To address the slow beam evolution and fixed probing-budget constraints of existing GenSSBF methods, this paper proposed F-BBS, which enables one- or few-step beam gener-ation from variable-length RSRP observations using a single trained model. By learning an average velocity field and incor-porating budget-aware stochastic masking, F-BBS achieves a favorable gain-overhead-latency tradeoff across diverse prop-agation environments. The results show that average-velocity learning is critical for reliable low-step generation, while mild brainstorming with compact wireless prompts already captures most of the achievable beamforming gain. Overall, F-BBS demonstrates that high-quality user-specific beam synthesis can be achieved in real time without exhaustive online search or budget-specific retraining. Future work will extend the framework to multi-user, multi-cell, and hybrid beamforming settings, as well as investigate noise-resilient wireless prompt design. REFERENCES [1] E. Bj¨ ornson, Y. C. Eldar, E. G. Larsson, A. Lozano and H. V. Poor, “Twenty-five years of signal processing advances for multiantenna com-munications: From theory to mainstream technology,” IEEE Signal Pro-cess. Mag. , vol. 40, no. 4, pp. 107-117, Jun. 2023. [2] J. G. Andrews, T. E. Humphreys and T. Ji, “6G takes shape,” IEEE BITS Inf. Theory Mag. , vol. 4, no. 1, pp. 2-24, Mar. 2024. [3] M. Xiao, et al ., “Millimeter wave communications for future mobile networks,” IEEE J. Sel. Areas Commun. , vol. 35, no. 9, pp. 1909-1935, Jun. 2017. [4] S. Kutty and D. Sen, “Beamforming for millimeter wave communications: An inclusive survey,” IEEE Commun. Surv. Tut. , vol. 18, no. 2, pp. 949-973, Dec. 2016. [5] E. Dahlman, S. Parkvall, and J. Skold, 5G NR: The Next Generation Wireless Access Technology . New York, NY, USA: Academic, Sep. 2018. [6] T. He and Z. Xiao, “Suboptimal beam search algorithm and codebook design for millimeter-wave communications,” Mobile Netw Appl. , vol. 20, no. 1, pp. 86-97, Feb. 2015. [7] Z. Xiao, T. He, P. Xia, and X. Xia, “Hierarchical codebook design for beamforming training in millimeter-wave communication,’ IEEE Trans. Wireless Commun. , vol. 15, no. 5, pp. 3380–3392, May 2016. [8] C. Qi, K. Chen, O. A. Dobre, and G. Y. Li, “Hierarchical codebook based multiuser beam training for millimeter wave massive MIMO,’ IEEE Trans. Wireless Commun. , vol. 19, no. 12, pp. 8142–8152, Dec. 2020. [9] K. Chen and C. Qi, “Beam Training Based on Dynamic Hierarchical Codebook for Millimeter Wave Massive MIMO,” IEEE Commun. Lett. ,vol. 23, no. 1, pp. 132–135, Jan. 2019. [10] A. Abdallah, A. Celik, A. Alkhateeb and A. M. Eltawil, “Explainable autoencoder design for RSSI-based multi-user beam probing and hybrid precoding,” arXiv preprint arXiv:2503.08267 , 2025. [11] Y. Liu, Z. Wang, J. Xu, C. Ouyang, X. Mu and R. Schober, “Near-field communications: A tutorial review,” IEEE Open J. Commun. Soc. , vol.4, pp. 1999-2049, Aug. 2023. [12] Y. Heng, Y. Zhang, A. Alkhateeb, and J. G. Andrews, “Site-specific beam alignment in 6G via deep learning,” IEEE Commun. Mag. , vol. 62, no. 8, pp. 162-168, Aug. 2024. [13] M. Alrabeiah, Y. Zhang and A. Alkhateeb, “Neural networks based beam codebooks: Learning mmWave massive MIMO beams that adapt to deployment and hardware,” IEEE Trans. Commun. , vol. 70, no. 6, pp. 3818-3833, Jun. 2022. [14] Y. Heng, J. Mo and J. G. Andrews, “Learning site-specific probing beams for fast mmWave beam alignment,” IEEE Trans. Wireless Commun. , vol. 21, no. 8, pp. 5785-5800, Jan. 2022. [15] J. Yang, W. Zhu, M. Tao and S. Sun, “Hierarchical beam alignment for millimeter-wave communication systems: A deep learning approach,” 
+
+IEEE Trans. Wireless Commun. , vol. 23, no. 4, pp. 3541-3556, Sep. 2024. [16] Y. Zhang, M. Alrabeiah and A. Alkhateeb, “Reinforcement learning of beam codebooks in millimeter wave and terahertz MIMO systems,” IEEE Trans. Commun. , vol. 70, no. 2, pp. 904-919, Feb. 2022. [17] J. Chen, F. Gao, X. Tao, G. Liu, C. Pan and A. Alkhateeb, “Computer vision aided codebook design for MIMO communications systems,” IEEE Trans. Wireless Commun. , vol. 22, no. 5, pp. 3341-3354, Nov. 2023. [18] A. Abdallah, A. Celik, M. M. Mansour and A. M. Eltawil, “Multi-agent deep reinforcement learning for beam codebook design in RIS-aided systems,” IEEE Trans. Wireless Commun. , vol. 23, no. 7, pp. 7983-7999, July 2024. [19] S. Zhang, Y. Zhang, Y. Liu and B. Di, “Codebook design and beam alignment for IOS-aided communications: From the near-field and far-field boundary perspective,” IEEE Trans. Wireless Commun. , vol. 24, no. 12, pp. 9826-9839, Dec. 2025. [20] H. Luo, and A. Alkhateeb, “Digital twin aided millimeter wave MIMO: Site-specific beam codebook learning,” arXiv preprint arXiv:2512.01902 ,2025. [21] Y. Heng and J. G. Andrews, “Grid-free MIMO beam alignment through site-specific deep learning,” IEEE Trans. Wireless Commun. , vol. 23, no. 2, pp. 908-921, Feb. 2024. [22] S. Li and I. P. Roberts, “Site-specific beam learning for full-duplex massive MIMO wireless systems,” arXiv preprint arXiv:2510.00342 ,2025. [23] A. Torralba, P. Isola and W. T. Freeman, “Foundations of computer vision,” 1st ed. The MIT Press, Apr. 2024. [24] Z. Wang, Z. Zhou, C. J. Zhao, and Y. Liu, “Generative site-specific beamforming for next-generation spatial intelligence,” arXiv preprint arXiv:2601.02301 , 2026. [25] Z. Zhou, Z. Wang, and Y. Liu, “Beam-brainstorm: A generative site-specific beamforming approach,” arXiv preprint arXiv:2601.02219 , 2026. [26] C. Masouros and G. Zheng, “Exploiting known interference as green signal power for downlink beamforming optimization,” IEEE Trans. Signal Process. , vol. 63, no. 14, pp. 3628-3640, May. 2015. [27] C. J. Zhao, Z. Wang, and Y. Liu, “Generative site-specific beamforming via information-maximizing codebook,” arXiv preprint arXiv:2602.12552 , 2026. [28] J. Ho, A. Jain and P. Abbeel, “Denoising diffusion probabilistic models,” in Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) , vol. 33, pp. 6840-6851, Dec. 2020. [29] Y. Lipman, R. T. Chen, H. Ben-Hamu, M. Nickel, and M. Le, “Flow matching for generative modeling,” arXiv preprint arXiv:2210.02747 ,2022. [30] Z. Geng, M. Deng, X. Bai, J. Z. Kolter, and K. He, “Mean flows for one-step generative modeling,” arXiv preprint arXiv:2505.13447 , 2025. [31] Y. Guo, et al ., “Splitmeanflow: Interval splitting consistency in few-step generative modeling,” arXiv preprint arXiv:2507.16884 , 2025. [32] W. Peebles and S. Xie, “Scalable diffusion models with transformers,” 
+
+arXiv preprint arXiv:2212.09748 , 2023. [33] A. Alkhateeb, “DeepMIMO: A generic deep learning dataset for millimeter wave and massive MIMO applications,” arXiv preprint arXiv:1902.06435 , 2019. [34] J. Hoydis, et al ., “Sionna RT: Differentiable ray tracing for radio propagation modeling,” arXiv preprint arXiv:2303.11103 , 2023.

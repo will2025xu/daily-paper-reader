@@ -1,0 +1,135 @@
+Title: LSTM-Based Power Delay Profile Predictions for Intra-Bus Wireless Propagation
+
+URL Source: https://arxiv.org/pdf/2603.19707v1
+
+Published Time: Mon, 23 Mar 2026 00:34:18 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+The paper has been presented at the 2025 35th International Conference Radioelektronika (RADIOELEKTRONIKA), Hnanice, Czech Republic, May 12-14, 2025, https://doi.org/10.1109/RADIOELEKTRONIKA65656.2025.11008407 
+
+# LSTM-based Power Delay Profile Predictions for Intra-bus Wireless Propagation 
+
+Rajeev Shukla ∗, Atharva Verma ∗ Aniruddha Chandra ∗, Ondˇ rej Zelen´ y†, Radek Zavorka †, Jiri Blumenstein †,Aleˇ s Prokeˇ s†, Jarosław Wojtu´ n‡, Jan M. Kelner ‡, Cezary Ziolkowski ‡, Domenico Ciuonzo §∗ECE Department, NIT Durgapur, 713209 Durgapur, India (aniruddha.chandra@ieee.org) 
+
+> †
+
+Department of Radio Electronics, Brno University of Technology, 61600 Brno, Czech Republic 
+
+> ‡
+
+Institute of Communications Systems, Faculty of Electronics, Military University of Technology, Warsaw, Poland 
+
+> §
+
+Electrical Engineering and Information Technologies (DIETI), University of Naples Federico II, Naples, Campania, Italy 
+
+Abstract —Long/short-term memory (LSTM) is a deep learning model that can capture long-term dependencies of wireless channel models and is highly adaptable to short-term changes in a wireless environment. This paper proposes a simple LSTM model to predict the channel transfer function (CTF) for agiven transmitter-receiver location inside a bus for the 60 GHz millimetre wave band. The average error of the derived power delay profile (PDP) taps, obtained from the predicted CTFs, was less than 10% compared to the ground truth. 
+
+Index Terms —Channel characterisation, LSTM, millimetre wave. 
+
+I. I NTRODUCTION 
+
+Channel characterisation is critical to the design and op-timisation of wireless communication systems. It helps to understand the propagation of signals across the wireless chan-nel and mitigate the effect of fading, interference, delay, and pathloss. Channel characterisation using real-time measure-ment of channel characteristics (like pathloss, fading, power delay profile, delay spread, etc.) prompts the development of empirical, deterministic, and artificial intelligence (AI)-based channel models. These models are beneficial in the event of unavailability of measuring equipment, limited data sources, and lack of financial means, which makes generalising different channel environments difficult [1]. Empirical channel models are not dynamic, often neglect site-specific effects, and have limited accuracy in complex environments. AI and machine learning (ML), especially deep learning (DL)–based channel models, offer promising solutions for dynamic and complex channel environments. DL models provide more accurate predictions by learning from complex propagation patterns from real-time data, thereby adapting to changes in complex physical environments [2], [3]. II. P ROPOSED METHODOLOGY 
+
+With the advent of more connected and autonomous vehi-cles, channel characterisation inside a vehicle plays a pivotal role in optimising wireless channel performance. Highly re-flective metal surfaces and a cluttered physical environment cause significant multipath effects impacting signal strength and delay spread. There had been a renewed interest in millimetre-wave (mmWave) communication with unconven-tional use cases emerging recently [4]. The 60 GHz mmWave band made popular with IEEE 802.11ad/ay standards, allows multi-gigabyte wireless connectivity and uses compact high-gain antennas for wireless connectivity [5]. However, the 
+
+60 GHz band has limited penetration capability, which prevents external interference and thus provides seamless connectivity inside public transport vehicles like buses and trains or au-tonomous vehicles. Due to frequent signal variations and pro-nounced multipath components (MPCs), traditional analytical methods fail to capture the complex dynamic channel. Thus, AI-driven models can analyse real-world measurement data to predict PDPs or CTFs and improve the accuracy of tapped delay line (TDL) models or ray-tracing predictions. AI/ML can revolutionise channel characterisation and chan-nel modelling for the modern wireless communication system. The authors in paper [6], [7] argued in support of this claim. The authors first provided a comprehensive survey on using ML in channel characterisation and antenna optimisation in these papers. Then, they detailed channel scenario identifi-cation and channel modelling. Similar assertions were made in [8], where the authors explored the integration of AI and visible light communication to provide assistive solutions to improve navigation, avoid obstacles, and improve the overall quality of life of visually impaired people. The paper [9] gave an in-depth analysis of ML-based channel estimation for orthogonal frequency division multiplexing (OFDM) systems for limited training data. The findings in [10] suggested a recurrent neural network (RNN) hybrid with NeuralProphet to enhance the efficiency and reliability of forecasting channel state information. To make the AI applications more transpar-ent and trustworthy, authors in [11] proposed the integration of explainable AI (XAI) with DL models. The authors suggested an XAI-based channel estimation (XAI-CHEST) to estimate doubly-selective channels. Advancements in intelligent transportation systems, increas-ing autonomy of vehicles, and high bandwidth requiring user-friendly experience make it crucial to investigate in-vehicle wireless channel characteristics. However, studies on in-vehicle channel characterisation are limited to only a few specific scenarios. The most prominent direction of studies is private vehicles like cars and vans and public vehicles like buses and train wagons. In [12], authors presented 5GHz band channel characterisation inside a bus and a mini-van, This research was funded in part by the National Science Center (NCN), Poland, grant no. 2021/43/I/ST7/03294 (MubaMilWave). For this purpose of Open Access, the author has applied a CC-BY public copyright license to any Author Accepted Manuscript (AAM) version arising from this submission. 
+
+> arXiv:2603.19707v1 [eess.SP] 20 Mar 2026
+
+Fig. 1: Flow chart for CTF generation using a simple 2-layer LSTM model. whereas [13] studied the effect of topological impact on wireless sensor networks (WSNs) performance. The authors used an in-house developed 3D ray-tracing tool to study the channel behaviour in the absence and presence of human beings inside the bus for proper optimisation of the transceiver position. In another such use-case scenario, extensive real-time measurement [14], the authors measured the channel transfer function (CTF) inside a bus using 55 GHz - 65 GHz millimetre waves. Notably, these studies are confined to empirical and deterministic channel characterisation techniques and cannot thus adapt to any physical changes and are non-generalisable. III. LSTM-BASED CTF FROM MEASUREMENT DATA 
+
+The current authors investigated the behaviour of wireless channels inside a bus in an extensive measurement campaign at Brno University, Czech Republic, and reported it in [14]– [16]. Analysis of measurements suggested that traditional methods could not accurately capture the highly clustered intra-vehicular channel environment and thus became less effective in interpolating and extrapolating [17] PDP beyond the measured data set. LSTMs are designed for sequential data and can cap-ture temporal dependencies. CTFs for mmWaves are highly frequency-dependent due to their highly dispersive nature. LSTMs can learn the correlation between CTFs and frequency and capture variations across different transmitter-receiver (TX -RX ) distances in the intra-vehicular cluttered channel scenario. Motivated by the need for accurate channel mod-elling at millimetre-wave (mmWave) frequencies, the authors propose an LSTM-based CTF prediction model to forecast CTFs in the 55–65 GHz mmWave band. This LSTM-based prediction follows a supervised learning approach, utilising measurement data from the authors’ own measurement cam-paigns reported in [14]–[16]. The dataset comprises CTF mea-surements collected over various TX -RX distances within the 55–65 GHz frequency range. The predicted CTFs are analysed using the TDL model, which is subsequently employed for bit-error-rate (BER) calculation. The LSTM model requires sequential data for prediction. The proposed LSTM model takes a simplistic approach to predicting the CTFs using only two physical parameters as input. The first parameter for the LSTM model is the frequency Algorithm 1: Hyperparameter tuning for LSTM model  
+
+> 1
+
+for layer 1 ← 20 to 100 do  
+
+> 2
+
+for layer 2 ← 2 to 9 do  
+
+> 3
+
+Initialization : Random seed , model ← N one ,epochs ← e 
+
+> 4
+
+Create layer 1: Add LSTM layer, activate ReLU, enable return sequence  
+
+> 5
+
+Create layer 2: Add LSTM layer, activate ReLU, disable return sequence  
+
+> 6
+
+Create dense layer : Add output dense layer with 1 unit  
+
+> 7
+
+Compile model : MSE loss, Adam optimiser  
+
+> 8
+
+Set : batch size ← 20 , disable shuf f le  
+
+> 9
+
+Train model  
+
+> 10
+
+Calculate : loss train , loss test  
+
+> 11
+
+end  
+
+> 12
+
+end  
+
+> 13
+
+Select : {layer 1, layer 2, e}| min :loss train,loss test 
+
+parameter, where 55 GHz-65 GHz frequency band with a step size of 10 MHz is taken to learn the sequential variations in the data, as we have a data point for each frequency step. The measurements were taken for various TX -RX distances, 
+
+d ∈ { 1.18 m, 1.47 m, 1.66 m, 2.24 m, 2.35 m, 3.66 m, 5.12 m, 
+
+5.16 m, 6.66 m, 6.76 m, 8.18 m, 9.36 m and 9.72 m}, to capture the variations across distances (refer to top-right corner of Fig.1). Next, we describe the methodology of hyperparameter tun-ing through Algorithm 1. We opted for two LSTM layers, where the first LSTM returns sequences, and the second layer is to learn from the sequence returned by the first layer and returns a single output per cell to the third ANN layer. After optimisation, the combination of hyperparameters with minimum test loss was considered. As far as the architectural specifications are concerned, the number of LSTM cells in the first and second layers were 100 and 9, respectively. On the other hand, the training specifications are as follows. We used Adam optimizer, and the number of epochs and batch size were decided to be 94 and 20. After proper hyperparameter tuning, the tuned LSTM net-work is trained using the training datasets and the trained network is tested on two unused databases. The test subjects have distances of 3.7m and 9.75 m, implicating the usefulness of the LSTM-based model for interpolation and extrapolation for new frequency-distance pairs. IV. R ESULTS AND DISCUSSION 
+
+The authors used the proposed LSTM model to predict the CTFs from variations in frequency and distance. Figs. 3, 4, and 5, illustrate a comparative analysis between measured and predicted CTFs, PDPs and TDL models for different TX -RX
+
+distances. The comparison between measured CTFs and predicted CTFs in Fig. 2 shows the ability of LSTM to follow the general trend of measured CTF data, especially in the lower frequency regions. The measured data’s general trend rep-resents the multipath components’ general decay behaviour over time delay and is helpful for modelling and performance evaluation purposes. The trend captures the overall shape of the PDP, suppressing the influence of small-scale fading and measurement noise. Notably, the predicted CTFs smoothen the fluctuations in measured CTFs caused by the multipath effect of the channel environment. The CTF values from measured and predicted CTF data generate channel impulse response (CIR), as explained in Fig. 1. The PDP values from the LSTM model preserve the power distribution trend of the measured data in Fig. 3. Similar to the case of CTFs, LSTM-based PDPs try to smooth the high-frequency multipath fading effects. The predicted PDP curve retains the channel characteristics, though some deviations can be observed at higher delays due to multipath fading and noise. Fig. 4 further analyses the CIRs for the LSTM model in terms of the TDL model. The bottom error plot between the CIRs of the measured average trend and the LSTM-predicted shows an acceptable deviation (≤ 10%) at different delay taps, validating the ability of LSTM to capture the CIRs. The error matrix in table I supports the validation. The TDL model is applied to simulate the channel, and BER is calculated in Fig. 5. The graphs show that the BER drop rate gets slower for the measured TDL as the distance between TX -RX increases. This is probably due to stronger multipath and deep fades, which results in a more extensive delay spread. The BER from the LSTM model is closer to the measured TDL for smaller distances. This indicates that a more substantial line-of-sight component and lower delay spread contribute to overcoming multipath effects. The BER analysis and error matrix signifies that LSTM successfully learned the channel characteristics and can be used for new TX -RX pairs. The results also show that the performance of the presented model weakens in severe fading conditions, and more training datasets and training features can be included for better learning. TABLE I: Average error across the taps of the PDPs (measured vs. trend, measured vs. predicted, and trend vs. predicted).                            
+
+> Type of PDPs compared d= 3 .7md= 9 .75 mRMSE R2RMSE R2
+> measured vs. trend 3.12 0.84 1.88 0.95
+> measured vs. predicted 7.96 0.47 3.04 0.78
+> trend vs. predicted 6.80 0.68 3.14 0.77
+
+V. C ONCLUSION 
+
+A simple LSTM-based model is presented here to predict CTFs in an intra-vehicular channel environment. The proposed model learned from highly clustered complex channel condi-tions inside the bus and could predict CTFs for unmeasured 
+
+TX -RX distances. PDP, TDL and BER-based analysis between the measured and predicted CTFs are provided to support the (a) TX -RX distance = 3.7m. (b) TX -RX distance = 9.75m. 
+
+Fig. 2: Comparison between measured channel gain and LSTM predicted CTFs at different TX -RX distances.        
+
+> (a) TX-RXdistance = 3.7m. (b) TX-RXdistance = 9.75m.
+
+Fig. 3: Comparison between measured and LSTM predicted PDPs at different TX -RX distances.        
+
+> (a) TX-RXdistance = 3.7m. (b) TX-RXdistance = 9.75m.
+
+Fig. 4: Comparison between measured and LSTM predicted TDLs at different TX -RX distances. (a) TX -RX distance = 3.7m. (b) TX -RX distance = 9.75m. 
+
+Fig. 5: Comparison between measured and LSTM predicted BER at different TX -RX distances. proposed model. The authors observed that the results are close to the average trend of the measured data, indicating that such models are suitable for interpolation and extrapolating new 
+
+TX -RX distance points. ACKNOWLEDGEMENT 
+
+This work was developed within a framework of the re-search grants: project no. 23-04304L sponsored by the Czech Science Foundation, MubaMilWave no. 2021/43/I/ST7/03294 funded by the National Science Centre, Poland, under the OPUS call in the Weave programme, grant no. UGB/22-748/2024/WAT sponsored by the Military University of Tech-nology, and chips-to-startup (C2S) program no. EE-9/2/2021-R&D-E sponsored by MeitY, Government of India. REFERENCES [1] X. Yin and X. Cheng, Characterization of Propagation Channels .Wiley, 2016, pp. 15–40. [2] A. Seretis and C. D. Sarris, “Toward physics-based generalizable con-volutional neural network models for indoor propagation,” IEEE Trans. Antennas Propag , vol. 70, no. 6, pp. 4112–4126, Jun. 2022. [3] ——, “An overview of machine learning techniques for radiowave propagation modeling,” IEEE Trans. Antennas Propag , vol. 70, no. 6, pp. 3970–3985, Jun. 2022. [4] S. Sambhwani, H. Chae, S.-E. Chiu, B. Fan, I. Sarkas, W. Sun, J. Zhou, and X. Zhu, “Extending mmWave deployment in the next-generation network: Coverage and reliability enhancements,” IEEE Wireless Com-mun. , vol. 32, no. 1, pp. 83–89, Feb. 2025. [5] Research and Markets. (2025, Jan.) Global WiGig industry booms: Next-gen wireless connectivity fuels 27.5% cagr through 2029. GlobeNewswire. [Online]. Available: https:// www.globenewswire.com/news-release/2025/01/03/3003840/28124/en/ Global-WiGig-Industry-Booms-Next-Gen-Wireless-Connectivity-Fuels-27-5-CAGR-Through-2029. html [6] C. Huang, R. He, B. Ai, A. F. Molisch, B. K. Lau, K. Haneda, B. Liu, C.-X. Wang, M. Yang, C. Oestges, and Z. Zhong, “Artificial intelli-gence enabled radio propagation for communications—part i: Channel characterization and antenna-channel optimization,” IEEE Transactions on Antennas and Propagation , vol. 70, no. 6, pp. 3939–3954, 2022. [7] ——, “Artificial intelligence enabled radio propagation for communi-cations—part ii: Scenario identification and channel modeling,” IEEE Transactions on Antennas and Propagation , vol. 70, no. 6, pp. 3955– 3969, 2022. [8] Q.-V. Pham, N. T. Nguyen, T. Huynh-The, L. Bao Le, K. Lee, and W.-J. Hwang, “Intelligent radio signal processing: A survey,” IEEE Access ,vol. 9, pp. 83 818–83 850, 2021. [9] K. Mei, J. Liu, X. Zhang, N. Rajatheva, and J. Wei, “Performance anal-ysis on machine learning-based channel estimation,” IEEE Transactions on Communications , vol. 69, no. 8, pp. 5183–5193, 2021. [10] M. K. Shehzad, L. Rose, M. F. Azam, and M. Assaad, “Real-time massive mimo channel prediction: A combination of deep learning and neuralprophet,” in GLOBECOM 2022 - 2022 IEEE Global Communi-cations Conference , 2022, pp. 1423–1428. [11] A. K. Gizzini, Y. Medjahdi, A. J. Ghandour, and L. Clavier, “Towards explainable ai for channel estimation in wireless communications,” IEEE Transactions on Vehicular Technology , vol. 73, no. 5, pp. 7389–7394, 2024. [12] D. W. Matolak and A. Chandrasekaran, “5 ghz intra-vehicle channel characterization,” in 2012 IEEE Vehicular Technology Conference (VTC Fall) , Larnaca, Cyprus, 2012, pp. 1–5. [13] L. Azpilicueta, P. L´ opez Iturri, E. Aguirre, J. J. Astrain, J. Villadangos, C. Zubiri, and F. Falcone, “Characterization of wireless channel impact on wireless sensor network performance in public transportation buses,” 
+
+IEEE Transactions on Intelligent Transportation Systems , vol. 16, no. 6, pp. 3280–3293, 2015. [14] A. Chandra, T. Mikulasek, J. Blumenstein, and A. Prokes, “60 GHz mmW channel measurements inside a bus,” in Proc. IEEE IFIP NTMS ,Larnaca, Cyprus, Nov. 2016, pp. 1–5. [15] A. Chandra, A. U. Rahman, U. Ghosh, J. A. Garc´ ıa-Naya, A. Prokeˇ s, J. Blumenstein, and C. F. Mecklenbr¨ auker, “60-ghz millimeter-wave propagation inside bus: Measurement, modeling, simulation, and per-formance analysis,” IEEE Access , vol. 7, pp. 97 815–97 826, 2019. [16] A. U. Rahman, U. Ghosh, A. Chandra, and A. Prokes, “Channel Modelling for 60GHz mmWave Communication Inside Bus,” in Proc. 2018 IEEE VNC , Taipei, Taiwan, Dec. 2018, pp. 1–6. [17] R. Shukla, A. N. Sarkar, A. Chandra, J. M. Kelner, C. Ziolkowski, T. Mikulasek, and A. Prokes, “A simple ANN-MLP model for estimating 60-GHz PDP inside public and private vehicles,” EURASIP Journal on Wireless Communications and Networking , vol. 2023, no. 1, p. 47, Jun. 2023.

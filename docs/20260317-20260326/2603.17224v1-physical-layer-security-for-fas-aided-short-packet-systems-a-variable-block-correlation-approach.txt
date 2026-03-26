@@ -1,0 +1,1613 @@
+Title: Physical Layer Security for FAS-Aided Short-Packet Systems: A Variable Block-Correlation Approach
+
+URL Source: https://arxiv.org/pdf/2603.17224v1
+
+Published Time: Thu, 19 Mar 2026 00:30:48 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# Physical Layer Security for FAS-Aided Short-Packet Systems: A Variable Block-Correlation Approach 
+
+Jianchao Zheng, Tuo Wu, Kai-Kit Wong, Fellow, IEEE , Baiyang Liu, Runyu Pan, Maged Elkashlan, Kin-Fai Tong, Fellow, IEEE , Hyundong Shin, Fellow, IEEE , and Sumei Sun, Fellow, IEEE 
+
+Abstract —This paper presents a comprehensive physical layer security (PLS) framework for fluid antenna system (FAS)-aided short-packet communications under the variable block-correlation model (VBCM). We consider a downlink wiretap scenario in which a base station transmits confidential short packets to a legitimate receiver user (RU) in the presence of an eavesdropper user (EU), where both the RU and EU are equipped with fluid antennas. Unlike existing FAS security analyses that rely on constant block-correlation models or infinite-blocklength assumptions, we incorporate the VBCM to accurately capture the non-uniform spatial correlation structure inherent in practical FAS deployments. By employing a piecewise linear approximation of the decoding error probability and Gauss-Chebyshev quadra-ture, we derive closed-form and asymptotic expressions for the average achievable secrecy throughput (AAST). We further prove that the AAST is monotonically non-decreasing in the number of RU ports, which reduces the three-dimensional joint optimization of transmit power, blocklength, and port number to a two-dimensional grid search (GS). Numerical results demonstrate that the FAS-aided system achieves up to an order-of-magnitude secrecy throughput improvement over conventional fixed-position antenna systems, and reveal that blocklength selection is the most critical design parameter in the joint optimization. 
+
+Index Terms —Fluid antenna system (FAS), physical layer se-curity (PLS), variable block-correlation model (VBCM), average achievable secrecy throughput (AAST), grid search (GS). 
+
+I. I NTRODUCTION 
+
+# THE evolution of wireless communications towards sixth-generation (6G) networks demands cutting-edge tech-nologies that simultaneously deliver ultra-high reliability, low latency, and stringent security guarantees [ 1]. Among the transformative applications envisioned for 6G, ultra-reliable 
+
+(Corresponding author: Tuo Wu. )J. Zheng is with the School of Computer Science and Engineering, Huizhou University, Huizhou 516007, China (E-mail: zhengjch@hzu .edu .cn ). T. Wu is with the Department of Electrical Engineering, City University of Hong Kong, Hong Kong, China (E-mail: tuowu2@cityu .edu .hk ). R. Pan is with the School of Computer Science and Technology, Shandong University, Qingdao 266237, China (E-mail: rypan@sdu .edu .cn ). K.-K. Wong is with the Department of Electronic and Electrical Engineer-ing, University College London, WC1E7JE London, U.K., and is also affiliated with the Department of Electronic Engineering, Kyung Hee University, Yongin-si, Gyeonggi-do 17104, Korea. (E-mail: kai -kit .wong@ucl .ac .uk ). B. Liu and K. F. Tong are with the School of Science and Technology, Hong Kong Metropolitan University, Hong Kong SAR, China (E-mail: 
+
+{byliu , ktong }@hkmu .edu .hk ). M. Elkashlan is with Queen Mary University of London, United Kingdom (E-mail: maged .elkashlan@qmul .ac .uk ). H. Shin is with the Department of Electronics and information Convergence Engineering, Kyung Hee University, Yongin-si.Gyeonggi-do 17104, Republic of Korea (E-mail: hshin@khu .ac .kr ). S. Sun is with the Institute for Infocomm Research (I2R), A*STAR, Singapore (E-mail: sunsm@a -star .edu .sg ). 
+
+low-latency communications (URLLC) and mission-critical Internet-of-Things (IoT) rely fundamentally on short-packet transmissions, where finite blocklength effects introduce an irreducible decoding error probability that departs significantly from the classical Shannon capacity [ 2]. In addition, advanced enabling techniques such as high-precision localization [ 3], [4], [ 5], intelligent resource management [ 6], and integrated sensing and communication (ISAC) [ 7] are also pivotal to realizing 6G visions. As these short-packet applications pro-liferate in security-sensitive domains—including autonomous vehicles, remote surgery, and industrial control—ensuring the confidentiality of short-packet transmissions has emerged as a critical and urgent research challenge. Massive multiple-input multiple-output (MIMO) serves as a cornerstone of contemporary fifth-generation (5G) networks, exploiting a large number of antennas for spatial diversity [8]. However, its performance is fundamentally limited by the number of available radio-frequency (RF) chains at the terminals, while rising hardware costs, power consumption, and operational complexity pose substantial scalability chal-lenges. Fluid antenna systems (FAS) [ 9], [ 10 ], [ 11 ], [ 12 ], [13 ], sometimes referred to movable antennas [ 14 ], [15 ], have emerged as a paradigm-shifting solution that overcomes these limitations [ 16 ], [ 17 ], [ 18 ], [ 19 ], [ 20 ], [ 21 ], [ 22 ], [ 23 ], [24 ], [ 25 ], [ 26 ], [ 27 ], [ 28 ], [ 29 ], [ 30 ], [ 31 ], [ 32 ], [ 33 ], [ 34 ], [35 ]. The broader FAS framework encompasses electronically switchable arrays [ 36 ], [ 37 ], reconfigurable metasurfaces [ 38 ], and spatially distributed antenna pixels [ 39 ], enabling dynamic control of spatial radiating points to enhance the degrees of freedom (DoFs) far beyond conventional fixed-position antenna (FPA) arrays [ 13 ]. Physical layer security (PLS) has received considerable attention as a key technique for securing wireless communica-tions without relying on cryptographic keys [ 40 ], [ 41 ]. Within the FAS paradigm, PLS introduces both distinct challenges and novel opportunities: the intelligent port selection mechanism of FAS enables the legitimate user to exploit spatial diversity for secrecy enhancement, while the eavesdropper may also benefit from similar reconfigurability. These aspects have been investigated in several recent studies [ 42 ], [ 43 ], [ 44 ], [45 ], [ 46 ], [ 47 ], [ 48 ], [ 49 ], [ 50 ]. Nonetheless, existing FAS security analyses predominantly operate under two simplify-ing assumptions: (i) infinite blocklength (Shannon capacity), which overlooks the finite blocklength effects inherent in short-packet transmissions, and (ii) constant block-correlation models (BCM), which assume uniform correlation coefficients across all channel blocks. 
+
+> arXiv:2603.17224v1 [eess.SP] 18 Mar 2026 2
+
+The accuracy of spatial correlation modeling is critical for FAS security analysis, as the correlation structure directly governs the channel statistics of both the legitimate receiver and the eavesdropper, thereby determining the secrecy capacity and outage performance. The N ×N channel covariance matrix of FAS exhibits a Toeplitz structure that renders exact analyt-ical treatment intractable [ 51 ]. To enable tractable analysis, spatial block-correlation models (BCM) have been proposed, which partition the Toeplitz-structured covariance matrix into 
+
+D independent blocks, each characterized by a correlation coefficient [ 19 ], [ 20 ]. While the original work [ 19 ] recognized that allowing correlation coefficients to vary across different blocks could in principle yield better approximation accuracy, it focused on the practically simpler constant BCM—where a single uniform coefficient is shared by all blocks—to avoid the exponential DN −D search complexity of the general variable case. However, the constant BCM suffers from fundamental limitations, especially in compact FAS deployments. When the number of ports N is small (e.g., N < 20 ), the eigenvalue distribution of the Toeplitz covariance matrix lacks signifi-cant sparsity, meaning that the differences between individual eigenvalues are not negligible and each port substantially influences the overall channel statistics. Forcing a uniform correlation coefficient across all blocks in such settings fails to capture the non-uniform intra-block correlation structure, leading to significant approximation errors that are particularly detrimental in security-sensitive applications where modeling inaccuracies translate directly to over- or under-estimation of the secrecy throughput [ 51 ], [ 52 ], [ 53 ]. To address this fundamental limitation, the variable block-correlation model (VBCM) was recently established in [ 54 ], which allows the correlation coefficient to vary across different blocks. By leveraging rigorous eigenvalue analysis, [ 54 ] derives closed-form expressions for the optimal block-specific correlation coefficients and develops a low-complexity algorithm that reduces the search complexity from the exponential DN −D
+
+to a linear (N − D) × D procedure, achieving substantially lower approximation error compared to the constant BCM. The convergence of FAS, short-packet communications, and PLS creates a compelling yet largely unexplored research direction. From a practical standpoint, many security-critical 6G applications—such as URLLC-based industrial control, autonomous driving, and remote healthcare—inherently re-quire short-packet transmissions, making the finite blocklength regime the natural operating condition rather than an edge case. Moreover, FAS is uniquely suited to enhance short-packet security: the port selection diversity of FAS provides a spatial DoF that can significantly reduce the decoding error probability at the legitimate receiver while maintaining a statistical advantage over the eavesdropper. Unlike the infinite blocklength regime, where secrecy is determined solely by the signal-to-noise ratio (SNR) gap, the short-packet regime introduces a channel dispersion penalty √VR/M that ampli-fies the sensitivity of the secrecy throughput to the channel quality—making the diversity gain from FAS port selection even more valuable. Furthermore, the VBCM is essential (not merely beneficial) for this analysis. In particular, when the number of antenna ports is limited (typically N < 20 ), the constant BCM’s inability to capture non-uniform intra-block correlations can produce substantial errors in the predicted secrecy throughput. Overly optimistic models may lead to dangerously under-designed systems, while overly pessimistic models result in unnecessarily conservative—and therefore inefficient—resource allocation. By assigning block-optimal correlation coefficients derived from eigenvalue analysis [ 54 ], the VBCM provides a reliable and tractable characterization of the correlated FAS channel that is indispensable for accurate short-packet security design [ 19 ], [ 51 ]. Despite the strong motivation, the integration of VBCM into FAS short-packet security analysis poses formidable analytical challenges. First , the VBCM’s multi-block cumulative distri-bution function (CDF) product structure, combined with the Gaussian Q-function from finite blocklength theory, results in complex nested integrals over Marcum Q-functions and multi-dimensional probability distributions that do not admit closed-form solutions. Second , the piecewise linear approximation of the decoding error probability partitions the integration domain into multiple regions whose boundaries are implicit functions of the eavesdropper’s SNR, requiring careful case-by-case analysis and numerical root-finding. Third , the joint optimization of transmit power P , blocklength M , and port number NR constitutes a mixed-integer non-convex program, where NR is discrete and the average achievable secrecy throughput (AAST) is non-monotonic in both M and the number of information bits m, giving rise to a complex multi-modal optimization landscape. To overcome these challenges, this paper develops a com-prehensive analytical and optimization framework for FAS-aided secure short-packet communications under the VBCM. Our key approach involves: (i) deriving closed-form AAST expressions by combining the piecewise linear approxima-tion of the decoding error probability with Gauss-Chebyshev quadrature for efficient numerical integration; (ii) obtaining asymptotic AAST expressions in the high-SNR regime that provide design insights and enable low-complexity optimiza-tion; and (iii) proving a monotonicity property of the AAST with respect to NR, which reduces the three-dimensional optimization to a two-dimensional grid search (GS). Our framework fundamentally differs from prior FAS security works [ 44 ], [ 45 ], [ 46 ], [ 47 ], [ 48 ] in three aspects: it replaces the constant BCM with the more accurate VBCM, it operates in the practically relevant finite blocklength regime rather than the Shannon limit, and it jointly optimizes all three key system parameters with provable convergence guarantees. The primary contributions of this work are summarized as follows:  
+
+> •
+
+VBCM-Based Security Analysis Framework: We estab-lish the first analytical framework for FAS-aided secure short-packet communications under the VBCM. By em-ploying a piecewise linear approximation of the decoding error probability and Gauss-Chebyshev quadrature, we derive closed-form expressions for the AAST that jointly account for the variable spatial correlation structure and finite blocklength effects. Asymptotic AAST expressions are further obtained in the high-SNR regime, providing tractable design guidelines. 3 
+
+> •
+
+Structural Properties and Dimensionality Reduction: 
+
+We prove that the asymptotic AAST is monotonically non-decreasing in NR (Proposition 1), which yields the corollary that the optimal port number is always 
+
+N ∗ 
+
+> R
+
+= Nmax . This structural result reduces the original three-dimensional mixed-integer optimization to a two-dimensional continuous search, significantly lowering computational complexity.  
+
+> •
+
+Joint Optimization with Convergence Guarantees: We develop a GS optimization algorithm to jointly optimize the transmit power, blocklength, and port number for maximizing the secrecy throughput. The algorithm is equipped with a theoretical convergence analysis based on Lipschitz continuity, providing explicit error bounds and minimum grid resolution requirements.  
+
+> •
+
+Comprehensive Design Insights: Through extensive nu-merical analysis, we reveal that (i) FAS achieves up to an order-of-magnitude secrecy throughput gain over conventional FPA systems, (ii) blocklength selection is the most critical design parameter, (iii) the secrecy gain is governed by the port count asymmetry NR/N E rather than absolute port numbers, and (iv) FAS port diversity is most effective in the moderate-SNR regime. The remainder of this paper is organized as follows. Sec-tion II introduces the system model for FAS-enabled secure communication and the channel correlation model. Section III presents the security analysis framework, including the deriva-tion of the AAST and asymptotic AAST expressions. Sec-tion IV details the optimization algorithm for FAS security enhancement. Section V provides numerical results and per-formance validation. Finally, Section VI concludes the paper. II. S YSTEM MODEL 
+
+We consider a wireless downlink secure short-packet com-munication system, in which a single-antenna base station (BS) transmits confidential information to a legitimate receiver user (RU) in the presence of an eavesdropper user (EU). Both the RU and the EU are equipped with one-dimensional linear fluid antennas capable of switching among NR and NE discrete ports, respectively, within a linear space of W λ , where W
+
+denotes the normalized antenna size and λ is the carrier wavelength. We assume quasi-static block fading channels, where the channel coefficients remain constant within each transmission block but vary independently across different blocks. 
+
+A. Signal Model 
+
+The BS transmits the signal s ∼ CN (0 , 1) to the RU with transmit power P . The signals received at the k-th port of the RU and the j-th port of the EU are respectively given by 
+
+yR,k = √P g R,k d− aR 
+
+> 2
+> R
+
+s + nR,k , k ∈ { 1, . . . , N R}, (1) 
+
+yE,j = √P g E,j d− aE 
+
+> 2
+> E
+
+s + nE,j , j ∈ { 1, . . . , N E }, (2) where gR,k ∼ CN (0 , η R) and gE,j ∼ CN (0 , η E ) denote the complex Gaussian channel coefficients from the BS to the 
+
+k-th port of the RU and the j-th port of the EU, respec-tively, with ηR and ηE representing the corresponding average channel power gains. In addition, nR,k ∼ CN (0 , σ 2
+
+> R
+
+) and 
+
+nE,j ∼ CN (0 , σ 2 
+
+> E
+
+) represent the additive white Gaussian noise (AWGN) at the RU and the EU, respectively. Moreover, dR
+
+and dE denote the distances from the BS to the RU and the EU, respectively, and aR and aE are the path-loss exponents for the RU and the EU links, respectively. By exploiting the spatial diversity offered by the fluid antenna, both users select the optimal port that maximizes the channel amplitude gain, i.e., 
+
+i∗ = arg max   
+
+> k∈{ 1,...,N R}
+
+|gR,k |,j∗ = arg max   
+
+> j∈{ 1,...,N E}
+
+|gE,j |. (3) Accordingly, the maximum channel amplitude gains at the RU and the EU are defined as αR = |gR,i ∗ | and αE = |gE,j ∗ |,respectively. The instantaneous signal-to-noise ratios (SNRs) at the selected ports of the RU and the EU are then given by 
+
+γR = P d −aR
+
+> R
+
+σ2
+
+> R
+
+α2
+
+> R
+
+, γE = P d −aE
+
+> E
+
+σ2
+
+> E
+
+α2 
+
+> E
+
+. (4) 
+
+B. FAS Channel Correlation Model 
+
+Due to the small spacing between adjacent ports of the fluid antenna, the channel coefficients are spatially corre-lated. The channel vector of the RU is defined as gR =[gR, 1, . . . , g R,N R ]T ∼ CN (0, ΣR), where ΣR = E[gRgHR ]
+
+is the covariance matrix. Following the Jakes model [ 36 ], the 
+
+(k, l )-th entry of the normalized correlation matrix is given by 
+
+[R]k,l = J0
+
+( 2π|k − l|W
+
+NR − 1
+
+)
+
+, (5) where J0(·) denotes the zero-order Bessel function of the first kind. Thus, the covariance matrix of the RU can be expressed as 
+
+ΣR = ηR
+
+
+
+1 [R]1,2 · · · [R]1,N R
+
+[R]1,2 1 · · · [R]2,N R
+
+... . . . ...
+
+[R]1,N R [R]2,N R · · · 1
+
+ , (6) which exhibits a symmetric Toeplitz structure. Similarly, the channel vector of the EU is defined as gE =[gE, 1, . . . , g E,N E ]T ∼ CN (0, ΣE ), where ΣE = ηE RE and 
+
+[RE ]i,j = J0
+
+( 2π|i−j|W 
+
+> NE−1
+
+)
+
+.III. S ECURITY THROUGHPUT OF FAS C OMMUNICATION 
+
+In this section, we derive the closed-form and asymptotic expressions for the average achievable secrecy throughput (AAST) of the considered FAS-aided secure short-packet communication system. 4
+
+A. Achievable Secrecy Rate and Performance Metrics Under Finite Blocklength 
+
+Based on the SNR expressions in ( 4), the achievable secrecy rate under finite blocklength can be approximated as [ 48 ]
+
+R(M, ǫ, δ ) = CS −
+
+√ VR
+
+MQ−1(ǫ)
+
+ln 2 −
+
+√ VE
+
+MQ−1(δ)
+
+ln 2 , (7) conditioned on γR > γ E (otherwise the secrecy rate is zero), where M denotes the blocklength, ǫ is the decoding error probability at the RU, and δ represents the information leakage level. Here, Cs = log 2(1 + γR) − log 2(1 + γE ) is the secrecy capacity, VR = 1 − (1 + γR)−2 and VE = 1 − (1 + γE )−2 are the channel dispersions at the RU and the EU, respectively, and Q−1(·) denotes the inverse of the Gaussian Q-function 
+
+Q(x) = ∫ ∞ 
+
+> x
+> 1√2π
+
+e− t2 
+
+> 2
+
+dt .The BS transmits m information bits to the RU. Given the blocklength M , the transmission rate is R = m/M . The decoding error probability ǫ is given by 
+
+ǫ = Q
+
+(√ M
+
+VR
+
+(
+
+ln 1 + γR
+
+1 + γE
+
+−
+
+√ VE
+
+M Q−1(δ) − m
+
+M ln 2 
+
+)) 
+
+,
+
+(8) for γR > γ E . When γR ≤ γE , the secrecy capacity is zero and we simply set ǫ = 1 for this trivial case. The average achievable secrecy throughput can be expressed as 
+
+T = EγR ,γ E
+
+[ m
+
+M (1 − ǫ)
+
+]
+
+= m
+
+M (1 − EγR ,γ E [ǫ]) , (9) where EγR ,γ E [ǫ] denotes the average decoding error probabil-ity. 
+
+B. Variable Block-Correlation Model and Channel Statistics Distribution 
+
+To evaluate ( 9), the statistical distributions of γR and γE
+
+are required. However, direct analysis based on the Toeplitz covariance matrix Σ is analytically intractable. To address this, we follow [ 50 ], [ 54 ] and employ the variable block-correlation model (VBCM) as a mathematically tractable ap-proximation. Specifically, the VBCM partitions the N × N
+
+Toeplitz covariance matrix into D independent blocks, where, unlike the conventional constant BCM [ 19 ] that assigns a single uniform coefficient to all blocks, the VBCM assigns each block d its own optimal correlation coefficient ρd derived from closed-form eigenvalue analysis [ 54 ]. This block-specific parameterization accurately captures the non-uniform spatial correlation structure, reducing approximation error from the exponential DN −D brute-force search to a linear (N −D)×D
+
+procedure [ 54 ]. Under the VBCM framework [ 50 ], the overall CDF of the user’s maximum channel amplitude is expressed as the product of individual block CDFs, i.e., 
+
+Fα(x) = 
+
+> D
+
+∏
+
+> d=1
+
+Fαd (x), (10) where 
+
+Fαd (x) = 
+
+∫ ∞
+
+> 0
+
+[
+
+1 − Q1
+
+( θ
+
+σd
+
+, x
+
+σd
+
+)] Ld 2θ
+
+ηρ d
+
+e− θ2 
+
+> ηρ d
+
+dθ. (11) Here, Q1(·, ·) denotes the first-order Marcum Q-function [ 56 ], 
+
+ρd ∈ [0 , 1] is the variable correlation coefficient for block 
+
+d, η is the average channel power gain, D is the number of independent blocks with sizes {Ld}Dd=1 satisfying ∑Dd=1 Ld =
+
+N , and σd = √η(1 − ρd)/2.The corresponding PDF is obtained by differentiating ( 10 )with respect to x, yielding 
+
+fα(x) = 
+
+> D
+
+∑
+
+> d=1
+
+fαd (x)
+
+> D
+
+∏ 
+
+> j=1 ,j 6=d
+
+Fαj (x)
+
+ , (12) where fαd (x) = d 
+
+> dx
+
+Fαd (x) represents the PDF of the maxi-mum amplitude in block d.
+
+C. SNR Statistics Derivation 
+
+Based on the VBCM channel statistics derived above, we now obtain the CDF and PDF of the SNRs at the RU and the EU. For notational convenience, we define the average SNRs as ¯γR , P d −aR 
+
+> R
+
+/σ 2 
+
+> R
+
+and ¯γE , P d −aE 
+
+> E
+
+/σ 2 
+
+> E
+
+, so that 
+
+γR = ¯ γRα2 
+
+> R
+
+and γE = ¯ γE α2 
+
+> E
+
+from ( 4). The CDF of γR is obtained by a direct transformation as 
+
+FγR (z) = Pr (¯γRα2 
+
+> R
+
+≤ z) = FαR
+
+(√ z
+
+¯γR
+
+)
+
+. (13) Differentiating ( 13 ) with respect to z via the chain rule yields the PDF of γR:
+
+fγR (z) = d
+
+dz FαR
+
+(√ z
+
+¯γR
+
+)
+
+= 1
+
+2√¯γR z fαR
+
+(√ z
+
+¯γR
+
+)
+
+. (14) Similarly, the CDF of γE is given by 
+
+FγE (y) = FαE
+
+(√ y
+
+¯γE
+
+)
+
+, (15) and the corresponding PDF is 
+
+fγE (y) = 1
+
+2√¯γE y fαE
+
+(√ y
+
+¯γE
+
+)
+
+. (16) 
+
+Remark 1 (FAS Diversity and Security Implications): The derived SNR statistics in ( 13 )–( 16 ) reveal the fundamental role of FAS in secure communications. From ( 10 ), the CDF 
+
+FαR (x) = ∏Dd=1 Fαd (x) is a product of D block CDFs, each satisfying Fαd (x) ≤ 1. As the number of RU ports NR
+
+increases (and correspondingly D or Ld), FαR (x) decreases for a given x, which shifts the SNR distribution FγR (z)
+
+toward higher values. This is equivalent to a spatial diversity gain achieved through port selection, even with a single RF chain. In contrast, increasing NE shifts FγE (y) toward higher SNR values for the eavesdropper, degrading the secrecy per-formance. Consequently, the secrecy throughput is governed by the asymmetry between the legitimate and eavesdropping channels: a favorable secrecy condition requires ¯γR/¯γE ≫ 1
+
+or NR ≫ NE to ensure that γR statistically dominates γE .This insight provides a design guideline that the RU should be equipped with significantly more FAS ports than the EU to guarantee a positive secrecy throughput. 5
+
+D. Derivation of Secrecy Throughput 
+
+In this subsection, we derive the AAST defined in ( 9). Since 
+
+ǫ = 1 when γR ≤ γE , the average decoding error probability can be written as 
+
+EγR ,γ E [ǫ] = 
+
+∫ ∞
+
+> 0
+
+fγE (y)
+
+∫ ∞
+
+> y
+
+ǫγR |γE =y fγR (x) dx dy, (17) for γR > γ E ; otherwise EγR ,γ E [ǫ] = 1 for γR ≤ γE .The integral in ( 17 ) does not admit a closed-form solution. To circumvent this difficulty, we employ the linear approxi-mation of ǫ as follows [ 48 ]. 
+
+ǫγR|γE ≈ ˆǫ ,
+
+
+
+1; γR ≤ v
+
+1
+
+2 − ω(γR − β); v < γ R < u 
+
+0; γR ≥ u, 
+
+(18) where 
+
+β = (1 + γE ) exp 
+
+(
+
+μV 1 
+
+> 2
+
+(γE )
+
+√m ln 2 + M
+
+m ln 2 
+
+)
+
+− 1. (19) and ω = √m/ (2 πβ (β + 2)) , v = β − 1 
+
+> 2ω
+
+, and u = β + 1 
+
+> 2ω
+
+.We first derive the conditional expectation E[ˆ ǫ|γE = y],which is given by 
+
+E [ˆ ǫ|γE = y] = 
+
+∫ ∞
+
+> y
+
+ˆǫγR |γE =y fγR (x) dx. (20) By comparing the value of y with v and u, three cases arise. 
+
+Case 1: When y ≤ v, substituting the piecewise approxi-mation ( 18 ) into the conditional expectation, we obtain 
+
+E [ˆ ǫ] = 
+
+∫ vy
+
+1 · fγR (x) dx 
+
+︸ ︷︷ ︸
+
+> I1
+
++
+
+∫ uv
+
+( 1
+
+2 − ω(x − β)
+
+)
+
+fγR (x) dx 
+
+︸ ︷︷ ︸
+
+> I2
+
+.
+
+(21) The first integral is straightforward: 
+
+I1 = FγR (v) − FγR (y). (22) For I2, we define g(x) , 1 
+
+> 2
+
+− ω(x − β) and apply integration by parts, yielding 
+
+I2 = [ g(x)FγR (x)] uv + ω
+
+∫ uv
+
+FγR (x) dx, (23) where we have used g′(x) = −ω. The boundary terms are evaluated as 
+
+g(u) = 1 
+
+> 2
+
+− ω(β + 1 
+
+> 2ω
+
+− β) = 0 ,g(v) = 1 
+
+> 2
+
+− ω(β − 1 
+
+> 2ω
+
+− β) = 1 . (24) Substituting the boundary values into ( 23 ) gives 
+
+I2 = −FγR (v) + ω
+
+∫ uv
+
+FγR (x) dx. (25) Combining ( 22 ) and ( 25 ), the FγR (v) terms cancel, and we arrive at 
+
+E [ˆ ǫ] = ω
+
+∫ uv
+
+FγR (x) dx − FγR (y). (26) To evaluate the integral in ( 26 ), we apply the change of variables x = u−v 
+
+> 2
+
+t + u+v 
+
+> 2
+
+, which maps x ∈ [v, u ] to 
+
+t ∈ [−1, 1] . Since u − v = 1 
+
+> ω
+
+, we have 
+
+ω
+
+∫ uv
+
+FγR (x) dx = ω · u − v
+
+2
+
+∫ 1
+
+> −1
+
+FγR (x(t)) dt = 1
+
+2
+
+∫ 1
+
+> −1
+
+FγR (x(t)) dt. 
+
+(27) Applying the Gauss-Chebyshev quadrature [?], i.e., 
+
+∫ 1 
+
+> −1
+
+h(t) dt ≈ π
+
+> Up
+
+∑Up
+
+> p=1
+
+√
+
+1 − t2 
+
+> p
+
+h(tp), yields 
+
+E [ˆ ǫ] = π
+
+2UpUp
+
+∑
+
+> p=1
+
+√
+
+1 − t2
+
+> p
+
+FγR (xp) − FγR (y), (28) where tp = cos 
+
+( 2p−1 
+
+> 2Up
+
+π
+
+)
+
+and xp = 1 
+
+> 2ω
+
+tp + β.
+
+Case 2: When v < y < u , the conditional expectation becomes 
+
+E [ˆ ǫ] = 
+
+∫ uy
+
+( 1
+
+2 − ω(x − β)
+
+)
+
+fγR (x) dx 
+
+= ω
+
+∫ uy
+
+FγR (x) dx − FγR (v). (29) Applying the Gauss-Chebyshev quadrature yields 
+
+E [ˆ ǫ] = π
+
+2UpUp
+
+∑
+
+> p=1
+
+√
+
+1 − t2
+
+> p
+
+FγR (xp) − FγR (v). (30) 
+
+Case 3: When y ≥ u, the secrecy condition is always satisfied and thus 
+
+E [ˆ ǫ] = 0 . (31) Having obtained E[ˆ ǫ], the overall average decoding error probability is computed by averaging over γE :
+
+EγR ,γ E [ǫ] = 
+
+∫ ∞
+
+> 0
+
+E [ˆ ǫ] fγE (y) dy. (32) Since E[ˆ ǫ] is a piecewise function with three cases, the inte-gration interval [0 , ∞) in ( 32 ) must be carefully partitioned. From ( 19 ), β is a function of γE . The four critical points of 
+
+γE that delineate the three cases are determined by solving the following two equations: 
+
+γE =v, (33) 
+
+γE =u. (34) Substituting ω = √m/ (2 πβ (β + 2)) and v = β − 1 
+
+> 2ω
+
+into (33 ), we obtain 
+
+(2 m − π)β2 − (4 mγ E − 2π)β + 2 mγ 2 
+
+> E
+
+= 0 . (35) Since β is a monotonically increasing function of γE [54 ], the two solutions of γE to ( 35 ), denoted as τ1 and τ2 with 
+
+τ1 ≤ τ2, can be obtained via the bisection method. Similarly, substituting the expressions for ω and u = β + 1
+
+> 2ω
+
+into ( 34 ) yields 
+
+(2 m − π)β2 + (4 mγ E − 2π)β + 2 mγ 2 
+
+> E
+
+= 0 . (36) The two solutions of γE to ( 36 ) are denoted as τ3 and τ4 with 
+
+τ3 ≤ τ4, which can also be found via the bisection method. 6
+
+Based on these critical points, the integration interval in ( 32 )for the three cases is determined as follows. 
+
+Case 1: When y ≤ v, i.e., y ≤ β − 1 
+
+> 2ω
+
+, the integration interval is 
+
+Θ1 = [ τ1, τ 2]. (37) 
+
+Case 2: When v < y < u , i.e., β − 1 
+
+> 2ω
+
+< y < β + 1 
+
+> 2ω
+
+, the integration interval is 
+
+Θ2 = ((( −∞ , τ 1] ∪ [τ2, ∞)) ∩ [τ3, τ 4]) . (38) 
+
+Case 3: When y ≥ u, the contribution to EγR ,γ E [ǫ] is zero. Substituting the integration intervals and the corresponding 
+
+E[ˆ ǫ] for each case into ( 32 ), we apply the Gauss-Chebyshev quadrature to evaluate the outer integral. For the i-th case, i ∈ { 1, 2}, let Hi and Li denote the upper and lower limits of the integration interval, respectively, and let Yi(y) denote E[ˆ ǫ] as a function of γE in the i-th case. Then, EγR ,γ E [ǫ] is computed as 
+
+EγR ,γ E [ǫ]i = π
+
+Ul
+
+Hi − L i
+
+2
+
+> Ul
+
+∑
+
+> l=1
+
+√
+
+1 − t2 
+
+> l
+
+Yi(yl)fγE (yl), (39) where Ul is the number of quadrature points controlling the complexity-accuracy tradeoff, and 
+
+tl = cos 
+
+( (2 l − 1) π
+
+2Ul
+
+)
+
+, (40) 
+
+yl = Hi − L i
+
+2 tl + Hi + Li
+
+2 . (41) Accordingly, the AAST is given by 
+
+T =
+
+{ m 
+
+> M
+
+(1 − EγR ,γ E [ǫ]i) , i ∈ { 1, 2}, 
+
+> m
+> M
+
+, i = 3 . (42) 
+
+Remark 2 (Blocklength-Rate-Security Trade-off): The AAST expression T = m 
+
+> M
+
+(1 − E[ǫ]) reveals a fundamental three-way trade-off among the transmission rate m/M , the decoding reliability E[ǫ], and the security level δ. Specifically: 
+
+(i) Blocklength M : Increasing M reduces the decoding error probability ǫ (since the channel dispersion penalty √VR/M 
+
+diminishes), but simultaneously decreases the effective rate 
+
+m/M . This creates a unimodal behavior of T with respect to 
+
+M , confirming the existence of an optimal blocklength M ∗.
+
+(ii) Information bits m: For a fixed M , increasing m raises the rate m/M but also increases ǫ (as decoding becomes harder), leading to a similar trade-off and an optimal m∗.
+
+(iii) Secrecy leakage δ: A smaller δ enforces stricter secrecy, which increases the effective decoding threshold β in ( 19 ) and consequently raises ǫ, reducing the throughput T .These trade-offs underscore the importance of jointly optimiz-ing M , m, and P in the FAS-aided secure short-packet system, as addressed in Section IV. 
+
+E. Asymptotic AAST 
+
+To reduce computational complexity, we derive an asymp-totic approximation of the AAST. Following [ 57 ], we relax the lower limit of the inner integral in ( 17 ) from y to 0, yielding 
+
+EγR ,γ E [ǫ] ≈
+
+∫ ∞
+
+> 0
+
+fγE (y)
+
+∫ ∞
+
+> 0
+
+ǫγR |γE =y fγR (x) dx dy. (43) Substituting the linear approximation ( 18 ) with the lower limit changed to 0, we have 
+
+E [ˆ ǫ] = 
+
+∫ v
+
+> 0
+
+fγR (x) dx 
+
+︸ ︷︷ ︸
+
+> J1
+
++
+
+∫ uv
+
+( 1
+
+2 − ω(x − β)
+
+)
+
+fγR (x) dx 
+
+︸ ︷︷ ︸
+
+> J2
+
+.
+
+(44) The first integral evaluates to J1 = FγR (v) − FγR (0) =
+
+FγR (v), since FγR (0) = 0 for a non-negative random variable. For J2, applying integration by parts as in ( 23 )–( 25 ) yields 
+
+J2 = −FγR (v) + ω ∫ uv FγR (x) dx . Combining J1 and J2, the 
+
+FγR (v) terms cancel, giving 
+
+E [ˆ ǫ] = ω
+
+∫ uv
+
+FγR (x) dx. (45) Applying the same Gauss-Chebyshev quadrature procedure as in ( 26 ) yields 
+
+E [ˆ ǫ] = π
+
+2UpUp
+
+∑
+
+> p=1
+
+√
+
+1 − t2
+
+> p
+
+FγR (xp). (46) Similarly, applying the Gauss-Chebyshev quadrature to the outer integral over y gives 
+
+EγR ,γ E [ǫ] = H
+
+2
+
+π
+
+UlUl∑
+
+> l=1
+
+√
+
+1 − t2 
+
+> l
+
+fγE (yl)E [ˆ ǫ] , (47) where H is a sufficiently large truncation parameter for the integration range. Consequently, the asymptotic AAST is obtained as 
+
+ˆT = m
+
+M
+
+(
+
+1 − H
+
+2
+
+π
+
+UlUl∑
+
+> l=1
+
+√
+
+1 − t2 
+
+> l
+
+fγE (yl)E [ˆ ǫ]
+
+)
+
+. (48) 
+
+Remark 3 (High-SNR Behavior and Design Guidelines): 
+
+The asymptotic AAST in ( 48 ) provides several important design insights for FAS-aided secure short-packet systems. 
+
+(i) High-SNR regime: As ¯γR → ∞ , the CDF FγR (xp) = 
+
+FαR
+
+(√xp/¯γR
+
+)
+
+→ 0 for any finite xp, which implies 
+
+E[ˆ ǫ] → 0 from ( 45 ). Consequently, ˆT → m/M , indicating that the AAST converges to the nominal transmission rate in the high-SNR regime. This confirms that adequate transmit power can effectively overcome the finite blocklength penalty. 
+
+(ii) Power-distance scaling: From the average SNR defini-tions ¯γR = P d −aR 
+
+> R
+
+/σ 2 
+
+> R
+
+and ¯γE = P d −aE 
+
+> E
+
+/σ 2 
+
+> E
+
+, the ratio 
+
+¯γR/¯γE = daE 
+
+> E
+
+/d aR 
+
+> R
+
+· σ2 
+
+> E
+
+/σ 2 
+
+> R
+
+is independent of P . This implies that increasing the transmit power alone improves both the legitimate and eavesdropping SNRs proportionally, and the secrecy advantage is fundamentally determined by the path-loss ratio daE 
+
+> E
+
+/d aR 
+
+> R
+
+. Therefore, FAS port selection plays a critical role in creating an additional secrecy advantage beyond path loss, as it independently enhances the legitimate channel quality through spatial diversity. 
+
+(iii) Practical design guideline: For a target secrecy throughput 
+
+Ttarget , the system designer should first select NR to ensure sufficient diversity gain over the eavesdropper (cf. Remark 1), then jointly optimize P and M to balance the rate-reliability trade-off (cf. Remark 2). 7
+
+IV. O PTIMIZATION PROBLEM FORMULATION AND 
+
+ALGORITHM DESIGN 
+
+In this section, we formulate the optimization problem with the objective of maximizing the asymptotic AAST in ( 48 )under practical constraints, and present a grid search (GS) algorithm to find the optimal operating points for the FAS system. 
+
+A. FAS Security Optimization Problem 
+
+The objective is to maximize the asymptotic AAST while satisfying practical constraints on transmit power, port number, and blocklength. This leads to the following optimization problem: 
+
+max  
+
+> NR,P,M
+
+ˆT (NR, P, M ) (49) s.t. P ≤ Pmax ,NR ≤ Nmax ,M ≤ Mmax ,
+
+ˆT (NR, P, M ) ≥ 0,
+
+where ˆT (NR, P, M ) denotes the asymptotic AAST as a func-tion of the RU’s port number NR, transmit power P , and blocklength M , as derived in ( 48 ). The optimization problem in ( 49 ) is inherently complex due to the non-convex nature of the objective function and the discrete nature of the port selection variable NR. Moreover, the presence of the eavesdropper with similar FAS capabilities creates a competitive scenario where the optimization land-scape exhibits multiple local optima. To address this optimization problem, we first analyze its structural properties and then propose the GS algorithm. 
+
+Proposition 1 (Monotonicity of ˆT with respect to NR): For fixed P and M , the asymptotic AAST ˆT (NR, P, M ) in ( 48 )is monotonically non-decreasing in NR.
+
+Proof 1: From ( 10 ), the CDF of the maximum channel amplitude at the RU is FαR (x) = ∏Dd=1 Fαd (x). When NR
+
+increases, the VBCM framework either increases the number of blocks D or the block sizes {Ld}. In both cases, since each block CDF satisfies 0 ≤ Fαd (x) ≤ 1 for x ≥ 0,the product FαR (x) is non-increasing in NR for any given 
+
+x > 0. Consequently, from ( 13 ), FγR (z) is also non-increasing in NR for any z > 0. From ( 45 ), the conditional expecta-tion E[ˆ ǫ] = ω ∫ uv FγR (x) dx is non-increasing in NR since the integrand decreases. Since ˆT = m 
+
+> M
+
+(1 − EγR ,γ E [ǫ]) and 
+
+EγR ,γ E [ǫ] is non-increasing in NR, the asymptotic AAST ˆT
+
+is monotonically non-decreasing in NR.
+
+Corollary 1 (Dimensionality Reduction): Under the opti-mization problem ( 49 ), the optimal number of RU ports is 
+
+N ∗ 
+
+> R
+
+= Nmax . Therefore, the three-dimensional search over 
+
+(NR, P, M ) reduces to a two-dimensional search over (P, M ):
+
+max 
+
+> P,M
+
+ˆT (Nmax , P, M ), s.t. P ≤ Pmax , M ≤ Mmax .
+
+(50) The total number of candidate solutions reduces from |S| in (56 ) to 
+
+|S ′| = GP × GM , (51) yielding a computational saving factor of (N max  
+
+> R
+
+− N min  
+
+> R
+
++ 1) .
+
+Remark 4 (Problem Structure): The optimization problem (49 ) is a mixed-integer non-convex program, since NR is discrete and ˆT is generally non-convex in (P, M ) due to the composite structure involving products of CDFs and Gauss-Chebyshev sums. However, Proposition 1 resolves the integer component, and the reduced problem ( 50 ) involves only two continuous variables, making the GS algorithm particularly efficient. 
+
+B. Grid Search Optimization 
+
+The GS algorithm provides a systematic approach to ex-plore the entire feasible parameter space, guaranteeing global optimality at the cost of computational complexity. Specifically, the GS method discretizes problem ( 49 ) into a finite set of candidate solutions. For the transmit power P and the blocklength M , we construct uniform grids as 
+
+P =
+
+{
+
+P min + j · P max − P min 
+
+GP − 1 : j = 0 , 1, . . . , G P − 1
+
+}
+
+,
+
+(52) 
+
+M =
+
+{
+
+M min + t · M max − M min 
+
+GM − 1 : t = 0 , 1, . . . , G M − 1
+
+}
+
+,
+
+(53) where GP and GM denote the grid resolutions for P and M ,respectively. The corresponding grid spacings are 
+
+∆P = P max − P min 
+
+GP − 1 , ∆M = M max − M min 
+
+GM − 1 . (54) For the discrete port parameter NR, the search space is naturally defined as 
+
+N = {N min  
+
+> R
+
+, N min  
+
+> R
+
++ 1 , . . . , N max  
+
+> R
+
+}. (55) Accordingly, the total number of candidate solutions is 
+
+|S| = |P| × |M| × |N | = GP × GM × (N max  
+
+> R
+
+− N min  
+
+> R
+
++ 1) .
+
+(56) For each candidate (NR, P, M ) ∈ N ×P ×M , the asymptotic AAST is computed using ( 48 ). The GS algorithm seeks the global optimum, which is expressed as 
+
+(N ∗
+
+> R
+
+, P ∗, M ∗) = arg max 
+
+> (NR,P,M )∈N ×P×M
+
+ˆT (NR, P, M ).
+
+(57) Equivalently, the optimization can be decomposed as 
+
+ˆT ∗ = max  
+
+> NR∈N
+
+max   
+
+> P∈P
+
+max 
+
+> M∈M
+
+ˆT (NR, P, M )= max  
+
+> i=1 ,..., |N |
+
+max 
+
+> j=1 ,...,G P
+
+max 
+
+> t=1 ,...,G M
+
+ˆT (N (i) 
+
+> R
+
+, P (j), M (t)),
+
+(58) where N (i) 
+
+> R
+
+, P (j), and M (t) denote the i-th, j-th, and t-th grid points, respectively. The overall GS algorithm is summarized in Algorithm 1.The GS algorithm achieves global optimality in the discrete sense. As the grid resolution increases, the approximation error decreases. By the Lipschitz continuity of ˆT with respect to 8
+
+Algorithm 1 Grid Search Optimization for FAS SP Security 
+
+Input: NE , W , ηR, ηE , σ2
+
+> R
+
+, σ2 
+
+> E
+
+, P min , P max , N min  
+
+> R
+
+, N max  
+
+> R
+
+,
+
+M min , M max , GP , GM
+
+Output: Optimal (N ∗
+
+> R
+
+, P ∗, M ∗) and maximum asymptotic AAST ˆT ∗ 
+
+> 1:
+
+Initialize ˆT ∗ ← 0, N ∗ 
+
+> R
+
+← N min  
+
+> R
+
+, P ∗ ← P min , M ∗ ←
+
+M min  
+
+> 2:
+
+Construct power grid P using ( 52 ) 
+
+> 3:
+
+Construct blocklength grid M using ( 53 ) 
+
+> 4:
+
+Construct port grid N using ( 55 ) 
+
+> 5:
+
+for NR ∈ N do  
+
+> 6:
+
+for P ∈ P do  
+
+> 7:
+
+for M ∈ M do  
+
+> 8:
+
+Compute ˆT (NR, P, M ) using ( 48 ) 
+
+> 9:
+
+if ˆT (NR, P, M ) > ˆT ∗ then  
+
+> 10:
+
+ˆT ∗ ← ˆT (NR, P, M ) 
+
+> 11:
+
+N ∗ 
+
+> R
+
+← NR, P ∗ ← P , M ∗ ← M 
+
+> 12:
+
+end if  
+
+> 13:
+
+end for  
+
+> 14:
+
+end for  
+
+> 15:
+
+end for  
+
+> 16:
+
+return (N ∗
+
+> R
+
+, P ∗, M ∗, ˆT ∗)
+
+both P and M , the overall grid approximation error is bounded by 
+
+ǫgrid =
+
+∣∣∣ ˆT true − ˆT ∗
+
+∣∣∣ ≤ LP · ∆P
+
+2 + LM · ∆M
+
+2 , (59) where LP and LM denote the Lipschitz constants of ˆT with respect to P and M , respectively, and ˆT true is the true continuous optimum. Substituting ( 54 ) into ( 59 ), the error can be expressed in terms of the grid resolutions as 
+
+ǫgrid ≤ LP (P max − P min )
+
+2( GP − 1) + LM (M max − M min )
+
+2( GM − 1) . (60) For a given target accuracy ǫtarget > 0, by allocating equal error budgets to each dimension, the minimum grid resolutions are 
+
+Gmin  
+
+> P
+
+= 1 + 
+
+⌈ LP (P max − P min )
+
+ǫtarget 
+
+⌉
+
+, (61) 
+
+Gmin  
+
+> M
+
+= 1 + 
+
+⌈ LM (M max − M min )
+
+ǫtarget 
+
+⌉
+
+, (62) where ⌈·⌉ denotes the ceiling function. Equations ( 61 )–( 62 )provide a principled way to select the grid resolution based on the desired accuracy. The computational complexity of the GS algorithm is 
+
+O(GP · GM · (N max  
+
+> R
+
+− N min  
+
+> R
+
++ 1)) , where each objective func-tion evaluation requires numerical integration with complexity 
+
+O(Up ·Ul). By leveraging Corollary 1, the reduced complexity becomes O(GP · GM ). The total computational cost is 
+
+Tgrid = GP · GM · Up · Ul · T eval , (63) where Teval denotes the cost of evaluating the VBCM channel statistics. Substituting ( 61 )–( 62 ), the minimum computational cost to achieve accuracy ǫtarget scales as 
+
+T min grid = O
+
+( LP LM (P max −P min )( M max −M min )
+
+ǫ2target 
+
+· UpUl
+
+)
+
+.
+
+(64) This reveals a fundamental accuracy-complexity trade-off: halving the target error requires quadrupling the computational effort. 
+
+C. Theoretical Convergence Analysis Theorem 1 (Grid Search Optimality): Algorithm 1 converges to the global optimum of problem ( 49 ) as the grid resolutions 
+
+GP → ∞ and GM → ∞ .
+
+Proof 2: Let S∗ = arg max (NR ,P,M )∈X ˆT (NR, P, M ) de-note the set of global optima, where X is the feasible region. For any ǫP > 0 and ǫM > 0, there exist grid resolutions GǫP
+
+and GǫM such that for all GP ≥ GǫP and GM ≥ GǫM , the grid spacings satisfy 
+
+∆P = P max − P min 
+
+GP − 1 ≤ ǫP
+
+LP
+
+, ∆M = M max − M min 
+
+GM − 1 ≤ ǫM
+
+LM
+
+,
+
+(65) where LP and LM are the Lipschitz constants of ˆT with respect to P and M , respectively. For any global optimum (N ∗
+
+> R
+
+, P ∗, M ∗) ∈ S ∗, there exists a grid point (N (i) 
+
+> R
+
+, P (j), M (t)) such that |P ∗ − P (j)| ≤ ∆P/ 2
+
+and |M ∗ − M (t)| ≤ ∆M/ 2. By Lipschitz continuity, 
+
+| ˆT (N ∗
+
+> R
+
+, P ∗, M ∗) − ˆT (N ∗
+
+> R
+
+, P (j), M (t))|≤ LP · ∆P
+
+2 + LM · ∆M
+
+2
+
+≤ ǫP + ǫM
+
+2 . (66) Since the GS evaluates all grid points, the maximum over the grid approaches the global maximum as GP → ∞ and 
+
+GM → ∞ . Therefore, 
+
+lim   
+
+> GP→∞ ,G M→∞
+
+ˆT grid = max 
+
+> (NR,P,M )∈X
+
+ˆT (NR, P, M ). (67) 
+
+Remark 5 (Practical Implementation Guidelines): The an-alytical results from Section III can be leveraged to improve the practical efficiency of Algorithm 1 in two ways. 
+
+(i) Search range reduction: From Remark 3, the power-distance scaling law ¯γR/¯γE = daE 
+
+> E
+
+/d aR 
+
+> R
+
+· σ2 
+
+> E
+
+/σ 2 
+
+> R
+
+suggests that a meaningful lower bound on P can be determined by requiring ¯γR > ¯γE , i.e., P > σ 2
+
+> R
+
+daR 
+
+> R
+
+/(σ2 
+
+> E
+
+daE 
+
+> E
+
+), below which the secrecy throughput is negligible. This narrows the search range [P min , P max ] and reduces Gmin  
+
+> P
+
+in ( 61 ). Similarly, the unimodal behavior of ˆT with respect to M (cf. Remark 2)implies that the search range for M can be centered around the approximate optimal point. 
+
+(ii) Adaptive grid refinement: A coarse-to-fine strategy can be employed, where an initial coarse grid identifies the promising region, followed by a refined grid in the neighborhood of the coarse optimum. This reduces the effective computational cost from O(1 /ǫ 2target ) in ( 64 ) to O(log 2(1 /ǫ target )) while maintaining the global convergence guarantee of Theorem 1. 9                      
+
+> 0510 15 20 25 30 35 40
+> SNR
+> 10 -4
+> 10 -3
+> 10 -2
+> 10 -1
+> 10 0
+> AAST bit/s/Hz
+> Simu., N R=20, N E=10, m=200 bits
+> Anal., N R=20, N E=10, m=200 bits
+> Asymp., N R=20, N E=10, m=200 bits
+> Simu., w/o FAS, N R=20, N E=10, m=200 bits
+> Simu., N R=40, N E=20, m=300 bits
+> Anal., N R=40, N E=20, m=300 bits
+> Asymp., N R=40, N E=20, m=300 bits
+> Simu., w/o FAS, N R=40, N E=20, m=300 bits
+> Fig. 1. AAST versus SNR, where m= 200 bits, NR= 20 ,NE= 10 , and
+> m= 300 bits, NR= 40 ,NE= 20 , respectively.
+
+V. N UMERICAL RESULTS AND ANALYSIS 
+
+In this section, numerical results are provided to validate the accuracy of the derived analytical AAST expressions and to evaluate the performance of the proposed GS optimization algorithm under various system configurations. The system operates at a carrier frequency of fc = 2 .4
+
+GHz with wavelength λ = c/f c = 0 .125 m. The antenna configuration employs a one-dimensional linear fluid antenna with half-wavelength port spacing λ/ 2, utilizing the maxi-mum channel gain port selection strategy. The channel model parameters are set as follows: average channel power gains 
+
+ηR = ηE = 1 .0, noise variances σ2 
+
+> R
+
+= σ2 
+
+> E
+
+= 1 .0, and spatial correlation following the Jakes model. The distances from the BS to the RU and the EU are dR = 10 m and dE = 100 m, respectively, and the path-loss exponents are aR = aE = 2 .For accurate evaluation of the derived analytical expres-sions, the numerical integration parameters are set as: trun-cation parameter H = 10 √ηR, outer quadrature points Up =100 , and inner quadrature points Ul = 100 .The GS algorithm is configured with parameter ranges 
+
+NR ∈ [5 , 20] , P ∈ [0 .1, 15] W, and M ∈ [100 , 1000] , subject to the constraint NR + NE ≤ 40 . Monte Carlo simulations with 10 5 independent channel realizations are performed for validation. Fig. 1 illustrates the AAST as a function of SNR under two system configurations: (i) m = 200 bits, NR = 20 ,
+
+NE = 10 , and (ii) m = 300 bits, NR = 40 , NE = 20 .Several key observations can be drawn. First, the analyti-cal results (“Anal.”) and the Monte Carlo simulation results (“Simu.”) are in excellent agreement across the entire SNR range for both configurations, thereby validating the accuracy of the derived closed-form AAST expressions. Second, the asymptotic approximation (“Asymp.”) closely tracks the exact analytical curves, particularly in the medium-to-high SNR regime (SNR ≥ 15 dB), confirming the tightness of the asymptotic expression in ( 48 ). Third, the FAS-aided system                  
+
+> 0100 200 300 400 500 600 700 800 900 1000
+> Blocklength M
+> 00.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5
+> AAST bit/s/Hz
+> Simu., m=200 bits
+> Anal., m=200 bits
+> Simu., m=300 bits
+> Anal., m=300 bits
+> Fig. 2. AAST vs Blocklength M, where NR= 40 ,NE= 20 , and SNR =20 dB.
+
+achieves a substantial AAST gain over the conventional fixed-position antenna system (“w/o FAS”), with an improvement of approximately one order of magnitude in the mid-SNR region (15 –25 dB). This significant gap underscores the effectiveness of FAS port selection in exploiting spatial diversity to enhance secrecy performance, consistent with the analysis in Remark 1.Fourth, comparing the two configurations, the system with larger antenna arrays ( NR = 40 , NE = 20 ) achieves a higher AAST at high SNR values despite transmitting more bits ( m = 300 ), demonstrating that the diversity gain from in-creased NR can more than compensate for the higher decoding burden. Finally, the AAST monotonically increases with SNR and converges to a saturation level at high SNR, which is consistent with the high-SNR limiting behavior ˆT → m/M 
+
+analyzed in Remark 3.Fig. 2 presents the AAST as a function of the blocklength 
+
+M for NR = 40 , NE = 20 , SNR = 20 dB, with m = 200 bits and m = 300 bits, respectively. The analytical results (“Anal.”) closely match the simulation results (“Simu.”) for both values of m, further validating the derived expressions. A distinct unimodal behavior is observed: the AAST first increases rapidly with M , reaches a peak, and then gradually decreases. Specifically, for m = 200 bits, the optimal blocklength is approximately M ∗ ≈ 200 –250 , yielding a peak AAST of about 0.44 bit/s/Hz; for m = 300 bits, the optimal blocklength shifts to M ∗ ≈ 250 –300 , with a comparable peak AAST of about 0.43 bit/s/Hz. This unimodal behavior confirms the fundamental blocklength-rate trade-off analyzed in Remark 2:when M is small, the channel dispersion penalty √VR/M 
+
+is large, resulting in a high decoding error probability and low throughput; as M increases beyond the optimal point, the effective transmission rate m/M decreases, which dominates and reduces the throughput. Furthermore, the optimal M ∗
+
+increases with m, since transmitting more information bits requires a longer blocklength to maintain a low decoding error probability. At large blocklengths ( M = 1000 ), the m = 300 10                    
+
+> 0100 200 300 400 500 600 700 800 900 1000
+> m bits
+> 10 -3
+> 10 -2
+> 10 -1
+> 10 0
+> AAST bit/s/Hz
+> Simu., N R=20, N E=10
+> Anal., N R=20, N E=10
+> Simu., N R=40, N E=20
+> Anal., N R=40, N E=20
+> Fig. 3. AAST vs transmit bits m, where SNR=20 dB, and NR= 20 ,
+> NE= 10 , and NR= 40 ,NE= 20 , respectively.
+
+configuration retains a higher AAST ( ≈ 0.25 bit/s/Hz) than the m = 200 case ( ≈ 0.17 bit/s/Hz), because the rate m/M is higher for larger m when M is fixed. These results strongly motivate the inclusion of M as an optimization variable in the formulated problem ( 49 ). Fig. 3 investigates the impact of the number of transmit bits 
+
+m on the AAST for two configurations: (NR = 20 , N E = 10) 
+
+and (NR = 40 , N E = 20) , with SNR = 20 dB. Similar to the blocklength trade-off observed in Fig. 2, the AAST exhibits a unimodal behavior with respect to m: it first increases sharply, reaches a peak, and then decreases as m grows further. For the (NR = 20 , N E = 10) configuration, the peak AAST of approximately 0.35 bit/s/Hz is achieved around m ≈ 300 
+
+bits, while the (NR = 40 , N E = 20) configuration attains a slightly higher peak of approximately 0.38 bit/s/Hz around 
+
+m ≈ 350 bits. This confirms the trade-off discussed in Remark 2(ii): increasing m raises the effective rate m/M 
+
+but simultaneously increases the decoding error probability 
+
+ǫ, and the balance between these two effects determines the optimal m∗. Notably, the two configurations yield comparable peak AAST values despite the (NR = 40 , N E = 20) case having twice the number of ports, because the eavesdropper’s capability also doubles, largely offsetting the RU’s diversity gain. Furthermore, when m exceeds approximately 700 bits, the AAST drops sharply and approaches zero near m =1000 bits, indicating that attempting to transmit too many information bits within a finite blocklength leads to severe decoding failure. The analytical and simulation results remain in close agreement throughout, further validating the derived expressions. Fig. 4 depicts the AAST as a function of the number of RU ports NR for m = 300 bits and NE = 20 , under two SNR levels: 20 dB and 30 dB. Several important ob-servations emerge. First, the AAST is monotonically non-decreasing in NR for both SNR levels, which is consistent with Proposition 1 and confirms that increasing the number              
+
+> 10 15 20 25 30 35 40
+> NR
+> 0.4 0.5 0.6 0.7 0.8 0.9 1
+> AAST bit/s/Hz  Simu., SNR=20 dB
+> Anal., SNR=20 dB
+> Simu., SNR=30 dB
+> Anal., SNR=30 dB
+> Fig. 4. AAST vs NR, where m= 300 bits, and NE= 20 .
+
+of FAS ports always benefits the secrecy throughput. This also validates Corollary 1, which states that the optimal port number is N ∗ 
+
+> R
+
+= Nmax . Second, the AAST at SNR = 30 dB is significantly higher than at SNR = 20 dB across all values of NR. Specifically, at SNR = 30 dB, the AAST remains above 0.88 bit/s/Hz and is relatively flat, indicating that the system operates near the saturation regime where ˆT → m/M .In contrast, at SNR = 20 dB, the AAST increases from approximately 0.38 bit/s/Hz at NR = 10 to about 0.45 bit/s/Hz at NR = 40 , demonstrating that port diversity provides a more pronounced improvement in the moderate-SNR regime where the system has not yet saturated. Third, the analytical and simulation results are in excellent agreement for both SNR levels, further corroborating the accuracy of the derived AAST expressions. 
+
+Remark 6 (Asymmetric Port Advantage and Operating Regime): The numerical results from Figs. 1–4 reveal two complementary design principles for FAS-aided secure short-packet systems. First, the secrecy gain of FAS is determined by the port count asymmetry NR − NE , rather than the absolute port numbers. This is evidenced by Fig. 3, where propor-tionally scaling both NR and NE (from (20 , 10) to (40 , 20) )yields only a marginal AAST improvement, whereas Fig. 4
+
+shows that increasing NR alone (with NE fixed) produces a consistent and significant gain. This observation aligns with the analytical insight in Remark 1: the secrecy throughput is governed by the channel asymmetry between the RU and the EU, which is enhanced by a larger NR/N E ratio. Second, from Figs. 1 and 4, the benefit of FAS port diversity is most pronounced in the moderate-SNR regime (e.g., 15 –25 dB), where both the FAS-versus-FPA gap (Fig. 1) and the AAST slope with respect to NR (Fig. 4) are maximized. At high SNR, the system saturates at ˆT → m/M regardless of NR,and the diversity gain diminishes. These findings suggest that in practical deployments, system designers should maximize the port count ratio NR/N E and allocate FAS resources preferentially to moderate-SNR users where the secrecy gain 11                 
+
+> Fig. 5. FAS Security Optimization Under Varying Threat Scenarios: 3D Secrecy Throughput Surface Analysis vs Pand NRfor Different Eavesdropper Capabilities ( NE= 5 ,15 ,25 ).
+> Fig. 6. FAS Security Optimization Under Varying Threat Scenarios: 3D Secrecy Throughput Surface Analysis vs Mand NRfor Different Eavesdropper Capabilities ( NE= 5 ,15 ,25 ).
+
+per additional port is highest. Figs. 5, 6, and 7 present a comprehensive 3D surface analy-sis of the FAS security optimization under three eavesdropper threat levels: low ( NE = 5 ), medium ( NE = 15 ), and high (NE = 25 ). The analysis is conducted using the GS algorithm with normalized antenna size W = 3 , m = 300 bits, RU ports 
+
+NR ∈ [5 , 20] , transmit power P ∈ [0 .1, 30] W, and blocklength 
+
+M ∈ [200 , 1000] . The black dot in each subplot marks the optimal operating point identified by the GS algorithm. The color gradient from blue to red represents the AAST values from low to high. Fig. 5 depicts the secrecy throughput surface as a function of P and NR. Under the low-threat scenario ( NE = 5), the surface exhibits a broad high-performance plateau (red region) at large NR and moderate-to-high P , with the peak AAST reaching approximately 0.14 bit/s/Hz. The optimal point is located at the corner of maximum NR and high P ,consistent with Proposition 1. As the threat level increases to 
+
+NE = 15 and NE = 25 , the overall surface height decreases and the high-performance region contracts, but the peak AAST remains comparable ( ≈ 0.14 ). This indicates that while the eavesdropper’s enhanced capability degrades the average throughput landscape, the GS algorithm can still locate an optimal (N ∗
+
+> R
+
+, P ∗) that largely compensates for the increased threat. Furthermore, the surface gradient becomes steeper near the low-NR and low-P boundary under high-threat conditions, highlighting that suboptimal parameter selection incurs a se-vere performance penalty in hostile environments. Fig. 6 shows the secrecy throughput surface as a function of M and NR. For the low-threat case ( NE = 5), the surface reveals a clear ridge structure along the NR axis: the AAST first increases with M and then decreases, exhibiting the unimodal blocklength behavior observed in Fig. 2. The peak AAST ( ≈ 0.16 bit/s/Hz) is achieved at large NR and an intermediate M , confirming that both port diversity and blocklength optimization are essential. As NE increases to 
+
+15 and 25 , the surface contracts and the ridge shifts toward smaller M values, implying that a shorter blocklength be-comes preferable under stronger eavesdropper threats. The peak AAST decreases from approximately 0.16 (NE = 5 )to 0.14 (NE = 15 ) and 0.13 (NE = 25 ), quantifying the throughput degradation caused by the escalating threat. The monotonically non-decreasing behavior of the AAST with respect to NR is consistently preserved across all three threat 12         
+
+> Fig. 7. FAS Security Optimization Under Varying Threat Scenarios: 3D Secrecy Throughput Surface Analysis vs Pand Mfor Different Eavesdropper Capabilities ( NE= 5 ,15 ,25 ).
+
+levels, further corroborating Proposition 1.Fig. 7 illustrates the secrecy throughput surface as a function of P and M , which reveals the most pronounced structural feature among the three views. The surface forms a narrow, elongated ridge in the (P, M ) plane: the AAST peaks at a specific combination of moderate P and intermediate M ,while it drops sharply on both sides of the ridge. For the low-threat case ( NE = 5 ), the ridge extends from approxi-mately (P, M ) ≈ (10 , 300) to (30 , 400) , with a peak AAST of approximately 0.14 bit/s/Hz (marked by the black dot at the ridge summit). As NE increases to 15 and 25 , the ridge narrows and the high-performance region (red/yellow) shrinks significantly, while the low-performance region (blue) expands. This narrowing effect demonstrates that under high-threat conditions, the system’s tolerance for parameter mis-match diminishes considerably — even small deviations from the optimal (P ∗, M ∗) can lead to a dramatic throughput loss. The ridge structure also confirms the coupled nature of the P -M trade-off: higher transmit power allows higher SNR and thus a broader range of feasible blocklengths, but excessive power provides diminishing returns due to the SNR-independent path-loss ratio ¯γR/¯γE discussed in Remark 3.The combined analysis of Figs. 5–7 leads to the following design-oriented insights. 
+
+Remark 7 (Threat-Adaptive Parameter Sensitivity): The 3D surface analysis reveals that the sensitivity of the AAST to parameter selection is highly asymmetric across the three optimization dimensions. From Figs. 5 and 6, the AAST is relatively robust to NR (monotonically non-decreasing, consis-tent with Proposition 1) and to P (broad plateau at moderate-to-high P ). However, from Figs. 6 and 7, the AAST is highly sensitive to the blocklength M , exhibiting a sharp peak-and-decay pattern. This asymmetry implies that in practical FAS deployments, blocklength selection is the most critical design parameter : a suboptimal M can degrade the throughput far more severely than a suboptimal P or NR. Therefore, system designers should prioritize accurate blocklength optimization while adopting simpler strategies (e.g., maximum NR and sufficient P ) for the other parameters. VI. C ONCLUSION 
+
+In this paper, we have investigated the physical layer secu-rity of a FAS-aided secure short-packet communication system under the VBCM framework. Closed-form and asymptotic expressions for the AAST have been derived by employing a linear approximation of the decoding error probability and Gauss-Chebyshev quadrature. Furthermore, a GS optimization algorithm has been developed to jointly optimize the transmit power, blocklength, and number of RU ports for maximizing the secrecy throughput. Numerical results have validated the accuracy of the analytical expressions and demonstrated that the FAS-aided system achieves significant secrecy perfor-mance gains over conventional fixed-position antenna systems. The results have also revealed the existence of an optimal blocklength and highlighted the sensitivity of system per-formance to parameter selection under varying eavesdropper threat levels. REFERENCES [1] F. Tariq et al. , “A speculative study on 6G,” IEEE Wireless Commun. ,vol. 27, no. 4, pp. 118–125, Aug. 2020. [2] Y. Polyanskiy, H. V. Poor, and S. Verdu, “Channel coding rate in the finite blocklength regime,” IEEE Trans. Inf. Theory , vol. 56, no. 5, pp. 2307–2359, May 2010. [3] T. Wu et al. , “Exploit high-dimensional RIS information to localization: What is the impact of faulty element?,” IEEE J. Sel. Areas Commun. ,vol. 42, no. 10, pp. 2803–2819, Oct. 2024. [4] T. Wu et al. , “Joint angle estimation error analysis and 3-D position-ing algorithm design for mmWave positioning system,” IEEE Internet Things J. , vol. 11, no. 2, pp. 2181–2197, Jan. 2024. [5] T. Wu et al. , “Employing high-dimensional RIS information for RIS-aided localization systems,” IEEE Commun. Lett. , vol. 28, no. 9, pp. 2046–2050, Sep. 2024. [6] T. Wu et al. , “From optimization to learning: Dual-approach re-source allocation for over-the-air edge computing under execu-tion uncertainty,” IEEE Trans. Mobile Comput. , early access, doi: 10.1109/TMC.2025.3649634. [7] D. Ma, B. Liu, J. Yang, Y. Fang, T. Wu and K. -F. Tong, “Meta-fluid antenna-enabled multi-user ISAC: Architecture implementation, algorithm design, and full-wave validation,” IEEE J. Sel. Top. Sign. Proces. , early access, doi: 10.1109/JSTSP.2026.3666297. [8] J. Fu, P. Jiang, P. Zhu, H. Q. Ngo, M. Matthaiou and X. You, “Local partial RZF in cell-free massive MIMO: A deterministic equivalent analysis,” IEEE Trans. Wireless Commun. , vol. 25, pp. 12548-12564, 2026 13 
+
+[9] W. K. New et al. , “A tutorial on fluid antenna system for 6G net-works: Encompassing communication theory, optimization methods and hardware designs,” IEEE Commun. Surv. Tuts. , vol. 27, no. 4, pp. 2325–2377, Aug. 2025. [10] W. Lu et al. , “Fluid antennas: Reshaping intrinsic properties for flexible radiation characteristics in intelligent wireless networks,” IEEE Com-mun. Mag. , vol. 63, no. 5, pp. 40–45, May 2025. [11] H. Hong et al. , “A contemporary survey on fluid antenna systems: Fundamentals and networking perspectives,” IEEE Trans. Netw. Sci. Eng. , vol. 13, pp. 2305–2328, 2026. [12] W. K. New et al. , “Fluid antenna systems: Redefining reconfigurable wireless communications,” IEEE J. Sel. Areas Commun. , vol. 44, pp. 1013–1044, 2026. [13] T. Wu et al. , “Fluid antenna systems enabling 6G: Principles, applica-tions, and research directions,” IEEE Wireless Commun. , early access, 2025, doi: 10.1109/MWC.2025.3629597. [14] L. Zhu and K. K. Wong, “Historical review of fluid antennas and movable antennas,” arXiv preprint arXiv:2401.02362v2, Jan. 2024. [15] L. Zhu, W. Ma, W. Mei, Y. Zeng, Q. Wu, B. Ning, Z. Xiao, X. Shao, J. Zhang, and R. Zhang, “A tutorial on movable an-tennas for wireless networks,” IEEE Commun. Surv. & Tut. , doi: 10.1109/COMST.2025.3546373, 2025. [16] J. Yao et al. , “FAS-driven spectrum sensing for cognitive radio net-works,” IEEE Internet Things J. , vol. 12, no. 5, pp. 6046-6049, 1 March, 2025. [17] H. Xu et al. , “Channel estimation for FAS-assisted multiuser mmWave systems,” IEEE Commun. Lett. , vol. 28, no. 3, pp. 632–636, Mar. 2024. [18] X. Lai et al. , “On performance of fluid antenna system using maximum ratio combining,” IEEE Commun. Lett. , vol. 28, no. 2, pp. 402–406, Feb. 2024. [19] R. Pablo, M. David,K.-K. Wong, “A New spatial block-correlation model for fluid antenna systems,” IEEE Trans. Wireless Commun. , vol. 23, no. 11, pp. 15829–15843, Nov. 2024. [20] X. Lai, J. Yao, K. Zhi, T. Wu, D. Morales-Jimenez, and K. K. Wong, “FAS-RIS: A block-correlation model analysis,” IEEE Trans. Veh. Technol. , vol. 74, no. 2, pp. 3412-3417, Feb. 2025. [21] J. Yao et al. , “FAS-RIS communication: Model, analysis, and optimiza-tion,” IEEE Trans. Veh. Technol. , vol. 74, no. 6, pp. 9938-9943, Jun. 2025. [22] J. Yao et al. , “Proactive monitoring via jamming in fluid antenna systems,” IEEE Commun. Lett. , vol. 28, no. 7, pp. 1695–1702, Jul. 2024. [23] J. Yao et al. , “Exploring fairness for FAS-assisted communication systems: from NOMA to OMA,” IEEE Trans. Wireless Commun. , vol. 24, no. 4, pp. 3433-3449, Apr. 2025. [24] F. R. Ghadi et al. , “Copula-based performance analysis for fluid antenna systems under arbitrary fading channels,” IEEE Commun. Lett. , vol. 27, no. 11, pp. 3068–3072, Nov. 2023. [25] W. K. New, K. K. Wong, H. Xu, K. F. Tong, and C.-B. Chae, “An information-theoretic characterization of MIMO-FAS: Optimiza-tion, diversity-multiplexing tradeoff and q-outage capacity,” IEEE Trans. Wireless Commun. , vol. 23, no. 6, pp. 5541–5556, Jun. 2024. [26] N. Waqar, K.-K. Wong, K.-F. Tong, A. Sharples, and Y. Zhang, “Deep learning enabled slow fluid antenna multiple access,” IEEE Commun. Lett. , vol. 27, no. 3, pp. 861–865, Mar. 2023. [27] C. Wang et al. , “Fluid antenna system liberating multiuser MIMO for ISAC via deep reinforcement learning,” IEEE Trans. Wireless Commun. ,vol. 23, no. 9, pp. 10879-10894, Sep. 2024. [28] T. Wu et al. , “Unleashing more potential from FAS: A framework of FAS-CoNOMA systems,” IEEE Trans. Commun. , early access, doi: 10.1109/TCOMM.2026.3663520. [29] T. Wu et al. , “FAS-RIS for V2X: Unlocking realistic performance analysis with finite elements,” IEEE Trans. Veh. Technol. , early access, doi: 10.1109/TVT.2025.3647789. [30] T. Wu et al. , “Scalable FAS: A new paradigm for array signal process-ing,” to appear in IEEE J. Sel. Topics Signal Process. , arXiv preprint arXiv:2508.10831, 2025. [31] J. Yao, T. Wu, L. Zhou, M. Jin, C. Huang, and C. Yuen, “FAS vs. ARIS: Which is more important for FAS-ARIS communication systems?,” 
+
+IEEE Trans. Wireless Commun. , vol. 25, pp. 2075–2091, 2026. [32] H. Chen et al. , “FAS-ARIS: Turning multipath challenges into localization opportunities,” IEEE Trans. Netw. Sci. Eng. , doi: 10.1109/TNSE.2025.3618845. [33] H. Xu et al. , “The future is fluid: Revolutionizing DOA estimation with sparse fluid antennas,” to appear in IEEE Trans. Wireless Commun. ,arXiv preprint arXiv:2508.10826, 2025. [34] L. Zhou, J. Yao, M. Jin, T. Wu, and K.-K. Wong, “Fluid antenna-assisted ISAC systems,” IEEE Wireless Commun. Lett. , vol. 13, no. 12, pp. 3533– 3537, Dec. 2024. [35] J. Yao et al. , “Rethinking hardware impairments in multi-user systems: Can FAS make a difference?,” IEEE Trans. Mobile Comput. , doi: 10.1109/TMC.2025.3628255. [36] K.-K. Wong, A. Shojaeifard, K.-F. Tong, and Y. Zhang, “Fluid antenna systems,” IEEE Trans. Wireless Commun. , vol. 20, no. 3, pp. 1950–1962, March 2021. [37] K. K. Wong, A. Shojaeifard, K.-F. Tong and Y. Zhang, “Performance limits of fluid antenna systems,” IEEE Commun. Lett. , vol. 24, no. 11, pp. 2469–2472, Nov. 2020. [38] B. Liu, K.-F. Tong, K. K. Wong, C.-B. Chae, and H. Wong, “Pro-grammable meta-fluid antenna for spatial multiplexing in fast fluctuating radio channels,” Opt. Express , vol. 33, no. 13, pp. 28898-28915, 2025. [39] J. Zhang, J. Rao, Z. Ming, Z. Li, C.-Y. Chiu, K. K. Wong, K.-F. Tong, and R. Murch, “A novel pixel-based reconfigurable antenna applied in fluid antenna systems with high switching speed,” IEEE Open J. Antennas Propag. , vol. 6, no. 1, pp. 212-228, Feb. 2025. [40] A. D. Wyner, “The wire-tap channel,” Bell Syst. Tech. J. , vol. 54, no. 8, pp. 1355–1387, Oct. 1975. [41] H. Niu, et al. , “A survey on artificial noise for physical layer security: Opportunities, technologies, guidelines, advances, and trends.” arXiv preprint , arXiv:2507.06500, 2025. [42] A. Shojaeifard et al., “MIMO evolution beyond 5G through reconfig-urable intelligent surfaces and fluid antenna systems,” Proc. IEEE , vol. 110, no. 9, pp. 1244–1265, Sept. 2022. [43] K. K. Wong, K. F. Tong, Y. Shen, Y. Chen, and Y. Zhang, “Bruce Lee-inspired fluid antenna system: Six research topics and the potentials for 6G,” Frontiers Commun. Netw., section Wireless Commun. , 3:853416, Mar. 2022. [44] F. Ghadi, K. -K. Wong, F. Javier L´ opez-Mart´ ınez, W. Kiat New, H. Xu and C. -B. Chae, “Physical layer security over fluid antenna systems: Secrecy performance analysis,” IEEE Trans. Wireless Commun. , vol. 23, no. 12, pp. 18201-18213, Dec. 2024. [45] J. D. Vega-S´ anchez, L. F. Urquiza-Aguiar, H. R. C. Mora, N. V. O. Garz´ on, and D. P. M. Osorio, “Fluid antenna system: secrecy outage probability analysis,” IEEE Trans. Veh. Technol. , vol. 73, no. 8, pp. 11458-11469, Aug. 2024. [46] B. Tang, H. Xu, K. -K. Wong, K. -F. Tong, Y. Zhang and C. -B. Chae, “Fluid antenna enabling secret communications,” IEEE Commun. Lett. ,vol. 27, no. 6, pp. 1491-1495, June 2023. [47] J. Yao et al., “FAS for secure and covert communications,” IEEE Internet Things J. , vol. 12, no. 11, pp. 18414-18418, 1 June1, 2025 [48] J. Zheng, X. Lai, T. Wu, M. Elkashlan, D. B. da Costa, C. Yuen, and F. Adachi, “Unlocking FAS-RIS security analysis with block-correlation model,” IEEE Wireless Commun. Lett. , vol. 14, no. 7, pp. 1-5, 2025. [49] S. Yang et al. , “Toward intelligent antenna positioning: Leveraging DRL for FAS-aided ISAC systems,” IEEE Internet Things J. , vol. 14, no. 7, pp. 2029–2033, Jul. 2025. [50] T. Wu et al. , “Variable block-correlation modeling and optimization for secrecy analysis in fluid antenna systems,” to appear in IEEE Trans. Wireless Commun. , arXiv preprint arXiv:2510.03594, 2025. [51] K. K. Wong, K. F. Tong, Y. Chen, and Y. Zhang, “Closed-form expressions for spatial correlation parameters for performance analysis of fluid antenna systems,” IET Electron. Lett. , vol. 58, no. 11, pp. 454– 457, May 2022. [52] Z. Chai, K. K. Wong, K. F. Tong, Y. Chen, and Y. Zhang, “Port selection for fluid antenna systems,” IEEE Commun. Lett. , vol. 26, no. 5, pp. 1180–1184, May 2022. [53] K. K. Wong and K. F. Tong, “Fluid antenna multiple access,” IEEE Trans. Wireless Commun. , vol. 21, no. 7, pp. 4801-4815, Jul. 2022. [54] X. Lai et al. , “Revisiting spatial block-correlation model for fluid antenna systems: From constant to variable correlations,” IEEE J. Sel. Areas Commun. , vol. 44, pp. 1335–1351, 2026. [55] K. K. Wong, D. Morales-Jimenez, K.-F. Tong, and C.-B. Chae, “Slow fluid antenna multiple access,” IEEE Trans. Commun. , vol. 71, no. 5, pp. 2831–2846, May 2023. [56] I. S. Gradshteyn and I. M. Ryzhik, Table of integrals, series, and products, 7th ed . San Diego, CA: Academic, 2007. [57] H. Wang, Q. Yang, Z. Ding, and H. V. Poor, “Secure short-packet communications for mission-critical IoT applications,” IEEE Trans. Wireless Commun. , vol. 17, no. 7, pp. 4550–4564, Jul. 2019.

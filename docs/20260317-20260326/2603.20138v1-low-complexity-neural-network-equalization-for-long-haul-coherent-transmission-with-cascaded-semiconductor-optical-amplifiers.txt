@@ -1,0 +1,225 @@
+Title: Low-complexity neural network equalization for long-haul coherent transmission with cascaded semiconductor optical amplifiers
+
+URL Source: https://arxiv.org/pdf/2603.20138v1
+
+Published Time: Mon, 23 Mar 2026 01:15:01 GMT
+
+Number of Pages: 5
+
+Markdown Content:
+## Low-complexity neural network equalization for long-haul coherent transmission with cascaded semiconductor optical amplifiers 
+
+S. Bogdanov 1∗, S. Sygletos 1, O. Sidelnikov 2, G. Gomes 1, M. Kamalian-Kopae 3 and S. K. Turitsyn 1
+
+> 1
+
+Aston Institute of Photonic Technologies, Aston University, Birmingham, B4 7ET, UK 
+
+> 2
+
+Novosibirsk State University, Novosibirsk, 630090, Russia 
+
+> 3
+
+Microsoft Azure Fiber, Unit 7, The Quadrangle, Romsey, SO561 9DL, UK and 
+
+> ∗
+
+s.bogdanov@aston.ac.uk 
+
+In this letter, we numerically investigate a long-haul coherent data transmission system with a cascade of semiconductor optical amplifiers (SOAs). We exploit low-complexity neural networks that can be implemented in real time to compensate for the accumulated distortions induced by a cascade of SOAs. This equalization provides an order-of-magnitude reduction in bit error rate at low dispersion (in the O-band), whereas higher dispersion degrades performance. 
+
+I. INTRODUCTION 
+
+Semiconductor optical amplifiers (SOAs) possess sev-eral attractive properties for fiber optic communications. They are cost-effective, compact, and integrable with ex-isting data transmission systems, while offering a broad amplification bandwidth (typically ∼ 30 –80 nm at the 3-dB level) [1, 2]. This wide bandwidth is particularly im-portant as ultra-wideband transmission remains a domi-nant route to higher link capacity, making SOAs a com-pelling alternative to complex multi-stage amplification schemes. For example, amplification across the full low-loss window of standard fibre (O–E–S–C–L–U bands) has been demonstrated using a cascade of six amplifiers of dif-ferent types, including Raman amplification [3]. In con-trast, semiconductor devices can potentially provide gain across these bands within a single technology platform. This capability is particularly relevant for ultra-wideband transmission fibres, such as hollow-core fibres, which can offer low-loss windows over a wide spectral range. More-over, the growing demand for data-centre interconnec-tions requires cost-effective and reliable amplification in the O-band, where conventional erbium-doped fibre am-plifiers are ineffective [4]. Although O-band transmission currently relies on specialised bismuth-doped fibre am-plifiers, SOAs can offer a compact alternative while re-taining the advantages listed above [5]. Finally, because SOAs are electrically pumped, they avoid the need for optical pump lasers, simplifying deployment and enabling low-power, highly integrable amplification. Nonetheless, SOAs exhibit several limitations, includ-ing signal distortions arising from gain saturation and the finite carrier lifetime, polarization-dependent gain, and relatively high noise figures [2]. The finite gain recovery time, when comparable to or longer than the symbol pe-riod, gives rise to pattern effects because the gain does not fully recover from one symbol to the next [6], leading to symbol-to-symbol power fluctuations. In coherent trans-mission, the temporally varying gain can also translate into nonlinear phase noise via the linewidth enhancement factor [7]. These effects motivate system designs that are robust to SOA impairments, and a range of mitigation schemes has been proposed. One approach is to linearize the SOA response by modulating the drive current using the input data stream [8, 9]. Alternatively, a simplified linear backpropagation procedure was described in [10], with the authors reporting that it outperforms the stan-dard fourth-order Runge–Kutta implementation as the sampling rate approached realistic Nyquist values. More recently, a trainable digital filter was applied to com-pensate SOA-induced nonlinearities in a 32 Gbaud 16-QAM/64-QAM back-to-back system [11], achieving per-formance comparable to conventional methods, but with reduced parameter-estimation time. In cascaded SOA systems, impairments tend to ac-cumulate, leading to substantial penalties in long-haul, multi-span links. An experimental study of metro and access networks employing a cascade of four SOAs re-ported progressively increasing degradation along the cas-cade [12]. Recently, long-haul experiments using an SOA for fiber-loss compensation demonstrated a lower capac-ity than an EDFA-only scheme [13]. Nevertheless, po-tential advantages such as reduced energy consumption and broad wavelength applicability motivate SOA-based solutions when combined with appropriate digital signal processing (DSP). Machine-learning methods, and neural networks (NNs) in particular, have been extensively studied for equal-ization in fiber-optic channels and have demonstrated strong performance [14–16]. These approaches have sub-sequently been applied to SOA-based amplification sys-tems. For instance, a two-cascaded 100 Gbit /s PAM-4 IM/DD O-band link was investigated in [17]. Among multilayer perceptrons (MLPs), convolutional neural net-works (CNNs), and long short-term memory (LSTMs) NNs, the LSTM provided the best equalization perfor-mance on both simulated and experimental data. In another study, a bidirectional neural network was em-ployed for receiver-side equalization of SOA-induced dis-tortions in a coherent 30 Gbaud 16-QAM back-to-back system [18], yielding a 4 dB Q-factor improvement over standard minimum mean-square error (MMSE) equaliza-tion without requiring prior knowledge of the SOA pa-rameters. Of particular interest are low-complexity neu-ral network equalizers that can be implemented in real time on field-programmable gate arrays (FPGAs). For example, a two-layer perceptron with 33 and 14 neu-rons was demonstrated in a 50 Gb /s passive optical net-work (PON) [19], outperforming a maximum likelihood sequence estimator at the expense of increased hardware complexity. An FPGA-based MLP was also reported for a 100 Gb /s IM/DD PON back-to-back system using an SOA as a power booster [20], in which the authors em-ployed a two-layer model (12 and 8 neurons) with a 32-symbol input window. Alternatively, a two-layer 1D CNN was applied in a 20 GBaud IM/DD PON [21], using longer 
+
+> arXiv:2603.20138v1 [physics.optics] 20 Mar 2026
+
+2input sequences (256 and 512 symbols), with 4 and 8 fil-ters per layer, while jointly predicting 8 symbols. In a related (SOA-free) long-haul scenario (dual-polarization 16-QAM at 34 Gbaud over 14 spans of 70 km ), a biLSTM and a deep CNN were investigated [22]. Both models used 81-symbol inputs with four channels (I/Q compo-nents from both polarizations), and the CNN comprised two convolutional layers with 70 and 2 filters, producing 61 symbol decisions simultaneously, while the biLSTM used 35 hidden units and a similar 2-filter convolutional decision layer. However, these FPGA implementations were evaluated only via offline simulations. These exam-ples illustrate that only simple, shallow MLPs and CNNs are suitable for real-time implementation, while recur-rent architectures impose additional limitations on online use. Although MLPs and CNNs demonstrate lower per-formance when processing channels with memory, they can still be effectively applied for equalization in low-dispersion scenarios. The advantages of SOAs – including broadband am-plification, cost-effectiveness, compactness, and integra-bility – motivate researchers to apply them in long-haul, metro, and access networks. However, SOAs’ nonlinear distortions caused by gain saturation and a high noise figure have limited their use. The former can now be ef-fectively addressed with NN equalizers capable of learn-ing impairment patterns. Moreover, it has been demon-strated that the simplest NNs can be implemented on an FPGA, enabling real-time equalization. In this paper, we perform a numerical simulation of the long-haul coherent communication system with a cascade of SOAs. We use a simplified multilayer perceptron to compensate for the combined fiber and SOA-induced nonlinear distortions. We keep the complexity of the NNs closer to that of those implemented on an FPGA to ensure real-time feasibility.  
+
+> II. SYSTEM AND COMPONENTS MODELLING
+
+We consider single-polarization, single-channel trans-mission of a standard 16-QAM signal at 32 Gbaud over a multi-span fibre link, as depicted in Fig. 1. At the transmitter, a bit sequence is mapped to 16-QAM sym-bols and shaped by a root-raised cosine (RRC) filter with roll-off 0.1. The waveform is then normalized to a pre-scribed launch power and injected into the transmission line. The link consists of 16 identical spans of standard single-mode fibre, each 73 km long, followed by an inline semiconductor optical amplifier (SOA) that compensates the span loss. Consequently, the signal power is restored after each span, while impairments due to fibre propaga-tion and SOA operation (gain saturation and amplified spontaneous emission noise) accumulate along the cas-cade. After each SOA, a Gaussian optical filter is applied to suppress out-of-band amplified noise. At the receiver, we perform linear dispersion compensation (LDC), apply the matched RRC filter, downsample to 1 Sa /sym , and finally apply a neural-network (NN) equalizer prior to demodulation. Signal propagation in the optical fibre is governed by the nonlinear Schr¨ odinger equation (NLSE) [23]: 
+
+iq z − β2
+
+2 qtt + γ|q|2q = −i αf
+
+2 q, (1) 
+
+Figure 1: The scheme of the simulated data transmission system. At the transmitter: bit sequence generator, modulator, and RRC filter; in line: 16 spans each consisting of 73 km of standard fibre followed by an SOA and a Gaussian filter; at the receiver: linear dispersion compensation (LDC), matched RRC filter, NN equalizer, and demodulator. where q(t, z ) is the signal envelope, t and z are the temporal and spatial variables, β2 is the group-velocity dispersion, γ is the Kerr nonlinearity, and αf is the fibre attenuation. For standard single-mode fibre at 
+
+λ0 = 1550 nm (C-band), we use β2 = −21 .67 ps 2/km ,
+
+γ = 1 .27 × 10 −3 mW −1km −1, and αf = 0 .2 dB /km . (1) is solved using the split-step Fourier method with 8 samples per symbol and 128 steps per span. A comprehensive analysis of SOA-induced self-phase modulation and gain dynamics was presented in [7]. For numerical simulations, we adopt a commonly used simpli-fied (effectively lossless) dynamical SOA model, in which the gain is governed by a 1D rate equation and amplified spontaneous emission (ASE) noise is injected at the SOA input [24]. More detailed approaches (e.g., traveling-wave and Connelly-type models) can be found in [1, 2]. The SOA action on the complex envelope is described through the input/output power and phase relations [7]: 
+
+Pout (t) = Pin (t) eh(t), (2) 
+
+ϕout (t) = ϕin (t) − 12 αH h(t), (3) 
+
+∂h (t)
+
+∂t = h0 − h(t)
+
+τc
+
+− Pin (t)
+
+τcPsat 
+
+
+
+eh(t) − 1
+
+
+
+, (4) where Pin (t) and Pout (t) are the instantaneous input and output powers, ϕin (t) and ϕout (t) are the corresponding phases, and h(t) is the gain integrated over the SOA length. Here, h0 is the small-signal integrated gain, Psat 
+
+is the saturation power, τc is the carrier lifetime, and 
+
+αH is the linewidth enhancement factor. (3) shows that time-varying gain induces phase modulation and thus a gain-saturation-driven nonlinearity. We simulate the SOA using (2)–(4), solving (4) with a fourth-order Runge–Kutta method. ASE noise is added at the SOA input [24]: 
+
+qSOA in (t) = q(t) + σASE nASE (t), (5) 310 5 0 5 10 15       
+
+> Output power, dBm
+> 11
+> 12
+> 13
+> 14
+> 15
+> Gain, dB
+> Reference
+> Model
+> Parameter Value
+> Psat 15.2 dBm
+> h014.85 dB
+> NF 8 dB
+> c100 ps
+> H5
+
+Figure 2: Comparison of the SOA model with the experimental data from Thorlabs’ official webpage for SOA1013S [25]. where q(t) is the signal before the SOA, nASE (t) is a complex random process normalized to unit power, and 
+
+σ2ASE = hνn sp Bsim . Here, hν is the photon energy, 
+
+nsp = NF /2 is the spontaneous emission factor with NF 
+
+being the noise figure in linear units, and the simulation bandwidth is set by the temporal resolution Bsim = 1 /dt .To mimic a realistic device, we tune the model parame-ters using a commercially available SOA1013S (Thorlabs) [25]. The static CW gain curve provided by the vendor is compared with the model fit in Fig. 2. We adjust h0 and 
+
+Psat to match the reference curve, while fixing NF = 8 dB 
+
+according to the device specification. The parameters τc
+
+and αH are not provided; therefore, we use typical values reported for SOAs. As a receiver-side equalizer, we employ a multilayer perceptron (MLP) to predict transmitted symbols using the sequences of received symbols. The MLP hyperpa-rameters are selected via grid search. The NN input consists of a window of 33 consecutive complex-valued symbols; their I- and Q-components are concatenated into a real-valued vector before being fed to the network. The baseline model has one hidden layer with 128 neu-rons and the tanh activation function, and two outputs predicting the I and Q components of the central sym-bol; we refer to this architecture as 33-128 . In addition, we consider 17-64 and 33-256 variants. These architec-tures are intentionally kept close to those demonstrated in FPGA-oriented implementations reported in the liter-ature [19–22], supporting the feasibility of real-time de-ployment. To train the NNs, we use 10 6 symbols, split 80% for training and 20% for testing (when the BER is too low, we increase the test data to 10 6 symbols), and the mean-squared-error loss function. The training rou-tines are implemented in the TensorFlow 2.0 framework. 
+
+III. RESULTS 
+
+In Fig. 3(a), we implement the data transmission sys-tem described above with inline SOAs and compare the performance with (1) a system in which the SOAs are replaced by linear amplifiers (with no any nonlinear dy-namic) but the same NF = 8 dB (noted as LinAmp 8dB ), thereby excluding SOA nonlinearity from consideration. This allows us to assess how the NN compensates for deterministic SOA-induced effects, beyond the stochastic impairments caused by noise. The second scenario (2) is when the fiber spans between SOAs are replaced with variable optical attenuators (i.e., eliminating the fiber’s dispersion and nonlinearity). We implement this regime to estimate the degree of distortion caused by a pure SOA cascade and to examine how the NN handles it. When we do not apply the NN equalizer, the SOAs’ nonlinearity is the main contributor to the signal distortion. However, when the NN, 33-128 model, is incorporated into the DSP chain, we observe that distortions in the system with removed fiber spans, the scenario (2), could be effectively compensated, 57x reduction in BER. At the same time, a limited performance gain is achieved in the complete 10 8 6 4 2 0
+
+Launch power, dBm 
+
+10 4
+
+10 3
+
+10 2
+
+10 1  
+
+> BER
+> SOA
+> SOA + NN
+> SOA (no fiber)
+> SOA (no fiber) + NN
+> LinAmp 8dB
+> LinAmp 8dB + NN
+> SOA
+> SOA + NN
+> SOA (no fiber)
+> SOA (no fiber) + NN
+> LinAmp 8dB
+> LinAmp 8dB + NN
+
+(a) 
+
+> FEC
+
+10 8 6 4 2 0
+
+Launch power, dBm 
+
+10 4
+
+10 3
+
+10 2
+
+10 1                    
+
+> BER
+> SOA
+> SOA + NN
+> LinAmp 8dB (20)
+> LinAmp 8dB (20) + NN
+> SOA ( 20)
+> SOA ( 20) + NN
+> SOA
+> SOA + NN
+> LinAmp 8dB (20)
+> LinAmp 8dB (20) + NN
+> SOA ( 20)
+> SOA ( 20) + NN
+
+(b) 
+
+> FEC
+
+Figure 3: BER as a function of launch power for the system with SOA and LinAmp 8dB (linear amplifier with 
+
+NF = 8 dB ). (a): The scenarios are SOA (red), SOA with no fiber (blue), LinAmp 8dB (green). (b): SOA (red, from (a) for reference), SOA with β2 → 0 (purple), and LinAmp 8dB with β2 → 0 (green). In all cases, solid lines correspond to non-equalized systems, dashed lines to equalized systems. The forward error correction (FEC) threshold is 3.8 × 10 −3 (7% overhead). 430 20 10 0
+
+> 2
+
+## , ps 2/km 
+
+## 10 4
+
+## 10 3
+
+## 10 2   
+
+> SOA
+> SOA + NN
+> LinAmp 8dB
+> LinAmp 8dB + NN
+> SOA
+> SOA + NN
+> LinAmp 8dB
+> LinAmp 8dB + NN
+> FEC
+> C-band O-band
+
+## BER 
+
+SOA SOA + NN 
+
+Figure 4: The dependence of BER on β2 for system with SOA and LinAmp 8dB when NN is applied or not. Two constellations correspond to the wavelength at which NN equalization provides the maximum BER reduction (circled on the graph). system (including fiber spans), 3x lower BER. Even with different NN models from our pool, we receive almost the same performance (red shaded area in Fig. 3(a)). Also, a 3.5x decrease in BER is achieved with the NN equalizer in the scenario where SOAs are replaced with LinAmp 8dB .Therefore, it is clear that the joint action of the SOAs’ nonlinearity and fiber effects significantly reduces the per-formance gain from the NN equalizer, whereas the pure SOAs’ distortions can be effectively compensated. The dispersion of the optical fiber introduces channel memory, complicating the equalization of signals with NNs. In Fig. 3(b), we compare our communication sys-tem having inline SOAs with one where the optical fiber dispersion is set to be small, β2 = −1 ps 2/km (depicted 
+
+β2 → 0 in Fig. 3(b)). The last scenario can be applied to the O-band data transmission. Although systems with small dispersion suffer from increased nonlinear distor-tion, the application of NNs benefits by reducing channel memory. In this case, our NN equalizer provides a 9x reduction in BER, compared to 3x for the system with standard C-band dispersion ( β2 = −21 .7 ps 2/km ). The same holds for the SOAs replaced by LinAmp 8dB at the same small dispersion regime, where the NN equalizer re-duces BER by up to 36x. These findings reveal that the nonlinear distortions caused by the joint action of an SOA and fiber nonlinearity can be effectively compensated by a simple NN equalizer when isolated from dispersion. The dependence of the gain in performance for systems with SOAs and LinAmp 8dB on a wide range of β2 after applying the NN equalizer is depicted in Fig. 4. It is clearly demonstrated that the NN is able to provide bet-ter equalization when |β2| is small. For the system with 
+
+LinAmp 8dB , this gain is even higher, demonstrating that NN compensates not only SOAs’ but fiber’s nonlinearity as well.  
+
+> IV. CONCLUSION
+
+In this letter, we investigate a single-polarization single-channel coherent long-haul data transmission sys-tem with a cascade of 16 SOAs as inline amplifiers. We demonstrate that the nonlinear distortions of a signal caused by a cascade of SOAs can be effectively compen-sated by a low-complexity NN, enabling real-time imple-mentation. Moreover, the proposed equalizer operates effectively when SOA’s distractive effects are mixed with fiber nonlinearity. At the same time, the dispersion of the optical fiber introduces channel memory, significantly re-ducing equalization performance. However, as |β2| tends to zero (i.e., in the O-band), the effectiveness of equaliza-tion increases by an order of magnitude.  
+
+> V. ACKNOWLEDGMENT
+
+This work was supported by UK EPSRC grant TRANSNET (EP/R035342/1) and Advanced Opti-cal Frequency Comb Technologies and Applications (EP/W002868/1).                                    
+
+> [1] M. J. Connelly, Semiconductor Optical Amplifiers
+> (Springer, 2007). [2] A. Sobhanan, A. Anthur, S. O’Duill, M. Pelusi, S. Namiki, L. Barry, D. Venkitesh, and G. P. Agrawal, Semiconductor optical amplifiers: recent advances and applications, Advances in Optics and Photonics 14 , 571 (2022). [3] B. J. Puttnam, R. S. Luis, I. Phillips, M. Tan, A. Donodin, D. Pratiwi, L. Dallachiesa, Y. Huang, M. Mazur, N. K. Fontaine, et al. , 402 Tb/s GMI data-rate OESCLU-band transmission, in Optical Fiber Communi-cation Conference (OFC) (2024) p. Th4A.3. [4] E. Agrell, M. Karlsson, F. Poletti, S. Namiki, X. Chen, L. A. Rusch, B. Puttnam, P. Bayvel, L. Schmalen, Z. Tao,
+> et al. , Roadmap on optical communications, Journal of Optics 26 , 093001 (2024). [5] D. J. Elson, M. Jarmoloviˇ cius, V. Mikhailov, J. Luo, D. Inniss, S. Beppu, G. Baxter, R. Stolte, L. Stewart, S. Takasaka, et al. , Continuous 16.4-THz bandwidth co-herent DWDM transmission in O-band using a single fi-bre amplifier system, Journal of Lightwave Technology (2024). [6] A. Mecozzi and J. M ørk, Saturation induced by picosec-ond pulses in semiconductor optical amplifiers, Journal
+
+5
+
+of the Optical Society of America B 14 , 761 (1997). [7] G. P. Agrawal and N. A. Olsson, Self-phase modulation and spectral broadening of optical pulses in semiconduc-tor laser amplifiers, IEEE Journal of Quantum Electron-ics 25 , 2297 (1989). [8] A. Saleh, R. Jopson, and T. Darcie, Compensation of non-linearity in semiconductor optical amplifiers, Electronics Letters 24 , 950 (1988). [9] J. C. Ortiz-Cornejo, P. Morel, S. Azou, and J. A. Pardi˜ nas-Mir, A numerical assessment of an effective envelope-tracking semiconductor optical amplifier design for coherent-optical ofdm transmission, Optics Commu-nications 454 , 124474 (2020). [10] A. Ghazisaeidi and L. A. Rusch, On the efficiency of dig-ital back-propagation for mitigating SOA-induced non-linear impairments, Journal of Lightwave Technology 29 ,3331 (2011). [11] E. Sillekens, F. M. Ferreira, R. I. Killey, and P. Bayvel, Experimental demonstration of a simplified SOA nonlin-earity mitigation scheme, in Optical Fiber Communica-tion Conference (OFC) (2023) p. W3E.5. [12] S. Koenig, R. Bonk, H. Schmuck, W. Poehlmann, T. Pfeiffer, C. Koos, W. Freude, and J. Leuthold, Am-plification of advanced modulation formats with a semi-conductor optical amplifier cascade, Optics Express 22 ,17854 (2014). [13] E. Sillekens, R. Sohanpal, R. Aparecido, H. Buglia, J. Yang, R. I. Killey, and P. Bayvel, Experimental demon-stration of semiconductor optical amplifiers for 2064 km link loss compensation, IEEE Photonics Technology Let-ters 37 , 861 (2025). [14] F. Musumeci, C. Rottondi, A. Nag, I. Macaluso, D. Zibar, M. Ruffini, and M. Tornatore, An overview on application of machine learning techniques in optical networks, IEEE Communications Surveys & Tutorials 21 , 1383 (2018). [15] F. N. Khan, Q. Fan, C. Lu, and A. P. T. Lau, An optical communication’s perspective on machine learning and its applications, Journal of Lightwave Technology 37 , 493 (2019). [16] P. J. Freire, A. Napoli, B. Spinnler, N. Costa, S. K. Tu-ritsyn, and J. E. Prilepsky, Neural networks-based equal-izers for coherent optical transmission: Caveats and pit-falls, IEEE Journal of Selected Topics in Quantum Elec-tronics 28 , 5100413 (2022). [17] K. Wang, C. Wang, J. Zhang, Y. Chen, and J. Yu, Miti-gation of SOA-induced nonlinearity with the aid of deep learning neural networks, Journal of Lightwave Technol-ogy 40 , 979 (2022). [18] A. Safarnejadian, H. Imtiaz, M. Zeng, and L. A. Rusch, A neural network equalizer for SOA nonlinearities in co-herent systems, in European Conference on Optical Com-munication (ECOC) (2025) p. W.02.01.93. [19] N. Kaneda, Z. Zhu, C.-Y. Chuang, A. Mahadevan, B. Farah, K. Bergman, D. Van Veen, and V. Houtsma, FPGA implementation of deep neural network based equalizers for high-speed PON, in Optical Fiber Commu-nication Conference (OFC) (2020) p. T4D.2. [20] E. Roshanshomal, S. L. Murphy, S. O. Ayat, F. Ja-mali, P. D. Townsend, and C. Antony, Low-complexity FPGA-accelerated NN-based adaptive equalizer for 100 Gb/s IMDD PON, in IEEE International Conference on Machine Learning for Communication and Networking (ICMLCN) (2025) pp. 1–5. [21] J. Ney and N. Wehn, Achieving high throughput with a trainable neural-network-based equalizer for communi-cations on FPGA, in Euromicro Conference on Digital System Design (DSD) (2024) pp. 106–113. [22] P. J. Freire, S. Srivallapanondh, M. Anderson, B. Spinnler, T. Bex, T. A. Eriksson, A. Napoli, W. Schairer, N. Costa, M. Blott, et al. , Implementing neural network-based equalizers in a coherent optical transmission system using field-programmable gate ar-rays, Journal of Lightwave Technology 41 , 3797 (2023). [23] G. P. Agrawal, Nonlinear Fiber Optics , 5th ed. (Aca-demic, 2012). [24] D. Cassioli, S. Scotti, and A. Mecozzi, A time-domain computer simulator of the nonlinear response of semi-conductor optical amplifiers, IEEE Journal of Quantum Electronics 36 , 1072 (2000). [25] Thorlabs, SOA1013S semiconductor optical ampli-fier, https://www.thorlabs.com/thorproduct.cfm? partnumber=SOA1013S .

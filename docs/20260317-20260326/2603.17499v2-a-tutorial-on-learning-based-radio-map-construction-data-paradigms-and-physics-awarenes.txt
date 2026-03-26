@@ -1,0 +1,1654 @@
+Title: A Tutorial on Learning-Based Radio Map Construction: Data, Paradigms, and Physics-Awarenes
+
+URL Source: https://arxiv.org/pdf/2603.17499v2
+
+Published Time: Wed, 25 Mar 2026 00:38:51 GMT
+
+Number of Pages: 34
+
+Markdown Content:
+> 1
+
+# A Tutorial on Learning-Based Radio Map Construction: Data, Paradigms, and Physics-Awareness 
+
+Xiucheng Wang, Yuhao Pan, Nan Cheng 
+
+Abstract —The integration of artificial intelligence into next-generation wireless networks necessitates the accurate construction of radio maps (RMs) as a foundational prerequisite for electro-magnetic digital twins. A RM provides the digital representation of the wireless propagation environment, mapping complex geographical and topological boundary conditions to critical spatial-spectral metrics that range from received signal strength to full channel state information matrices. This tutorial presents a comprehensive survey of learning-based RM construction, systematically addressing three intertwined dimensions: data, paradigms, and physics-awareness. From the data perspective, we review physical measurement campaigns, ray tracing simulation engines, and publicly available benchmark datasets, identifying their respective strengths and fundamental limitations. From the paradigm perspective, we establish a core taxonomy that categorizes RM construction into source-aware forward prediction and source-agnostic inverse reconstruction, and examine five principal neural architecture families spanning convolutional neural networks, vision transformers, graph neural networks, generative adversarial networks, and diffusion models. We further survey optics-inspired methods adapted from neural radiance fields and 3D Gaussian splatting for continuous wireless radiation field modeling. From the physics-awareness perspective, we introduce a three-level integration framework encompassing data-level feature engineering, loss-level partial differential equation regularization, and architecture-level structural isomorphism. Open challenges including foundation model development, physical hallucination detection, and amortized inference for real-time deployment are discussed to outline future research directions. 
+
+Index Terms —Radio map, neural network, physics-informed neural network, diffusion model, generative artificial intelligence. 
+
+I. I NTRODUCTION 
+
+Next-generation wireless networks increasingly rely on artificial intelligence to manage complex, high-dimensional data distributions [1], [2]. These distributions include massive multiple-input multiple-output (MIMO) channel matrices, het-erogeneous traffic patterns, and dynamic network topologies [3], [4]. To support the realization of electromagnetic digital twins, the accurate construction of radio maps (RMs) has become a fundamental prerequisite [5], [6]. An RM provides a digital 
+
+This work was supported by the National Key Research and Development Program of China (2024YFB907500). Xiucheng Wang, and Nan Chengare with the State Key Labora-tory of ISN and School of Telecommunications Engineering, Xidian University, Xi’an 710071, China (e-mail: xcwang 1@stu.xidian.edu.cn; dr.nan.cheng@ieee.org); (Corresponding author: Nan Cheng.) .Yuhao Pan is with the Division of Integrative Systems and Design, Hong Kong University of Science and Technology, Hong Kong, China (e-mail: ypanca@connect.ust.hk) 
+
+representation of the wireless propagation environment over a geographic region of interest. It maps geographical and topological boundary conditions to spatial-spectral metrics. These metrics range from received signal strength (RSS) and time of arrival (ToA) to full complex channel state information (CSI) matrices [7]. A high-fidelity RM therefore serves as the cornerstone for downstream tasks such as resource allocation, interference management, and predictive network planning [8], [9]. Traditionally, acquiring ground-truth radio environment data has relied on dedicated physical measurement campaigns [3]. Drive tests and walk tests capture the stochastic nature of real-world propagation channels [10]. However, these methods suffer from high operational costs and limited spatial coverage [11]. Indoor environments and three-dimensional vertical domains remain particularly difficult to survey [12]. The industry has adopted crowdsourcing paradigms such as the minimization of drive tests (MDT) to alleviate spatiotemporal sparsity [10], [11]. Nevertheless, commercial user equipment introduces significant measurement noise due to device heterogeneity and uncalibrated antenna configurations [13]. To bypass the constraints of physical data collection, ray tracing (RT) simulators have been widely employed [14], [15]. These computational electromagnetics methods serve as physical engines for synthesizing propagation data. However, the shooting and bouncing rays (SBR) algorithm faces severe scalability bottlenecks [14]. Its computational complexity grows exponentially with the number of interaction orders. This renders ray-optical models too expensive for city-scale dynamic dataset generation [13], [16]. Recent differentiable RT frameworks such as Sionna [17] enable end-to-end gradient computation. They allow joint optimization of simulation parameters and neural network weights. Despite this progress, the millisecond-level latency required by real-time digital twins remains beyond the reach of pure simulation approaches [18]. To overcome these computational limitations, the field has shifted toward data-driven deep learning (DL) methodolo-gies [13], [16], [19]. DL models function as differentiable surrogate models that implicitly encode wave propagation laws [20], [21]. They approximate electromagnetic responses in near real-time while maintaining fidelity to ground-truth physics. Based on this paradigm, this tutorial establishes a core taxonomy for RM construction. It categorizes the problem into two formulations: source-aware forward prediction and source-agnostic inverse reconstruction. In source-aware RM construction, the neural network re-
+
+> arXiv:2603.17499v2 [eess.SY] 24 Mar 2026 2
+
+ceives complete knowledge of the propagation environment and transmitter parameters [20]–[22]. The network acts as a high-speed surrogate for rigorous physical solvers. Source-agnostic RM construction addresses scenarios where transmitter con-figurations are latent or unavailable [23]–[25]. Measurements are spatially sparse in these settings. From a signal processing perspective, this formulation constitutes a severely ill-posed nonlinear inverse problem [11]. The network must recover the global field distribution from limited partial observations. Driven by these diverse problem formulations, the underlying neural architectures have evolved significantly. Early methods relied on convolutional neural networks (CNNs) to abstract propagation into two-dimensional pixel mapping problems [20], [21], [26]. However, fixed and localized receptive fields restrict CNNs from capturing long-range spatial dependencies [13]. Macroscopic shadowing and diffraction around distant obstacles require global spatial reasoning. Vision transformers (ViTs) address this limitation through self-attention mechanisms [22], [25], [27], [28]. They process environmental features globally and establish correlations between distant geographic structures and local signal attenu-ation. This capability is valuable for inverse problems where sparse observations must be contextualized within the full environment [25], [29]. The token-based input representation of ViTs naturally accommodates variable-sized sparse point sets. This avoids the information dilution caused by rasterizing sparse measurements onto dense grids [25]. Graph neural networks (GNNs) have also been adopted to model the non-Euclidean nature of radio propagation [30]– [33]. They represent spatial elements as nodes and physical interactions as edges. This formulation translates classical propagation models into learnable graph structure priors [30]. GNNs naturally handle heterogeneous network entities and non-uniform spatial sampling. To address severe degradation under extreme spatial sparsity, the community has transitioned from discriminative point estimation to generative paradigms. Generative adversarial networks (GANs) reformulate RM construction as a condi-tional generation problem [34]–[39]. Diffusion models further decompose generation into a sequence of tractable denoising operations [40]–[48]. They offer stable training dynamics and high sample fidelity [49]. Their stochastic nature also enables uncertainty quantification through Monte Carlo sampling over multiple realizations [40], [50]. To overcome resolution bottlenecks inherent in discrete grid representations, researchers have adapted optical neural rendering techniques to the radio frequency domain. Neural radiance fields (NeRF) and 3D Gaussian splatting (3DGS) enable the construction of continuous wireless radiation fields [6], [51]–[53]. These optics-inspired representations explicitly model the volumetric propagation process. They achieve high physical fidelity in complex-valued channel reconstruction. However, per-scene optimization requirements currently limit their applicability to dynamic environments [6]. Purely data-driven models remain inherently unconstrained in their latent spaces. This frequently leads to physical hallu-cinations that violate foundational electromagnetic rules [41], [54]. Physics-informed methodologies address this challenge by embedding fundamental laws directly into the learn-ing pipeline [51], [53]–[56]. Maxwell’s equations and the Helmholtz equation can be incorporated into data repre-sentations, loss functions, and network architectures [41], [53], [57]. This tutorial introduces a three-level integration taxonomy for these approaches. The taxonomy encompasses data-level feature engineering, loss-level partial differential equation (PDE) regularization, and architecture-level structural isomorphism [41], [53], [57], [58]. 
+
+A. Related Works 
+
+Although RM construction and wireless deep learning have attracted significant attention, existing surveys focus on different aspects. Doha and Abdelhadi [59] provide a comprehensive roadmap for integrating deep learning into wireless receivers. Their scope is confined to temporal and symbol-level processing at the receiver end. This focus is fundamentally distinct from the spatial, environment-scale field reconstruction addressed in this tutorial. Vasudevan and Yuksel [13] offer a broad overview of machine learning for radio propagation. Their coverage emphasizes traditional regression-based algorithms such as random forests and support vector machines. Zeng et al. [5] present a visionary tutorial on the channel knowledge map concept and its network-level applications. Regarding map construction, their discussion relies on classical spatial interpolation techniques like Kriging and tensor completion. Our tutorial, in contrast, treats RM construction as a complex inverse problem and explores advanced generative paradigms. Feng et al. [56] provide a solid categorization of RM estimation methods into model-driven, data-driven, and hybrid approaches. Their architectural coverage extends to ViTs and conditional GANs. However, the existing literature largely views RM construction as a deterministic interpolation or image-to-image translation task. Our tutorial advances beyond this view in three respects. First, we introduce probabilistic generative paradigms to handle extreme spatial sparsity and quantify uncertainty [40], [49]. Second, we systematically review and mathematically adapt optics-inspired neural rendering techniques to the complex-valued RF domain [6], [52], [53]. Third, we propose a rigorous three-level taxonomy for physics-informed integration and formally define the concept of physical hallucinations [41]. A detailed comparison with existing surveys is presented in Table I. 
+
+B. Contributions 
+
+The main contributions of this tutorial are summarized as follows. 1) We present a comprehensive data ecosystem for RM construction. We systematically review physical measure-ment techniques [10], [11], RT simulation engines [14], [15], [17], and publicly available benchmark datasets [20], [21], [42]. We identify their respective strengths and limitations while providing practitioner-oriented guidance for dataset selection. 3
+
+TABLE I: Comparison of This Tutorial with Existing Related Surveys Feature or Dimension Doha et al. (2025) [59] Zeng et al. (2024) [5] Vasudevan et al. (2024) [13] Feng et al. (2025) [60] Our Tutorial (This Work) Primary Focus Deep learning in physical-layer receiver modules Concept and network-level utilization of channel knowledge maps General machine learning for path loss and propagation Classification of RM estimation methods Advanced deep learning paradigms and physics-aware construction Problem Formulation Symbol detection, decoding, and equalization Spatial interpolation and database querying Regression and classification Spatial interpolation and image mapping Forward prediction versus inverse reconstruction Architecture Depth MLP, CNN, RNN, and basic autoencoders Shallow autoencoders and UNet Basic MLP, CNN, and decision trees Intermediate CNN, ViT, and conditional GANs Deep CNN, ViT, GNN, GAN, and diffusion models Optics-Inspired RF Modeling Not covered Not covered Not covered Not covered Extensive coverage of RF-NeRF and RF-3DGS Physics Integration Not applicable Not covered Not covered Basic concatenation of empirical models Rigorous 3-level taxonomy of data, loss, and architecture Extreme Sparsity Not applicable Kriging and matrix completion Traditional machine learning interpolation CNN and GAN inpainting Diffusion models, generative priors, and point-set ViTs Key Novelty DNN-to-module mapping for receivers Formalizing environment-aware communications Machine learning for drive test minimization Categorization by dependency on model knowledge Formalizing physical hallucinations and continuous RF fields 2) We establish a unified architectural taxonomy organized by the forward-inverse problem dichotomy. This tax-onomy spans CNNs [20], [21], ViTs [22], [25], [27], GNNs [30]–[32], GANs [34]–[36], diffusion models [40]– [42], [61], and optics-inspired neural rendering meth-ods [6], [48], [51]–[53]. Cross-architecture comparisons clarify the trade-offs among inference latency, data efficiency, and spatial modeling capability. 3) We introduce a physics-informed integration framework that categorizes embedding strategies by their depth of physical coupling [41], [51], [55], [57], [58]. This framework provides actionable recipes for practitioners to incorporate electromagnetic knowledge incrementally. Open challenges including foundation model develop-ment, physical hallucination detection, and amortized inference for real-time deployment are discussed through-out. II. P RELIMINARIES 
+
+This section introduces the mathematical foundations re-quired for subsequent discussions. We first define the radio map and its key properties. We then review three generative and rendering frameworks that serve as building blocks for RM construction: diffusion models, NeRF, and 3DGS. 
+
+A. Definition and Characterization of Radio Map 
+
+A radio map is a spatially continuous representation of the electromagnetic (EM) field distribution within a geographic region of interest [5], [7]. Unlike isolated signal measurements at discrete locations, an RM encodes the full spatial pattern as a structured, queryable representation. This enables inference, planning, and optimization tasks in wireless systems [8], [11]. 
+
+1) Electromagnetic Foundation: The spatial distribution of the EM field is governed by Maxwell’s equations [62], [63]. In the frequency domain, these reduce to the scalar Helmholtz equation for the complex field amplitude u(r) at position r:
+
+∇2u(r) + k2(r) u(r) = −f (r), (1) where k(r) is the spatially varying wavenumber determined by local permittivity and conductivity, and f (r) is the source excitation term. This equation governs free-space spread-ing, specular reflection, diffraction, and material penetration loss [63]. An RM is therefore a discretized solution of the boundary-value problem defined by (1) over the spatial domain 
+
+Ω.This PDE-rooted nature carries an important implication. The spatial values in an RM are not statistically independent samples. They are strongly correlated through the differential constraints of the underlying physics [54]. Any physically con-4
+
+TABLE II: Systematic Comparison of Radio Map, Channel Knowledge Map, and Radio Environment Map [5], [7], [11] 
+
+Attribute Radio Map Channel Knowledge Map Radio Environment Map 
+
+Core quantity EM field state: power, angle, delay Tx–Rx impulse response Multi-layer knowledge base: spectrum, interference, policy Physical basis Helmholtz/Maxwell solution; field-theoretic [54] System-theoretic: link input– output response [5] Network-level abstraction; not tied to a single PDE Mathematical for-mulation 
+
+P (r) = |u(r)|2 from Helmholtz 
+
+h(r; τ ): channel impulse re-sponse Aggregated database; no uni-fied form Tx dependency Source-agnostic; supports un-known or multiple Tx via su-perposition Tied to a specific Tx–Rx pair [5] Configuration-dependent; may aggregate links Superposition Linear in power under incoher-ent conditions [20] Linear in impulse response, but per-pair processing re-quired Not applicable; database-level concept Data acquisition From raw RSS via interpola-tion or field inversion [10] Requires channel sounding and impulse-response extrac-tion [3] Aggregated from sensors, databases, operator records [11] APS/PDP support Native; multi-channel image or 4-D tensor [42] Accessible via post-processing algorithms Not a primary representation Relation to PINNs Directly governed by (1) ; PDE residual is well-defined [54], [55] PDE constraint less natural in transfer-function domain No direct PDE formulation Typical application Coverage prediction, beam management, localization [8], [20] Site-specific channel database, precoder design [5] Cognitive radio, dynamic spec-trum access [11] sistent RM construction method must respect these constraints. This observation motivates physics-informed neural networks (PINNs) [51], [54], [55], which incorporate the residual of (1) as a regularization term in the training loss. This ensures consistency with the wave equation even where measured data are absent. 
+
+2) Multi-Dimensional Representation: A complete EM field characterization requires power, angular, and delay informa-tion [5]. Depending on the application, an RM can be organized into a hierarchy of increasing dimensionality. At the most compact level, the power-domain RM captures the spatially distributed RSS at each grid point. It is expressible as a single-channel image P ∈ RH×W [20], [21]. This form aligns naturally with standard CNN input conventions. At the second level, the angular and delay domain RM encodes the angular power spectrum (APS) and the power delay profile (PDP) as multi-channel images [42]. Each channel corresponds to a specific angular bin or delay tap. This captures the second-order spatial statistics of the multipath channel. At the highest level, the four-dimensional RM represents a full delay-angle-power tensor T ∈ RH×W ×Nτ ×Nθ [7], [42]. It jointly encodes power as a function of delay τ and angle 
+
+θ at every location. This enables direction of arrival (DoA), direction of departure (DoD), and joint spectral maps. 
+
+3) Distinction from Related Concepts: Two concepts fre-quently appear alongside the RM: the channel knowledge map (CKM) [5] and the radio environment map (REM) [11]. Each rests on a different abstraction. Table II compares them along nine key attributes. The CKM is a spatial distribution of impulse responses 
+
+h(r; τ ) [5]. Each response characterizes the input–output behavior between a fixed transmitter and a receiver at r.The power-domain RM corresponds to the steady-state field energy P (r) = |u(r)|2, where u(r) solves (1) . When multiple transmitters are present, the aggregate field satisfies: 
+
+P (r) = 
+
+> M
+
+X
+
+> m=1
+
+um(r)
+
+> 2
+
+≈
+
+> M
+
+X
+
+> m=1
+
+|um(r)|2 =
+
+> M
+
+X
+
+> m=1
+
+Pm(r), (2) where the approximation holds under incoherent superposi-tion [20]. This assumption is valid for signals on distinct carriers or with uncorrelated phases. Equation (2) shows that the multi-source RM equals the sum of per-source power maps. This property simplifies both measurement and reconstruction. The REM is a system-level knowledge repository [11]. It encompasses spectrum occupancy, regulatory constraints, interference metrics, and user-behavior data. The RM defined here is a proper subset of the REM, constituting its physical 5
+
+TABLE III: Intrinsic Properties of the Radio Map 
+
+Property Description 
+
+Spatial continu-ity 
+
+u(r) solves the elliptic equation (1) ;smooth except at material interfaces; strong spatial correlation [54] Linear superpo-sition Under incoherent conditions, the power-domain RM satisfies (2) ; modular per-source construction [20] Environment coupling 
+
+k2(r) encodes geometry and materials; building layouts are informative in data-sparse regions [20], [21] Direct measura-bility Power-domain RM can be estimated from raw RSS without channel sound-ing hardware [10], [11] Hierarchical ex-tensibility Scales from single-channel power map to 4-D delay-angle-power tensor [7], [42] field layer. 
+
+4) Intrinsic Properties: Several intrinsic properties of the RM, inherited from the wave equation, are relevant for subse-quent discussions. Table III summarizes these five properties. 
+
+B. Diffusion Model 
+
+RM construction under extreme spatial sparsity demands generative models that produce physically plausible field distributions [40], [44]. Diffusion models provide a principled alternative to GANs and variational autoencoders (VAEs) [49], [64]. They decompose generation into a sequence of tractable denoising steps, yielding stable training and high sample fidelity. 
+
+1) Discrete-Time Formulation: The denoising diffusion probabilistic model (DDPM) [49] consists of two opposing Markov chains over T timesteps. The forward process corrupts a sample x0 ∼ q(x0) by injecting Gaussian noise: 
+
+q(xt|xt−1) = N
+
+
+
+xt; p1 − βt xt−1, β tI
+
+
+
+, (3) where {βt ∈ (0 , 1) }Tt=1 is the variance schedule. By defining 
+
+αt = 1 − βt and ¯αt = Qti=1 αi, direct sampling at arbitrary t
+
+is possible: 
+
+xt = √¯αt x0 + √1 − ¯αt ϵ, ϵ ∼ N (0, I). (4) The reverse process recovers x0 from noise xT ∼ N (0, I).A neural network approximates this as: 
+
+pθ (xt−1|xt) = N (xt−1; μθ (xt, t ), Σθ (xt, t )) . (5) Matching this to the forward posterior via variational optimiza-tion, the training objective simplifies to noise prediction [49]: 
+
+LDDPM (θ) = Et, x0,ϵ
+
+h
+
+∥ϵ − ϵθ (xt, t )∥2i
+
+. (6) 
+
+2) Continuous-Time SDE Generalization: The discrete steps can be generalized to a continuous-time SDE framework [65]. As T → ∞ , the forward chain converges to the Itˆ o SDE: 
+
+dx = f (x, t )d t + g(t)d w, (7) where f (x, t ) is the drift coefficient and g(t) controls noise magnitude. Anderson’s theorem [66] guarantees a reverse-time SDE: 
+
+dx = f (x, t ) − g(t)2∇x log pt(x) dt + g(t)d ¯ w, (8) where ∇x log pt(x) is the score function. A score network 
+
+sθ (x, t ) approximates this gradient via denoising score match-ing [67]. The full derivation is provided in Appendix A. 
+
+3) Relevance to Wireless Channel Modeling: The continuous-time formulation offers two advantages for wireless applications. First, adaptive ODE/SDE solvers with variable step sizes can accelerate inference [65]. Second, it connects diffusion to stochastic optimal control, enabling physics-informed integration [41]. In practice, most wireless RM methods adopt the discrete DDPM for its simplicity and stable convergence [40], [42], [43], [47]. 
+
+C. Neural Radiance Fields 
+
+NeRF represents 3D scenes as continuous volumetric func-tions parameterized by neural networks [6]. The scene is mod-eled as a 5D mapping from spatial location x = ( x, y, z ) and viewing direction d = ( θ, ϕ ) to volume density σ and emitted radiance c = ( r, g, b ) via an MLP: FΘ : ( x, d) → (c, σ ).
+
+1) Volume Rendering: To synthesize 2D images, NeRF uses differentiable volume rendering. For ray r(t) = o + td, the expected color is: 
+
+C(r) = 
+
+Z tf
+
+> tn
+
+T (t) σ(r(t)) c(r(t), d) d t, (9) where T (t) = exp  − R ttn σ(r(s)) d s is the accumulated transmittance. This integral is approximated via stratified sampling over N bins: 
+
+ˆC(r) = 
+
+> N
+
+X
+
+> i=1
+
+Ti
+
+ 1 − exp( −σiδi)ci. (10) A moderate N suffices for smooth optical variations. In the RF domain, longer wavelengths produce phase-sensitive multipath interference. This requires finer spatial resolution along each ray [6], [51]. 
+
+2) Positional Encoding: To address the spectral bias of deep networks, NeRF projects coordinates into a higher-dimensional space using Fourier features. The encoding for p ∈ [−1, 1] is: 
+
+γ(p) =  sin(2 kπp ), cos(2 kπp )L−1 
+
+> k=0
+
+, (11) where L is the number of frequency bands. In the RF domain, the highest frequency 2L−1π must resolve variations on the order of λ/ 2 [6]. For sub-6 GHz systems where λ ≈ 5–10 cm, the required L is smaller than in optical NeRF. The network is optimized using L2 loss: L = P 
+
+> r∈R
+
+∥ ˆC(r) − Cgt (r)∥22.
+
+3) Limitations for RF Adaptation: The optical NeRF for-mulation operates on real-valued RGB intensities under ray-6
+
+TABLE IV: Taxonomy of input representations, condition embedding strategies, and generalization boundaries for radio map construction. The rightmost column specifies the physical dimensions over which the trained model cannot generalize without retraining.                                                                                  
+
+> Deployment Scenario Env. Representation ( Cgeo )Tx Position Encoding Condition Embedding Representative Methods Generalization Boundary
+> Single-floor indoor (offices, corridors) 2D binary occupancy map Binary mask channel Input-level channel concatenation RadioUNet [20], No height or
+> Mocc ∈ { 0,1}H×WSbin ∈ { 0,1}H×WPMNet [21] 3D layout generalization Sub-6 GHz urban micro/macro-cell 2.5D normalized height map Binary mask or Input-level channel concatenation [51], [12], No material property
+> Mheight ∈[0 ,1] H×WGaussian heatmap [6] generalization ( ϵr, σ )Indoor with materials and directional antennas 2D multi-channel tensor Binary mask + Input-level channel concatenation SIP2Net [68], No cross-frequency (reflectance, transmittance, FSPL) antenna pattern channel [26] generalization 3D indoor (multi-floor, furniture) 2D height-encoded pixel values Binary mask channel; Input concat; output channels as Rx heights [69], Rx height fixed at training;
+> venv = ( h+ 0 .1) /3.1Tx height →pixel value [70] no arbitrary 3D queries UAV / air-to-ground (3D volumetric) 3D voxel grid or Coordinate vector MLP embedding or Transformer cross-attention CAED [23], Fixed voxel resolution; point cloud ∈RH×W×D(x, y, z, f, P t)[42] high memory for large scenes Dynamic environments (moving vehicles) Decoupled static + dynamic Binary mask + Cross-attention (separate prompts) RadioDiff [40], Heuristic decoupling; obstacle matrices (Hs,Hd)Gaussian heatmap RadioDiff-Flux [61] no scatterer-level detail Beam-aware CKM (continuous beamforming) 2.5D building map + Binary mask channel Adaptive layer norm. (adaLN) for beam w
+> [71], Zero-shot generalization Tx position map Tfor Tx location [72] to unseen beam vectors Multi-band / cross-freq. radio mapping Height map + ITU material Binary mask + Physics-derived feature tensors (FSPL, gain) [56], Explicit frequency input tensors ( ϵr(f), σ (f))freq. as scalar input [73] enables cross-band transfer Universal / foundation model paradigm 3D building density + Sparse measurements Memory-based prompt learning (key-value pool) [74], Prompt-based adaptation height topology + frequency + Rx height [75] to new scenarios
+
+optics assumptions. Wireless RF signals are inherently complex-valued, involving both amplitude and phase [6]. RF propagation at centimeter and millimeter wavelengths is dominated by multipath interference and diffraction [51], [63]. These physical disparities require substantial mathematical redesign, which is detailed in Section VII-A. 
+
+D. 3D Gaussian Splatting 
+
+While NeRF achieves high fidelity, its MLP-based ray-marching imposes substantial overhead. 3DGS introduces an efficient explicit alternative [52]. It models the scene with an ensemble of anisotropic 3D Gaussians. Each primitive has center μ ∈ R3 and covariance Σ ∈ R3×3.
+
+1) Covariance Parameterization: To ensure Σ remains posi-tive semi-definite, 3DGS decomposes it as Σ = RSS T RT [52]. Here S is a diagonal scaling matrix and R is derived from a normalized quaternion q = [ qr , q i, q j , q k]T via the standard rotation formula. 
+
+2) Directional Appearance: View-dependent appearance is parameterized with spherical harmonics (SH): c(d) =PLmax 
+
+> l=0
+
+Plm=−l kml Y ml (d). SH functions capture smooth op-tical illumination well. However, they poorly represent RF angular energy distributions [52], [53]. Coherent multipath at centimeter wavelengths produces sharp angular fluctuations. RF signals are also complex-valued, whereas standard SH encodes real-valued intensities. These issues motivate complex-valued Fourier-Legendre expansions for wireless 3DGS adaptation, as discussed in Section VII-B. 
+
+3) Rendering: The covariance is projected onto the image plane as Σ′ = JWΣW T JT , where W is the world-to-camera transform and J is the projection Jacobian. Pixel color is computed via front-to-back alpha compositing: 
+
+C(x′) = X
+
+> i∈N
+
+ci αii−1Y
+
+> j=1
+
+(1 − αj ), (12) where αi derives from the Gaussian footprint and an opti-mizable opacity. Adaptive density control clones or prunes Gaussians during training [52]. III. P ROBLEM FORMULATION AND TAXONOMY 
+
+A. Mathematical Abstractions and Modeling 
+
+The physical propagation environment is defined within a continuous region of interest (ROI) D ⊂ R3. For com-putational processing, this space is discretized into a grid 
+
+G = {g1, g 2, . . . , g N }, where N is the spatial resolution [5], [20]. The environment tensor is then constructed as 
+
+E ∈ RH×W ×CE .The channel dimension CE concatenates distinct physical descriptors: 
+
+CE = Cgeo + Cmat + Csem . (13) Here, Cgeo encodes spatial geometry such as obstacle locations and heights. Cmat defines electromagnetic material properties, including relative permittivity ϵr and conductivity σ. Csem 
+
+provides semantic indices that distinguish structures such as concrete walls, glass windows, and foliage [68], [73]. For a typical urban setup, one may set Cgeo = 1 , Cmat = 2 , and 
+
+Csem = 1 , yielding a 4-channel input tensor. The choice of geometric dimensionality within Cgeo depends on the deployment scenario [5], [40]. For simple indoor layouts or flat outdoor environments, the geometry is simplified as a 2D binary occupancy map Mocc ∈ { 0, 1}H×W [20], [21]. For sub-6 GHz urban micro-cells where rooftop diffraction is important, a 2.5D normalized height map Mheight ∈ [0 , 1] H×W is needed [69]. Each pixel value encodes the normalized building height at that location. Full 3D voxel grids must be used for multi-floor indoor scenarios, urban canyons, or unmanned aerial vehicle (UAV)-to-ground links [23], [42]. These cases involve true 3D scattering and vertical volumetric interactions. The structural and material properties collectively serve as digital boundary conditions for the electromagnetic wave equation [56], [57]. Table IV provides a taxonomy that maps deployment scenarios to environment representations, transmitter encoding strategies, condition embedding mechanisms, and generalization boundaries. This table serves as a practitioner-oriented reference and is discussed in the following subsection. 7
+
+B. Input Representation and Condition Embedding 
+
+The design of input representations and condition embedding is among the most important architectural decisions in RM construction [5], [13]. It directly determines the physical dimensions over which a trained model can generalize. This subsection provides a systematic guide on these design choices. 
+
+1) Environment Representation: The environment tensor E
+
+can be encoded at varying levels of physical fidelity. Each level presents a trade-off between representational richness and generalization scope. The simplest encoding is a 2D binary occupancy map 
+
+Mocc ∈ { 0, 1}H×W , where each pixel marks obstacle presence. This representation is adopted in RadioUNet [20] and PMNet [21]. In these methods, the input has two channels: a building layout map and a transmitter location map. Binary encoding is lightweight and sufficient for single-floor indoor or flat subur-ban settings [26]. However, it discards all height information. A model trained on binary maps cannot distinguish a one-story house from a high-rise building. To retain vertical geometry at low cost, 2.5D normalized height maps encode building height as a continuous value within [0 , 1] [6], [51]. For instance, the normalization venv =(henv + 0 .1) /3.1 maps heights to pixel intensities [69]. Even zero-height structures remain distinguishable from open space. This encoding enables height-dependent effects such as rooftop diffraction and elevation-dependent shadowing [40]. However, the height axis is collapsed to a single scalar per pixel. Vertically overlapping structures such as bridges or multi-floor interiors cannot be captured. At the highest fidelity, full 3D voxel grids E ∈
+
+RH×W ×D×CE preserve the complete volumetric geometry [23], [42]. These are essential for UAV-to-ground and multi-floor indoor modeling. However, they impose large memory and computational costs. The fixed voxel resolution also constrains spatial precision. An alternative approach maps the 3D output into multiple 2D channels, where each channel corresponds to a discrete receiver height [69], [70]. This achieves 3D coverage prediction within a standard 2D convolutional framework. Beyond geometry, electromagnetic material properties extend generalization scope [56], [68]. When the tensor encodes frequency-dependent permittivity ϵr (f ) and conductivity σ(f )
+
+as additional channels, the network learns material-specific attenuation [73]. Models that omit materials are confined to the frequency band and material distribution of the training data. 
+
+2) Transmitter Position Encoding: The transmitter location 
+
+S can be represented through several strategies. The most com-mon approach uses a binary spatial mask Sbin ∈ { 0, 1}H×W
+
+[20], [21]. A single activated pixel marks the transmitter position. This mask is concatenated with E along the channel dimension to form [E; Sbin ]. While simple, binary masks quantize the transmitter to discrete grid locations. To enable continuous positioning, several works parameterize the transmitter as a 2D Gaussian heatmap [40]: 
+
+P(j, k ) = exp 
+
+
+
+− (j − a)2 + ( k − b)2
+
+2σ2
+
+
+
+, (14) where (a, b ) are continuous transmitter coordinates and σ
+
+controls the spatial spread. This soft representation allows differentiable backpropagation through the location. It is essen-tial for joint RM generation and transmitter localization [76], [77]. The Gaussian heatmap also encodes spatial uncertainty, and its peak sharpens as the model converges. For additional transmitter parameters such as transmit power 
+
+Pt, carrier frequency fc, or antenna downtilt θtilt , these scalars can be embedded via multi-layer perceptron (MLP) mappings [22], [78]. Including such parameters as explicit inputs is essential for cross-configuration generalization. A model with frequency as input can generalize to new bands; a model trained at a fixed frequency cannot. 
+
+3) Condition Embedding Mechanisms: The mechanism by which conditions are injected into the architecture determines how effectively the model leverages them. Three strategies are employed in the literature. 
+
+Input-level channel concatenation is the simplest approach. All condition tensors are stacked along the channel dimension and fed as a unified input [20], [21]. For example, RadioUNet concatenates the building map and transmitter mask into a 2-channel tensor. SIP2Net [68] extends this to a 5-channel tensor with reflectance, transmittance, distance, free-space path loss (FSPL), and antenna pattern maps. This strategy is simple and requires no additional components. However, it treats all channels homogeneously, without selective modulation based on specific physical parameters. 
+
+Cross-attention conditioning provides a more expressive alternative [25], [28]. The environment or transmitter features are encoded separately and injected via cross-attention layers. The network’s intermediate features serve as queries, and the condition embeddings serve as keys and values. RadioDiff [40] uses cross-attention to inject static and dynamic obstacle features as separate prompts. This mechanism accommodates conditions of different resolutions or modalities. It also allows spatially varying attention that aligns structures with local signal behavior. The computational cost scales with the number of attention layers and sequence length. 
+
+Adaptive layer normalization (adaLN) offers a parameter-efficient alternative for scalar or low-dimensional conditions [41]. It dynamically generates scale and shift parameters from the condition embedding cemb :adaLN (f , cemb ) = (1 + γ) ⊙ N (f ) + β, (15) 
+
+[γ, β ] = MLP (cemb ). (16) The scale factor γ adjusts feature amplitudes to match the beam’s spatial power distribution. The shift factor β modulates the baseline signal level. This mechanism suits conditions that exert a global influence on the output, such as carrier frequency or transmit power [71], [72]. For spatially varying conditions like building geometry, adaLN must be complemented by spatial conditioning. In practice, state-of-the-art frameworks combine multiple strategies [74], [75]. For instance, one may use input concatena-tion for the spatial environment map, a convolutional encoder for spatial features, and adaLN for continuous beam vectors. 8PART A: SOURCE-AWARE FORWARD PREDICTION (Deterministically Modeling Propagation)   
+
+> Environment Tensor 𝐸𝐸
+> (Geometry & Materials)
+> INPUTS
+> Transmitter Source 𝑆𝑆
+> (Known Parameters)
+> Pos, Power, Pattern)
+
+PART B: SOURCE-AGNOSTIC INVERSE RECONSTRUCTION (Ill-Posed Sparse to Dense Interpolation)        
+
+> Environment Tensor 𝐸𝐸
+> (Known Geometry)
+> Sparse Measurements 𝑀𝑀 Ω
+> (Trajectory / Sensors)
+> Latent Source 𝑆𝑆
+> (Unknown / Hidden) Electromagnetic Foundation Model
+> NEURAL NETWORK CORE
+> NEURAL NETWORK CORE Complete Radio Map ℳ
+> (Predicted Field)
+> Reconstructed Radio Map ℳ
+> (Inferred Field)
+> OUTPUTS
+> Probabilistic Generation
+> Spatial Interpolation
+> Differentiable Surrogate for Ray Tracing / CEM
+
+Fig. 1: Two primary paradigms of neural RM construction. (A) Source-aware modeling, where neural networks act as deterministic surrogates for ray tracing using known environment and transmitter inputs. (B) Source-agnostic reconstruction, representing an ill-posed inverse problem that leverages probabilistic generation to interpolate complete radio fields from sparse, incomplete measurements. 
+
+4) Generalization Boundaries Determined by Input Design: 
+
+A key insight from the above discussion is that generalization is bounded by what is explicitly represented in the input [5], [13]. A model cannot generalize over a physical dimension absent from its input. If the environment is a binary occupancy map, the model cannot distinguish buildings of different heights. If the trans-mitter location is hard-coded rather than parameterized, the model cannot handle unseen positions. If the carrier frequency is implicit in training data, the model is confined to that single band [56], [73]. This observation leads to a principled design methodology. Practitioners should first identify all physical dimensions requiring generalization, such as geometry, materials, trans-mitter configuration, frequency, and antenna pattern. Each dimension must be explicitly represented in the input tensor and injected through an appropriate embedding mechanism. Table IV systematizes this design space and identifies the generalization boundary for each common configuration. 
+
+C. The Forward Problem: Source-Aware Radio Mapping 
+
+Fig. 1 contrasts the two primary paradigms of neural RM construction: source-aware forward prediction and source-agnostic inverse reconstruction. Source-aware radio mapping is a forward prediction problem. The objective is to predict global electromagnetic coverage given the propagation environment 
+
+E and transmitter parameters S [20], [40]. Deep neural networks in this setting approximate rigorous computational electromagnetic solvers [56], [57]. They serve as surrogate models for ray tracing engines or full-wave Maxwell’s equation solvers. However, constructing an accurate forward mapping is challenging. The mapping from E to the signal distribution is a high-sensitivity non-linear function [73]. Minor changes in wall thickness or obstacle displacement can cause large variations due to phase shifts and multipath interference. The problem becomes more complex with multiple trans-mitters. The aggregated field at location r from K transmitters must follow one of two regimes. The first is incoherent power addition: 
+
+M(r) = 
+
+> K
+
+X
+
+> k=1
+
+Pk|Hk(r)|2, (17) where Pk is the transmit power and Hk is the complex channel response of the k-th transmitter. The second regime is coherent superposition: 
+
+M(r) = 
+
+> K
+
+X
+
+> k=1
+
+pPkHk(r)ejϕ k
+
+> 2
+
+, (18) which accounts for the initial carrier phases ϕk and resulting interference. The choice of regime depends on the physical coherence conditions [79], [80]. Incoherent addition applies when trans-mitters operate independently, as in conventional orthogonal frequency division multiple access (OFDMA) inter-cell inter-ference [81], [82]. Each base station transmits asynchronously, and cross-cell signals combine on a power basis. Coherent superposition applies when transmitters share a common phase 9
+
+reference [83], [84]. Examples include distributed multiple-input multiple-output (MIMO) with joint transmission and reconfigurable intelligent surface (RIS)-assisted links. Ignoring phase coherence in such scenarios underestimates the signal-to-noise ratio in constructive regions and overestimates it in destructive zones. This distinction requires architectures that handle global context and complex signal interactions across the spatial domain [22], [25]. 
+
+D. The Inverse Problem: Source-Agnostic Radio Mapping 
+
+Source-agnostic radio mapping is an inverse reconstruction problem. The transmitter parameters S are latent or unavailable [23], [24]. The goal is to reconstruct the complete RM M from the environment tensor E and sparse measurements MΩ =
+
+{(xi, y i, v i)}mi=1 , where m ≪ N .This task is an ill-posed non-linear inverse problem [85], [86]. The observed measurements y can be formulated as: 
+
+y = A(PΩ ⊙ M) + n, (19) where n is additive measurement noise. Here, PΩ is a linear binary sampling mask applied via the Hadamard product ⊙ to select m locations. A(·) is the non-linear degradation function of receiver hardware, including sensitivity thresholds, dynamic range saturation, and quantization [86]. Reconstructing M from y is ill-posed because the sampling operator is singular and the solution is non-unique [23], [85]. Multiple source-environment combinations could yield identical sparse observations. The network must incorporate strong structural priors to regularize this inversion [56], [57]. Two canonical priors are widely used. The first is the sparsity of dominant multipath components in the angular domain [3]. Only a limited number of scattering clusters contribute significantly at any location. The second is the low-rank structure of the spatial channel matrix [87]. For narrowband massive MIMO channels, low-rank structure arises from the limited angular spread relative to the array aperture. For spatially distributed RMs, low-rank structure can emerge when the map is organized as a spatial-frequency tensor across multiple sub-bands [88]. All frequency slices share common propagation paths with frequency-invariant delays and angles. However, a single-frequency power map from one transmitter does not inherently exhibit low-rank structure unless additional organization is imposed. Practitioners should verify the applicability of low-rank assumptions for their specific RM modality. The learning model must exploit these priors, embedded within E, to infer the latent source S [44], [76]. It must also reconstruct physically consistent signal variations in deep shadowing zones where no measurements exist [25], [28]. 
+
+E. Environmental Constraints and Domains 
+
+The design of learning-based RM frameworks is constrained by the propagation domain [5], [13]. Indoor scenarios are confined environments dominated by wall penetration losses and dense 3D multipath reflections [26], [68]. They require high-precision representations such as 3D point clouds or building information modeling (BIM) data. Specialized architectures like GNNs or 3D CNNs are needed to encode non-Euclidean structural adjacencies in multi-room layouts [30], [31]. Outdoor scenarios operate at macroscopic scale [20], [40]. They are driven by line-of-sight (LoS) blockages, large-scale shadowing, and rooftop diffraction. Represented mainly by 2.5D digital surface models (DSMs), outdoor RM modeling suffers from measurement sparsity over large areas [89], [90]. Architectures with global receptive fields, such as Transformers, are needed to capture long-distance blockage correlations [22], [25], [28]. 
+
+F. Target RM and Mapping Function 
+
+The target RM is a tensor M ∈ RH×W ×CM . The channel dimension CM encodes specific metrics of the wireless channel state [5], [83]. For example, CM = 3 may comprise a RSS channel in dBm, a time of arrival (ToA) channel in nanoseconds, and a signal-to-interference-plus-noise ratio (SINR) channel in dB. The mapping function parameterized by weights θ is defined differently for each problem type. For the source-aware forward task, the network acts as a differentiable surrogate solver [20], [40]: 
+
+M = Fθ (E, Sknown ). (20) For the source-agnostic inverse task, the network acts as a spatial interpolator and latent source estimator [23], [24]: 
+
+M = Rθ (E, MΩ). (21) 
+
+G. Discussion on Sampling Paradox 
+
+A paradox arises in the source-agnostic inverse problem regarding sampling efficiency. Consider isotropic radiation un-der the Friis equation: Pr (ri) = PtGtGr
+
+  λ
+
+> 4π∥ri−rtx ∥
+
+2. Under free-space propagation, three non-collinear LoS measurements suffice to recover the transmitter location rtx and power Pt via trilateration [63]. However, this three-point sufficiency is only a thought experiment. In practice, multipath fading corrupts LoS measurements with spatial fluctuations of 5–15 dB [91]. This causes substantial errors in trilateration. In urban environments, diffraction, non-line-of-sight (NLoS) blockages, and frequency-selective fading invalidate the geometric inversion entirely [3], [40]. The key insight is that well-placed LoS samples carry redundant geometric information. The true reconstruction challenge lies in NLoS zones where simple distance-power relationships fail. Despite this, many existing works use uniform or random sampling [23], [24]. These strategies oversample predictable LoS regions while undersampling complex NLoS zones. Future strategies should adopt physics-aware adaptive sampling [92], [93]. Sensor placement can be guided by heuristics such as anchoring at diffraction corners, shadow boundaries, and high-entropy zones [73]. Alternatively, active learning frameworks can use predictive uncertainty maps to select high-variance NLoS locations [85]. Such strategies would improve sample efficiency by concentrating measurements where the physical field is least predictable from geometric priors alone. 10 Learning-Based Radio Map Construction 
+
+Data Ecosystem (Sec. IV) 
+
+Paradigms (Sec. V–VII) 
+
+Physics-Awareness (Sec. VIII) 
+
+> Physical measurement campaigns
+> Ray tracing simulation engines
+> Differentiable ray tracing for end-to-end training
+> Preprocessing and feature engineering
+> Open benchmark datasets
+> Source-Aware Forward (Sec. V)
+> Source-Agnostic Inverse (Sec. VI)
+> CNN-based methods
+> ViT-based methods
+> GNN-based methods
+> GAN-based methods
+> Diffusion-based methods
+> CNN-based completion
+> ViT-based interpolation
+> GAN-based generation
+> Diffusion-based inversion
+> Optics-inspired rendering (Sec. VII)
+> Data-level: EM feature engineering
+> Loss-level: PDE regularization
+> Architecture-level: structural isomorphism
+> Physical hallucination detection
+> Plug-and-play physics modules
+
+Fig. 2: The overall structure of this tutorial, organized along three intertwined dimensions: data ecosystem, learning paradigms, and physics-awareness. 
+
+IV. D ATA ACQUISITION AND OPEN DATASETS 
+
+As outlined in Fig. 2, this tutorial addresses RM construction along three intertwined dimensions: data, paradigms, and physics-awareness. Beginning with the data dimension, high-quality datasets are essential for data-driven RM construc-tion [5], [13]. This section reviews three data acquisition paradigms: physical measurement, ray tracing simulation, and differentiable simulation. It then discusses preprocessing strate-gies and catalogs publicly available benchmarks. The section concludes with dataset limitations and selection guidance. Fig. 3 illustrates the complete workflow from physical measurements and ray tracing simulations to standardized benchmark datasets. 
+
+A. Real-World Measurement Techniques 
+
+Physical measurement campaigns provide the ground truth for validating RM algorithms [11], [94]. While simulations offer scalability, measurements capture the stochastic nature of real channels. Complex multipath scattering and hardware impairments are often oversimplified in ray-optical models [4]. Traditional methodologies rely on dedicated drive tests (DT) and walk tests (WT) to collect geolocated signal quality indicators [10]. To extract the local average RSS, measurements adhere to Lee’s sampling criterion [95]. This requires averaging samples over approximately 40 λ, where λ is the carrier wavelength. The local average power Plocal at location x is: 
+
+Plocal (x) = 12L
+
+Z x+Lx−L
+
+Pinst (y) dy, (22) with L as the averaging window length. At sub-6 GHz frequen-cies where λ ≈ 5–10 cm, this window spans approximately 2–4 m [96]. Spatially adjacent samples within this window are correlated and do not contribute independent information. To address the sparsity of dedicated campaigns, crowdsourc-ing from commercial user equipment (UE) has been adopted [8], [11]. This is standardized by 3GPP as minimization of drive tests (MDT). MDT data enables high-temporal-resolution RMs but introduces device heterogeneity. The measured signal strength from a specific UE is modeled as Pmeas = Ptrue +
+
+ηsf + ηdevice , where ηdevice denotes device-specific noise and antenna gain variation [97]. Statistical normalization per device model or collaborative filtering anchored by reference nodes is required to calibrate reports. Aerial sampling with unmanned aerial vehicles (UAVs) has extended RM construction into 3D volumetric space [92], [98]. UAV measurements often employ active learning for autonomous path planning. The objective is to maximize information gain I along a trajectory T subject to energy constraints. Under a Gaussian process (GP) model [99], the information gain is the reduction in predictive posterior entropy: 
+
+I(T ) = H[M¯Ω|MΩ] − H[M¯Ω|MΩ, MT ], (23) where MΩ represents existing measurements, MT denotes candidate trajectory measurements, and M¯Ω comprises unob-served field values. For a GP with kernel k(·, ·), this simplifies to I(T ) = 12 log det( I + σ−2 
+
+> n
+
+KT ,T | Ω) [85]. Maximizing this quantity directs the UAV to regions with highest predictive uncertainty, concentrating measurements in shadowing and non-line-of-sight (NLoS) zones [93]. 
+
+B. Ray Tracing for Data Generation 
+
+Synthetic data generation relies on computational electro-magnetics (CEM). Three algorithmic families are predominant: the shooting and bouncing rays (SBR) algorithm, the dominant 11 Digital Simulation 
+
+> (Ray Tracing)
+
+DATA ACQUISITION & SIMULATION   
+
+> Physical Measurement
+> (Real World)
+> Raw Data Output
+> RSRP (dBm), ToA (ns),
+> AoA (deg),
+> GPS Coordinates
+> Drive Test Vehicle
+> UAV / Drone
+> 3D Aerial Sampling
+> Crowdsourcing (MDT)
+> 3D City Model
+> Material Library
+> DPM (Dominant Path Model)
+> SBR (Shooting & Bouncing Rays
+> Transmitter
+> Transmitter
+> High Fidelity / High Cost
+> Dominant Paths / High Efficiency
+
+DATA PROCESSING PIPELINE    
+
+> Differentiable RT (e.g., Sionna)
+> Generated Field Data
+> Rasterization & Voxelization
+> Semantic Extraction
+> Height Map (DSM)
+> Material Map (εᵣ, σ)
+> Tx/Rx Location Map
+> Height Map
+> Material Map
+> Tx/Rx Location Map
+> Channels:
+> Geometry
+> Tx info
+> Path Loss
+> ToA
+> AoA
+> Multi-dimensional Tensor Stacking (H
+
+x W x C) 
+
+BENCHMARK DATASETS & APPLICATIONS 
+
+> PMNet
+
+2D Urban & Indoor 
+
+3D Volumetric & Dynamic 
+
+MIMO, Beam & Visual-Aided 
+
+Applications         
+
+> RadioMapSeer BART-Lab
+> IndoorRadioMap RMDirectionBerlin
+> UrbanRadio3D WAIR-D RadioMapMotion (Video)
+> Urban
+> MIMOMap DeepMIMO Beam CKM
+> CKM ImageNet
+> Network Planning Localization V2X
+> Communications
+
+Fig. 3: The illustration of RM data collection. A comprehensive workflow bridging physical measurements and ray tracing simulations to generate standardized multi-dimensional benchmark datasets. 
+
+path model (DPM), and differentiable ray tracing [14], [15], [17]. 
+
+1) Classical Forward Ray Tracing: SBR launches millions of ray tubes from the transmitter [100]. The total received field 
+
+Etotal is calculated by coherent superposition of all ray tubes intersecting the receiver volume: 
+
+Etotal =
+
+> Nray
+
+X
+
+> n=1
+
+En ·
+
+> Kn
+
+Y
+
+> i=1
+
+Γi(θi) ·
+
+> Mn
+
+Y
+
+> j=1
+
+Tj (ψj ) · e−jkd n
+
+dn
+
+, (24) where En is the initial field, k = 2 π/λ is the wavenumber, and dn is the path length. Γi and Tj denote the Fresnel reflection and transmission coefficients, respectively. SBR captures multipath fading with high fidelity but scales as 
+
+O(Nrays × N Kmax  
+
+> obj
+
+), where Nobj is the polygon count and 
+
+Kmax the maximum interaction order [101]. This makes city-scale dataset generation expensive. 
+
+2) Dominant Path Model: The DPM builds on intelligent ray tracing (IRT) with pre-computed visibility trees [15]. It exploits the observation that over 95% of received energy comes from a sparse set of dominant paths [102]. These typically include the line-of-sight (LoS) path, first- and second-order reflections, and main diffractions. The total path loss is: 
+
+P L total = 20 log 10 
+
+ 4πd λ
+
+
+
++
+
+> Nref
+
+X
+
+> i=1
+
+Lref,i 
+
++
+
+> Ndif f
+
+X
+
+> j=1
+
+Ldif f,j +
+
+> Npen
+
+X
+
+> k=1
+
+Lpen,k . (25) DPM reduces complexity to approximately O(NRx × Nobj )
+
+[14]. This efficiency is critical for generating large-scale training datasets. The trade-off is clear: SBR provides high fidelity with phase information at extreme computational cost, while DPM sacrifices high-order interactions for orders-of-magnitude faster generation [20]. 
+
+3) Differentiable Ray Tracing: Differentiable ray tracing frameworks, exemplified by Sionna [17], implement the entire propagation computation graph using automatic differenti-ation. This enables end-to-end gradient computation with respect to scene parameters such as material properties and transmitter configurations [103]. The significance for RM construction is twofold. First, it provides a physics-grounded data generation engine that integrates into gradient-based training loops. Second, it supports inverse problems where environmental parameters are recovered from observations [17]. Several datasets in Table VI, notably BeamCKM [71], employ Sionna with 10 9 rays following ITU-R standards. Practitioners are encouraged to evaluate such frameworks when constructing custom datasets, especially for domain adaptation from simulation to measurements. 
+
+C. Data Preprocessing and Representation 
+
+Raw spatial data must be transformed into standardized tensor representations via rasterization [5]. Vector-based CAD or GIS maps are discretized into binary occupancy grids. Beyond simple occupancy, feature engineering embeds physical priors into the learning model [68], [73]. Electromagnetic waves undergo significant diffraction at sharp discontinuities [110]. Extracting geometric features as input channels reduces the network’s learning burden. Edge intensity maps Fedge are computed using Sobel or Laplacian kernels, highlighting building walls where reflection losses concentrate. Diffraction is particularly dominant at structural corners. The uniform theory of diffraction (UTD) [110] 12 
+
+TABLE V: Comparative summary of public datasets for RM construction. “Source” indicates ray tracing simulation (Sim.) or physical measurement (Meas.). † denotes parametric generation scripts rather than fixed maps. 
+
+Dataset Dim. Modality Freq. Source Size Key Features 
+
+2D Urban & Indoor Path Loss 
+
+1 RadioMapSeer [20] 2D Path loss 3.5 GHz Sim. (DPM/IRT) 700 maps Dual-engine; 10 m res.; foundational benchmark 2 PMNet [21] 2D PL + height Multi Sim. (WI) ∼2,000 maps Cross-city transfer learning 3 BART-Lab [30] 2D PL (multi-band) 1.7–5.7 GHz Sim. (Feko/WP) 2,100 maps 5 frequency bands; coarse and fine subsets 4 IndoorRadioMap [104] 2D PL Multi Sim. (Ranplan) 25 envs. 0.25 m res.; material-encoded RGB; directional antennas 5 DeepREM [24] 2D PL 2.4/LTE GHz Sim. (WI) 8,400 maps Rosslyn micro-scale; inverse benchmark 6 RMDirectionalBerlin [105] 2D PL + RGBIR Sub-6 GHz Sim. (RT) 74,000 maps 9.3 TB; sector antennas; vegetation separation 
+
+3D Volumetric & Continuous 
+
+7 UrbanRadio3D [42] 3D PL, ToA, DoA 5.9 GHz Sim. (WP) 11.2M pts 1 m vertical res.; 20 height layers; UAV support 8 NeRF 2 Benchmarks [106] 3D Implicit field Multi Meas. Multi-scene BLE, MIMO CSI, RFID; real measurements 9 WAIR-D [74] 3D Ray params Multi Sim. (RT) 10,000 envs 40 cities; sub-6 GHz to THz; foundation model 
+
+MIMO, Beam-Aware & Precoding 
+
+10 UrbanMIMOMap [72] 2D 4×4 CSI 3.5 GHz Sim. (RT) 3,000 maps Full complex H; 0.5 m res. 11 BeamCKM [71] 2D Beam RSRP 3 GHz Sim. (Sionna) 10,000 maps 10 9 rays; DFT codebook; 256 ×256 pixel 12 DeepMIMO † [107] Config. Channel matrix mmWave Sim. (WI) Parametric Arbitrary arrays; 28/60 GHz; script-based 
+
+Temporal & Dynamic 
+
+13 RadioMapMotion [108] 2D+Time Sequential frames V2X Sim. (RT) 1,500 seq. Vehicle trajectories; video prediction 
+
+Cross-Modal & Vision-Aided 
+
+14 CKMImageNet [5] 2D/3D Visual + channel Multi Sim. 5,000 pairs Satellite imagery paired with AoA, AoD, delay 
+
+TABLE VI: Comparative summary of public datasets for RM construction. “Source” indicates ray tracing simulation (Sim.) or physical measurement (Meas.). † denotes parametric generation scripts rather than fixed maps. 
+
+Dataset Dim. Modality Freq. Source Size Key Features 
+
+2D Urban & Indoor Path Loss 
+
+1 RadioMapSeer [20] 2D Path loss 5.9 GHz Sim. (DPM/IRT) 56,080 maps Dual-engine; 701 maps × 80 Tx; 1 m res.; foundational benchmark 2 PMNet [21] 2D PL + height Multi Sim. (WI) ∼2,000 maps Cross-city transfer learning 3 BART-Lab [30] 2D PL (multi-band) 1.7–5.7 GHz Sim. (Feko/WP) 2,100 maps 5 frequency bands; coarse and fine subsets 4 IndoorRadioMap [104] 2D PL Multi Sim. (Ranplan) 25 envs. 0.25 m res.; material-encoded RGB; directional antennas 5 DeepREM [24] 2D PL 2.4/LTE GHz Sim. (WI) 8,400 maps Rosslyn micro-scale; inverse benchmark 6 RMDirectionalBerlin [105] 2D PL + RGBIR Sub-6 GHz Sim. (RT) 74,000 maps 9.3 TB; sector antennas; vegetation separation 
+
+3D Volumetric & Continuous 
+
+7 UrbanRadio3D [42] 3D PL, ToA, DoA 5.9 GHz Sim. (WP) 11.2M pts 1 m vertical res.; 20 height layers; UAV support 8 RadioMap3DSeer [109] 3D Path loss 3.5 GHz Sim. (IRT) 56,080 maps 3D extension of RadioMapSeer 9 NeRF 2 Benchmarks [106] 3D Implicit field Multi Meas. Multi-scene BLE, MIMO CSI, RFID; real measurements 10 WAIR-D [74] 3D Ray params Multi Sim. (RT) 10,000 envs 40 cities; sub-6 GHz to THz; foundation model 
+
+MIMO, Beam-Aware & Precoding 
+
+11 UrbanMIMOMap [72] 2D 4×4 CSI 3.5 GHz Sim. (RT) 3,000 maps Full complex H; 0.5 m res. 12 BeamCKM [71] 2D Beam RSRP 3 GHz Sim. (Sionna) 10,000 maps 10 9 rays; DFT codebook; 256 ×256 pixel 13 DeepMIMO † [107] Config. Channel matrix mmWave Sim. (WI) Parametric Arbitrary arrays; 28/60 GHz; script-based 
+
+Temporal & Dynamic 
+
+14 RadioMapMotion [108] 2D+Time Sequential frames V2X Sim. (RT) 1,500 seq. Vehicle trajectories; video prediction 
+
+Cross-Modal & Vision-Aided 
+
+15 CKMImageNet [5] 2D/3D Visual + channel Multi Sim. 5,000 pairs Satellite imagery paired with AoA, AoD, delay 
+
+establishes that corner geometries produce larger diffraction coefficients than smooth surfaces. Corner feature maps Fcorner ,extracted via Harris or Shi-Tomasi detectors, provide the network with access to critical scattering sites [57], [73]. These geometric features are combined with material prop-erty maps encoding relative permittivity ϵr and conductivity 
+
+σ [56]. Material values are typically assigned from ITU-R P.2040 recommendations. These deterministic assignments carry inherent uncertainties compared to physical reality, con-tributing to the simulation-to-reality gap [101]. The composite environment tensor E ∈ RH×W ×Cin formed by concatenating these channels defines the boundary conditions for the learning model. The number of input channels Cin represents a design trade-off. Including more physics-derived features, such as free-space path loss (FSPL) maps, distance fields, and antenna gain projections, reduces the network’s representational burden [68]. However, each additional channel increases preprocessing cost and may introduce approximation errors. Section III-B provides detailed guidance on how input design determines generalization boundaries. 
+
+D. Dataset Analysis and Benchmarks 
+
+Numerous publicly available datasets address specific chal-lenges in 6G environment-aware communications [4], [5]. We organize them by primary data modality. Table VI provides a comparative summary. 
+
+1) 2D Urban and Indoor Path Loss Datasets: Ra-dioMapSeer [20] is the foundational benchmark for 2D path loss prediction. It comprises 701 city maps with 80 transmitter positions per map, yielding a total of 56,080 radio maps simulated using both DPM and IRT engines at 5.9 GHz with 1 m resolution. As the most widely used benchmark, most methods in Sections V and VI report results on this dataset. 13 
+
+Its main limitation is the absence of vertical information and multipath parameters. 
+
+PMNet Dataset [21] features RMs from real-world urban environments including USC and downtown Boston. Generated via Wireless InSite, it explicitly includes subsets with varying building densities for cross-city transfer learning evaluation. 
+
+BART-Lab Dataset [30] employs Feko and WinProp to simulate five frequency bands from 1.75 to 5.75 GHz within the same environment. A coarse subset with 2,000 maps enables rapid prototyping, while a fine subset with 100 maps supports high-fidelity reconstruction. This structure enables cross-band prediction research. 
+
+IndoorRadioMap [104] was released for the First Indoor Pathloss RM Prediction Challenge [111]. It includes 25 indoor environments with material properties encoded into RGB tensors at 0.25 m resolution. The simulation considers up to 8 reflections and 10 transmissions with directional antenna patterns. 
+
+DeepREM [24] focuses on the Rosslyn urban scenario at 2.4 GHz. It serves as a standard benchmark for sparse mea-surement interpolation algorithms including tensor completion and kriging [23]. 
+
+RMDirectionalBerlin [105] bridges academic assumptions and industrial reality by modeling sectorized base stations. This 9.3 TB dataset includes 74,000 RMs with normalized digital surface models separating buildings from vegetation, alongside RGBIR aerial imagery. 
+
+2) 3D Volumetric and Continuous Datasets: UrbanRa-dio3D [42] contains 11.2 million labeled points across 20 height layers from 1 m to 20 m. Generated at 5.9 GHz using WinProp, it provides time of arrival (ToA) and direction of arrival (DoA) for every voxel. This makes it suitable for 3D network planning and UAV trajectory optimization [98]. 
+
+NeRF 2 Benchmarks [106] represent a shift from discrete sampling to implicit continuous representation. Spanning BLE RSSI, MIMO CSI, and RFID spectra, they enable neural networks that encode the electromagnetic field as a continuous function. Notably, this is one of the few benchmarks grounded in physical measurements rather than simulation [112]. 
+
+WAIR-D [74] provides 10,000 environments from 40 global cities, covering sub-6 GHz to terahertz frequencies. This breadth of environmental and spectral diversity supports foundation model training [75]. 
+
+3) MIMO, Beam-Aware, and Precoding Datasets: Urban-MIMOMap [72] provides the full 4 × 4 complex channel state information (CSI) matrix H at 0.5 m resolution. This enables direct computation of ergodic capacity and beamforming optimization [83]. 
+
+BeamCKM [71] covers 100 urban maps with uniform linear array antennas at 3 GHz. Sionna generates data with 10 9 rays and ITU-R electromagnetic parameters. All DFT codebook codewords with NBS = 8 are simulated, producing beam-specific channel knowledge maps at 256 × 256 pixel resolution with 40 dB dynamic range. 
+
+DeepMIMO [107] is a parametric generation framework rather than a fixed dataset. It generates channel matrices for arbitrary massive MIMO configurations at 28 and 60 GHz based on Wireless InSite scenarios. This flexibility makes it preferred for custom array geometries. 
+
+4) Temporal and Dynamic Datasets: RadioMapMotion 
+
+[108] incorporates real-world vehicle trajectories to generate sequential RM frames. By formulating estimation as a video prediction task, it enables spatio-temporal architectures for predictive resource allocation in high-mobility scenarios [93], [113]. 
+
+5) Cross-Modal and Vision-Aided Datasets: CKMIma-geNet [5] pairs multi-resolution satellite and aerial imagery with channel parameters including angle of arrival (AoA), angle of departure (AoD), and delay spread. This facilitates vision-aided beam prediction with zero or minimal pilot overhead [27], [114]. 
+
+6) Practitioner Guidance on Dataset Selection: Given the diversity of benchmarks, the following guidelines are offered. For initial algorithm development, RadioMapSeer [20] remains the standard choice due to widespread adoption and published baselines. For cross-environment generalization, PMNet [21] and WAIR-D [74] provide structured train-test splits across distinct morphologies. For 3D volumetric or UAV research, UrbanRadio3D [42] is the most comprehensive option. For beam-aware or MIMO studies, BeamCKM [71] and UrbanMIMOMap [72] offer the necessary physical layer richness. Researchers concerned with the simulation-to-reality gap should prioritize NeRF 2 benchmarks [106], which are grounded in physical measurements. 
+
+E. Discussion on Dataset Limitations 
+
+Open-source datasets have accelerated RM research, but three fundamental limitations require awareness [4], [13]. 
+
+1) Simulation-Reality Gap: The heavy reliance on synthetic solvers introduces a domain gap between training data and deployment [97], [101]. SBR-based datasets often exhibit stochastic noise from ray-tube undersampling rather than phys-ical propagation. Networks trained on such data risk overfitting to algorithmic noise [115]. This motivates domain adaptation techniques and hybrid strategies combining simulated data with small quantities of real measurements [97], [116]. 
+
+2) Precision Loss and Resolution Limitations: Encoding RMs as standard 8-bit images introduces quantization errors over dynamic ranges exceeding 100 dB. With 256 levels spanning 100 dB, the step size is approximately 0.4 dB. This may suffice for coarse coverage prediction but is inadequate for sub-dB precision [5]. More critically, coarse 1 m resolution is ill-conditioned for coherent systems at centimeter wavelengths. A single 1 m voxel spans multiple coherence intervals, aliasing phase information governing constructive and destructive interference. Such datasets are invalid for phase-sensitive MIMO modeling but acceptable for scalar RSS prediction [72]. Practitioners working on coherent channels should adopt sub-wavelength resolution or continuous representations such as NeRF 2 [106]. 
+
+3) Physical Deficiencies in Ray Tracing: Ray tracing is a geometric optical approximation valid in the asymptotic limit [100]. It breaks down when scatterer dimensions approach the carrier wavelength, where full-wave diffraction dominates [62]. 14 
+
+Applying statistical models to single-input single-output (SISO) results to approximate MIMO matrices lacks electromagnetic rigor [3]. The spatial correlation structure depends on scattering geometry rather than parametric models alone. Homogeneous material assumptions also ignore frequency-dispersive ϵr (f )
+
+and σ(f ) of real materials [101]. These limitations do not diminish the value of existing benchmarks for validating algorithms and ranking performance. However, they motivate next-generation infrastructures with calibrated measurements, higher precision, finer resolution, and frequency-dependent material models [4], [17]. V. L EARNING -B ASED METHODS FOR SOURCE -A WARE 
+
+RADIO MAPPING 
+
+This section reviews five neural architecture families for source-aware RM construction. Table VII provides a cross-architecture comparison to guide practitioners. No single architecture dominates across all dimensions [5], [13]. Each family occupies a distinct niche in the trade-off space among latency, data efficiency, spatial modeling, and output modality. Table IX further catalogs reusable architectural modules that can be integrated into these families without fundamental redesign. Fig. 4 illustrates the architectural progression from local convolutional receptive fields to global generative inference. 
+
+A. CNN-Based Methods 
+
+CNN-based forward RM construction establishes an image-to-image translation paradigm [20], [21]. Complex propagation phenomena are abstracted into 2D spatial pixel mappings. Table VIII summarizes representative CNN-based models. This subsection organizes the discussion around four recurring architectural challenges rather than individual models. 
+
+1) Encoder-Decoder Paradigm and Resolution Bottlenecks: 
+
+RadioUNet [20] introduced the U-Net encoder-decoder archi-tecture to RM construction. It takes a two-channel input of the building map and transmitter position to predict path loss maps. RadioUNet also proposed transfer learning from coarse simulation to sparse measurements, reducing the need for large empirical datasets [116]. A key tension in this paradigm is spatial resolution versus representational capacity. Pooling operations reduce resolution to increase the receptive field and extract abstract features [119]. However, downsampling discards fine-grained spatial information needed for shadow boundaries and diffraction edges. Skip connections partially address this but cannot recover information destroyed by pooling itself. PPNet [51] addresses this bottleneck through reformulation. Instead of continuous regression, it quantizes the output into discrete bins and uses cross-entropy loss. Continuous regression over a 100+ dB dynamic range is sensitive to outliers and gradient variance. Discrete classification establishes clear decision boundaries that stabilize training. Although quantization introduces up to 0.5 dB error per bin, the improved robustness outweighs this cost. PPNet also memorizes max-pooling indices during encoding for reuse during decoding, preserving sharp edges without additional parameters. 
+
+Tutorial takeaway: The encoder-decoder paradigm offers a reliable baseline for RM construction. When sharp shadow edges are critical, practitioners should preserve spatial indices as in PPNet [51] or use Laplacian pyramid decomposition as in LPCGMN [6]. 
+
+2) Receptive Field Expansion: Standard 3×3 convolutions have a fixed receptive field that grows only linearly with depth. This locality is mismatched with wave propagation physics [20], [22]. A distant building can create a deep shadow zone hundreds of meters away. Capturing such long-range dependencies has motivated several innovations. UNetDCN [6] integrates deformable convolutions that learn positional offsets for each sampling point. The receptive field expands non-uniformly to selectively attend to distant diffraction edges. A secondary capability is that the trained network can serve as a differentiable surrogate for antenna parameter optimization via backpropagation [120]. However, gradient-based inversion through deep networks is susceptible to gradient explosion and local optima. PMNet [21] uses atrous convolutions and spatial pyramid pooling (SPP). Atrous convolutions increase the effective receptive field by inserting gaps between kernel elements [89]. The SPP module aggregates multi-scale features at the bottleneck. This captures building occlusion patterns at multiple spatial extents simultaneously. A transfer learning framework further enables generalization across city layouts. SIP2Net [68] targets indoor scenarios with directional antennas. It combines asymmetric convolutions with atrous spatial pyramid pooling (ASPP) to reinforce linear wall edges [26]. A composite loss with a GAN adversarial term ensures both structural realism and numerical accuracy. 
+
+Tutorial takeaway: The receptive field should ideally span the longest dominant propagation path within the region of interest. Atrous convolutions provide a parameter-efficient expansion for regular grids [21]. Deformable convolutions are preferred when propagation-relevant structures have irregular spatial distributions [6]. 
+
+3) Dimensionality Reduction: Encoding 3D Physics in 2D Networks: Full 3D volumetric convolutions incur substantial computational overhead [42]. Several methods encode 3D physics within 2D architectures through creative tensor design. R2Net [70] maps obstacle heights to 2D pixel intensities via venv = ( henv + 0 .1) /3.1. Discrete receiver heights are mapped to output channels. The result is a 256 × 256 × 1
+
+input and a 256 ×256 ×16 output, avoiding 3D convolutions entirely. RadioResUNet [69] uses a cascaded architecture with height slicing. A combined Dice and binary cross-entropy loss preserves boundary conditions under strong shadowing. For wide-area outdoor prediction with variable distances, a satellite-image-based model [87] uses an SPP layer to accept variable-sized inputs. Input dimensions are determined by the physical transmitter-receiver separation, achieving lossless alignment without image rescaling. 
+
+Tutorial takeaway: The essence of 3D-to-2D reduction is folding the vertical dimension into channels [69], [70]. This is effective when vertical variations are discrete and enumerable. It cannot capture continuous vertical interactions such as inter-floor wave guiding. 15 CNNs: Local Receptive Field 
+
+ViTs: Global self-Attention 
+
+GNNs: Non-Euclidean Physical Topology 
+
+Generative Models: Probabilistic Inference 
+
+Pixel−level 
+
+mapping 
+
+Spatial locality 
+
+Smoothing 
+
+artivacts 
+
+Patch embedding 
+
+Long−range dependencies 
+
+Macro− 
+
+shadowing awareness 
+
+Heterogenerous 
+
+Nodes 
+
+(BS/UE) 
+
+Multipath 
+
+edges 
+
+Physics -
+
+Informed 
+
+Graph priors 
+
+Iterative 
+
+denoising 
+
+Extreme 
+
+Sparsity 
+
+handling 
+
+Overcoming 
+
+Physical 
+
+hallucinations 
+
+Increasing Capability for Spatial & Physical Modeling 
+
+𝑥𝑥 𝑡𝑡  𝑥𝑥 0𝑥𝑥 𝑇𝑇   
+
+> (Pure Noise) (Intermediate) (Final
+> Radio Map)
+
+Sparse Measurement 
+
+𝑀𝑀 𝛺𝛺  (Condition 𝑐𝑐 )
+
+Fig. 4: The progression illustrates a paradigm shift towards increasing spatial and physical modeling capabilities. Early CNNs rely on local receptive fields but struggle with long-range diffraction. ViTs overcome this via global self-attention to capture macro-shadowing dependencies. GNNs embed physics-informed priors by modeling non-Euclidean multipath topologies. Recently, generative modelsreframe the task as probabilistic inference, enabling the reconstruction of high-fidelity radio maps from extreme sparsity while overcoming physical hallucinations. TABLE VII: Cross-architecture comparison for source-aware RM construction. “Sparse Input” indicates the native ability to handle spatially sparse measurements. Inference times are representative values on 256 × 256 maps with a single GPU. 
+
+Dimension CNN ViT GNN GAN Diffusion (DDPM) Diffusion (Turbo/Flow) Best Suited Scenario 
+
+Output Type Deterministic Deterministic Deterministic Deterministic Stochastic Determ./Stochastic —Inference Latency ∼5 ms ∼10–50 ms ∼5–20 ms ∼5–10 ms ∼0.2–19 s ∼10–63 ms Real-time: CNN/GAN/Turbo Memory (GPU) <1 GB 1–3 GB <1 GB <1 GB 1.5–3 GB 1.5–3 GB Edge deploy: CNN/GNN Training Data Need High Medium–High Low–Medium High (paired) High High Data-scarce: GNN Sparse Input Poor Strong Strong Medium Strong Strong Sparse sensors: ViT/GNN Uncertainty ✗ ✗ ✗ ✗ Via MC sampling ∗ Via MC sampling ∗ UQ-critical: Diffusion Physics Integration Input-level Input-level Graph structure Loss-level Loss/Arch-level Loss/Arch-level Deep physics: GNN/Diffusion Spatial Resolution Grid-limited Patch-limited Flexible Grid-limited Grid-limited Grid-limited Continuous: GNN/NeRF        
+
+> ∗Diffusion models produce stochastic samples; computing ˆϕB≈1
+> J
+> PJj=1 F(γj)yields unbiased estimates of nonlinear functionals; see Section V-E.
+
+TABLE VIII: Summary of representative CNN-based models for forward RM construction. 
+
+Model Core Architecture Input Modality & Dim. Output Dim. Test Dataset Key Metric Inf. Time 
+
+RadioUNet [20] U-Net 256 ×256 ×2 (Map, Tx) 256 ×256 ×1 RadioMapSeer (DPM) RMSE ≈ 1 dB (norm.) 5.6 ms PPNet [51] SegNet (classification) H ×W ×3 (Layout, Gauss, Dist) H ×W ×1 30 GHz RT outdoor MAE: 1.08 dB N/A UNetDCN [6] UNet + deformable conv. H ×W ×C (RGB, Dist, Angle) H ×W ×1 Aerial + nDSM RMSE: 5.2–6.7 dB N/A PMNet [21] ResNet + atrous conv. + SPP 256 ×256 ×2 (Bldg, Tx) 256 ×256 ×1 USC/Boston RT RMSE ∼ 10 −2 (gray) N/A SIP2Net [68] U-Net + asym. conv. + ASPP 256 ×256 ×5 (multi-prior) 256 ×256 ×1 SPGC 2025 indoor Wt. RMSE: 9.41 dB N/A R2Net [70] 2D cascaded ResNet 256 ×256 ×1 (height enc.) 256 ×256 ×16 3DiRM3200 (3D) RMSE: 0.040 (norm.) N/A RadioResUNet [69] Cascaded ResUNet 256 ×256 ×2 (Layout, Tx) 256 ×256 ×1 2.4 GHz indoor RT Error: 4.25–5.40 dB N/A Sat-Image PL [87] Dual-branch (CNN+MLP)+SPP 175 ×p×5 (RGB, FSPL, Dist) Scalar PL 5.9 GHz V2I (real) RMSE: 5.05 dB N/A Geo2ComMap [117] AG U-Net-TP H ×W ×5 (multi-metric) H ×W ×1 OSM+Sionna RT Med. AE: 27.35 Mbps N/A LPCGMN [6] Laplacian Pyramid + LRDC High-res env. image H ×W ×1 DPM / DPMcars NMSE: 0.0064 N/A UAV Multimodal [118] CNN + Transformer (parallel) Image, Tx/Rx pos, freq. Vectors (PL, DS, AoA) AirSim + WinSite PL R2: 0.997 N/A 
+
+4) Multi-Modal Fusion and Physical Prior Integration: 
+
+Multi-modal fusion of diverse input modalities enables more explainable models [68], [117]. Geo2ComMap [117] extends CNN capabilities to multi-metric throughput evaluation. It integrates attention gate mech-anisms with geographic databases, reducing anomalous errors at building edges. In UAV air-to-ground scenarios, a multimodal fusion network [118] processes visual images through a residual CNN in parallel with a Transformer branch. This captures global dependencies of time-series channel data and addresses channel uncertainty from rapid 3D movement. LPCGMN [6] adopts a Laplacian pyramid reconstruction network. It retains 16 
+
+residual information during downsampling and reconstructs the channel knowledge map as an image inpainting task. 
+
+Tutorial takeaway: Including physics-derived features such as FSPL maps, distance fields, and antenna gain projections as input channels consistently reduces learning difficulty [56], [68]. However, each feature channel adds preprocessing cost and may introduce its own approximation errors. This motivates the physics-informed approaches discussed in Section VIII. 
+
+B. ViT-Based Methods 
+
+To overcome the locality of convolutional receptive fields, the RM community has adopted ViT architectures [22], [25], [28]. Table X summarizes representative methods. RMTransformer [22] integrates a multi-scale MaxViT en-coder with a convolutional decoder. Block attention captures localized boundary details, while grid attention models global structural dependencies. Multi-scale features are fused into the decoder via skip connections. On the USC dataset, RMTrans-former achieves an RMSE of 0.0071, approximately 62% lower than RadioUNet [20] and 32% lower than PMNet [21]. When spatial observations are extremely sparse, the challenge intensifies. DAT-Unet [28] embeds deformable attention within a U-Net framework. It dynamically adjusts attention receptive fields by learning positional offsets. These offsets focus on structurally relevant regions such as building corners and known observation points. With only 50 sampling points, DAT-Unet reduces the RMSE by approximately 12% compared to RadioUNet [20]. Indoor propagation introduces further complexity. TransPath-Net [121] uses a two-stage coarse-to-fine residual learning framework. A TransNeXt encoder predicts a coarse global map, which is then refined with physical priors in the second stage. DINOv2-ViT [27] leverages large-scale foundation model pre-training for cross-condition generalization. The massive self-supervised pre-training of DINOv2 provides rich embeddings learned from diverse visual structures. This appears to be the dominant contributor to generalization, as evidenced by the gap between fine-tuned DINOv2 and randomly initialized architectures. RM construction ultimately serves downstream deployment tasks. OSSN [78] unifies RM estimation and base station site selection into an end-to-end Transformer framework. Cross-attention between building tokens and candidate location embeddings enables this unification. A recommendation mod-ule trained via knowledge distillation reduces site selection complexity from O(N M ) to O(M ) [78]. UniRM [74] presents a universal framework using memory-based prompt learning for multi-band, 3D RM construction [75]. 
+
+Tutorial takeaway: ViTs offer the greatest advantage when inputs are spatially sparse and long-range blockage correlations exist [22], [25]. When inputs are dense and the environment is locally governed, the performance gap narrows. The foundation model paradigm represents a promising direction for cross-environment generalization [27], [74]. 
+
+C. GNN-Based Methods 
+
+GNNs are motivated by the non-Euclidean nature of radio propagation topology [30]–[32]. Spatial and spectral elements are represented as nodes, and their physical interactions as edges. This formulation naturally accommodates heterogeneous network entities and non-uniform sampling. RadioGAT [30] addresses extreme spatial-spectral sparsity through a model-driven graph construction mechanism. It for-mulates a radio depth map that encodes obstruction proportions, distance fading, and frequency fading into a unified depth feature: 
+
+D(k) 
+
+> b,n,m
+
+= Tb,n,m 
+
+ C − α log 10 db,n,m − β log 10 (fk), (26) where b is the block index, n the grid index, and m the transmit-ter index. C absorbs frequency- and distance-independent terms, and Tb,n,m is the non-building path proportion. A node-level masked training paradigm enables deployment under semi-supervised conditions without complete ground truth [30]. GNN-MDAR [122] addresses graph structural noise from propagation mechanism drifts across domains. It introduces a graph structure learner guided by a variational information bottleneck (VIB) objective: 
+
+Z = arg min  
+
+> Z
+
+−I(F C (Z), Y ) + β I (Z, (X, A )) , (27) where F C (Z) is the downstream regression prediction from the compressed representation Z. Y is the target RM label, and 
+
+(X, A ) are node features and the adjacency matrix. The first term maximizes predictive utility of Z. The second minimizes mutual information between Z and the raw graph structure, discarding domain-specific noise. The parameter β is gradually increased during training [122]. Starting with weak compression allows the model to first extract propagation-relevant features. Strong compression is applied only after useful structure has been stabilized. WirelessNet [32] demonstrates that homogeneous graphs are inadequate for network-level modeling. It introduces a heterogeneous message passing framework with separate node types for user equipment and base stations. Distinct edge types represent communication and interference signals. The message function for edge type τ is: 
+
+mτj = xτ,e τ W τ ReLU( W τpool xBS,j + bτpool ). (28) 
+
+Tutorial takeaway: GNNs are preferred when the propagation topology is non-Euclidean, when heterogeneous entity types must be modeled, or when sampling is non-uniform [30], [32]. Their main limitation is scalability: message passing over dense graphs with millions of nodes remains computationally challenging [31]. 
+
+D. GAN-Based Methods 
+
+GANs reformulate RM construction as conditional generation [34], [36], [123]. They produce spatially coherent maps with sharp shadow boundaries that discriminative models often smooth away. Table XI compares the principal GAN variants. The standard conditional GAN objective maps incomplete condition u to a complete RM: 
+
+min  
+
+> G
+
+max  
+
+> D
+
+Ex∼Pdata [log D(Q | u)] + Ez∼Pz [log(1 − D(G(P | u)))] . (29) 17 
+
+TABLE IX: Plug-and-play architectural modules for RM construction. “Integration Point” indicates where the module is typically inserted. Gains are relative to the baseline without the module. 
+
+Module Bottleneck Addressed Integration Point Representative Method Reported Gain Overhead 
+
+Deformable conv. Fixed receptive field Replace standard conv. UNetDCN [6] Distant diffraction capture Moderate ( ∼20% params) Atrous conv. Limited receptive field Replace standard conv. PMNet [21], SIP2Net [68] Multi-scale shadowing Negligible SPP Single-scale features Bottleneck layer PMNet [21] Variable-size input Negligible Attention gate Equal spatial weighting Skip connections Geo2ComMap [117] Reduces edge errors Small ( <5% params) Adaptive FFT Smoothed high-freq. edges U-Net decoder blocks RadioDiff [40] Sharp obstacle boundaries Small Laplacian pyramid Detail loss in downsampling Replace encoder-decoder LPCGMN [6] NMSE: 0.0064 (14.7% ↓) Negligible Pooling index memory Spatial info loss Encoder pooling layers PPNet [51] Preserves edge resolution Negligible Cross-attention Homogeneous conditions Intermediate layers RadioDiff [40] Separate static/dynamic prompts Moderate adaLN Scalar conditions Normalization layers [71] Zero-shot beam generalization Small Rotary position emb. No relative position info Attention layers [48] Cross-BS spatial correlation Negligible 
+
+TABLE X: Summary of ViT-based methods for source-aware RM construction.                                                                                               
+
+> Model Core Architecture Input Dimensions Output Dimensions Test Dataset(s) Key Metrics
+> RMTransformer [22] MaxViT encoder + CNN decoder 2×256 ×256 1×256 ×256 USC dataset RMSE: 0.0071 DAT-Unet [28] Deformable attention + U-Net 2×256 ×256 (sparse pts) 1×256 ×256 RadioMapSeer, SpectrumNet RMSE: 0.0183 (DPM, 50 pts) TransPathNet [121] TransNeXt + EMCAD decoder C×384 ×384 (multi-prior) 1×384 ×384 ICASSP 2025 challenge RMSE: 10.397 dB DINOv2-ViT [27] Pre-trained DINOv2 + UPerNet C×518 ×518 (multi-prior) 1×518 ×518 ICASSP 2025 challenge Wt. RMSE: 12.6 dB OSSN [78] ViT + pyramid decoder Building map + prompt 1×H×WRadioMapSeer Point ASCE: 0.0326 TxSTrans [78] ViT + ResNet + IFPN 256 ×256 ×1+ prompt 256 ×256 ×1RadioMapSeer/3DSeer Sparse RMSE: 0.0508 UniRM [74] UNet + self-attention + prompts Sparse obs + 3D map + f+hW×L(dense map) Multi-scenario custom RMSE: 3.42–13.68
+
+TABLE XI: Comparison of GAN-based methods for RM construction. “Training Mode” indicates the data pairing requirement. Methods are ordered by relaxation of data requirements.                                      
+
+> Method Training Mode Generator / Discriminator Key Innovation Phys. Prior Best Suited Scenario
+> Baseline cGAN [123] Paired (Kriging pseudo-GT) 16-layer U-Net / PatchGAN Kriging bootstrap ✗TV white space mapping RME-GAN [34] Paired 18-layer U-Net / 4-layer CNN Physical template + micro-correction ✓Non-uniform sampling FPTC-GANs [124] Paired RMP-GAN + RMC-GAN (sequential) First-predict-then-correct ✓Dynamic vehicular interference CycleGAN [125] Unpaired Dual ResNet-9 / PatchGAN Cycle-consistency; no paired GT ✗No paired GT available RecuGAN [38] Unconditional InfoGAN + WGAN-GP Noise →coverage; mutual info ✗No data; mmWave beams TiRE-GAN [35] Paired + task-driven ResNet gen. / PatchGAN disc. Task-incentivized outage loss ✓Spectrum management
+
+1) Paired Conditional Generation: The baseline cGAN for television spectrum mapping [123] creates pseudo-ground-truth via Kriging interpolation. It uses a 16-layer U-Net generator with skip connections and a PatchGAN discriminator. RME-GAN [34] advances this with a two-phase strategy. The first phase uses a log-distance path loss model to produce a global template. A cosine similarity loss aligns the generator gradient with the physical template gradient: 
+
+LGradient = X
+
+i
+
+CS (G(˜ y(i)) , G (z(i))) . (30) The second phase applies geometry-wise downsampling and high-frequency Fourier constraints. The physical motivation is to reduce the adversarial search space [34]. Anchoring the generator to a physically plausible global field means the discriminator only evaluates local deviations. FPTC-GANs [124] addresses temporal inconsistency be-tween stable environments and real-time vehicular interference. An RMP-GAN predicts a base map from stable parameters. An RMC-GAN then applies real-time corrections guided by sparse measurements. 
+
+2) Unpaired and Unconditional Generation: CycleGAN [125] eliminates pixel-to-pixel correspondence using cycle-consistency and identity losses: 
+
+Lcyc (G, F ) = Ex[∥F (G(x)) − x∥1] + Ey [∥G(F (y)) − y∥1].
+
+(31) RecuGAN [38] pushes further toward unconditional generation. It uses InfoGAN principles to synthesize coverage maps from noise and discrete latent codes with a Wasserstein objective and gradient penalty. 
+
+3) Bridging to Physics-Aware Paradigms: TiRE-GAN [35] bridges data-driven generation and physics-informed methods. It uses a radio depth map as a physics-embedded input channel. The generator objective includes a task-incentivized regularization term from a pre-trained outage detection network: 
+
+L = LG + αL M SE + βL R(z, ˆz), (32) where z and ˆz are downstream task network outputs. This feedback forces the generator to align shadowing boundaries with operational spectrum management requirements [35]. It foreshadows the deeper physics integration strategies surveyed in Section VIII. 
+
+E. Diffusion-Based Methods 
+
+Diffusion models establish a principled framework for capturing complex propagation distributions [40], [41], [61]. Table XII provides a summary organized by application tier. 
+
+1) Foundational Methods and Sparse Scenarios: RadioDiff [40] pioneers dynamic RM construction as a conditional generative task. It uses a decoupled diffusion model that separates forward noise into data attenuation and noise addition phases. The reverse process independently predicts drift and noise terms, reducing prediction variance and enhancing stability. An adaptive fast Fourier Transform (FFT) module captures high-frequency edge features from dynamic obstacles. RM-Gen [43] models indoor path loss prediction as mask-agnostic image inpainting. RRDDM [126] handles sparse 18 
+
+TABLE XII: Summary of diffusion-based methods for RM construction.                                                       
+
+> Method Target Problem Core Methodology Conditioning Key Highlights Foundation & Real-World Extreme Scenarios
+> RadioDiff [40] Dynamic RM Decoupled DM; adaptive FFT in U-Net Tx loc., obstacles Isolates drift/noise; sharp edges RM-Gen [43] Indoor PL Mask-agnostic inpainting Sparse RSS (5%–15%) No mask-specific retraining RRDDM [126] Vehicle trajectory RM Dual-head U-Net; residual denoising Trajectory RSS, PL prior Structural residual + noise injection RadioTrace [127] Unknown Tx, restricted sampling Straight-through estimator Sparse RSS, building map Training-free; joint Tx estimation
+> Dimensional & Network Expansion
+> CGDM [128] Ultra-grained channel fingerprint Super-resolution; ELBO Coarse-grained CF 4×SR; NMSE ∼10 −4
+> BS-1-to-N [48] Cross-BS CKM Rotary PE; inter-CKM attention Source BS CKM Cell-free network inference RadioDiff-3D [42] 3D volumetric RM 3D conv.; autoregressive height 3D map, Tx PL + ToA + DoA output BeamCKMDiff [71] Beam-aware CKM DiT; adaLN Beam w, env. Zero-shot continuous beam gen.
+> Real-Time Acceleration Paradigms
+> RadioDiff-Turbo [18] Latency bottleneck SDE bound + pruning Same as RadioDiff 1000 →10 steps; 60 ms RadioDiff-Flux [61] Sequential scenes Midpoint reuse; KL bound Sequential env. matrices 3.5–58 ×speedup; <0.15% drop RadioFlow [129] Real-time RM CNF; flow matching (ODE) Static/dynamic context NFE=1; 63 ms latency
+
+vehicle-trajectory measurements through a dual-head U-Net. It injects structural residuals and Gaussian noise simultaneously: 
+
+Il = Il−1 + αlIres + βlϵl−1. (33) RadioTrace [127] relaxes the assumption of known transmitter locations entirely. It achieves joint RM generation and contin-uous transmitter coordinate estimation via a straight-through estimator and observation matching loss: 
+
+L = ∥ˆxt 
+
+> 0
+
+⊙ M − O∥2 
+
+> F
+
+. (34) 
+
+2) Dimensional and Architectural Expansion: CGDM [128] models ultra-grained channel fingerprint construction as image super-resolution, maximizing the evidence lower bound (ELBO) conditioned on coarse-grained data. BS-1-to-N [48] employs rotary position embedding and inter-CKM attention for cell-free network inference. RadioDiff-3D [42] transitions to fully 3D tensor generation using autoregressive height-wise generation. BeamCKMDiff [71] shifts to a diffusion Transformer backbone. Continuous beam vectors w are injected via adaptive layer normalization for zero-shot generalization to unseen beam directions. 
+
+3) Real-Time Acceleration: Iterative denoising causes high inference latency, which is a bottleneck for real-time applica-tions [18], [61]. Three acceleration paradigms form a trade-off chain. RadioDiff-Turbo [18] applies structure-group parameter pruning and adjusts stochastic differential equation (SDE) integral bounds. This enables large sampling steps, reducing from 1000 to 10 steps. Inference latency reaches approximately 60 ms without network retraining. RadioDiff-Flux [61] exploits the fact that temporally adjacent scenes share building topology. It bounds the Kullback-Leibler divergence between latent representations zi and zj at diffusion step t:
+
+DKL (p∥q) = 12(1 − t)2
+
+t ∥zi − zj ∥2. (35) Here zi and zj are variational autoencoder (VAE)-encoded latent states of two RMs sharing the same static environment. The scaling factor (1 − t)2/t reveals an important structure. At large t near pure noise, it approaches zero, meaning latent distributions become indistinguishable. At small t near clean data, it diverges, reflecting maximum structural discriminabil-ity. This implies that early denoising steps recover shared building topology. Late steps refine scene-specific details such as transmitter location. Caching the intermediate state at a midpoint t∗ bypasses redundant early-stage recovery [61]. This delivers 3.5–58 × acceleration with less than 0.15% accuracy degradation. RadioFlow [129] transitions from stochastic diffusion to continuous normalizing flows (CNF) via flow matching. It learns a deterministic vector field vθ defined by an ordinary differential equation (ODE) dx = vθ (t, x ) dt . Flow matching directly regresses the straight-line optimal transport velocity between noise and target data. This eliminates stochastic fluctuations during inference. Single-step generation is achieved with 63 ms latency and 8.3 × parameter reduction. 
+
+4) Probabilistic Output and Diffusion Priors: A distinguish-ing feature of diffusion models is their ability to produce multiple stochastic samples from p(M|E, S) [40], [85]. Gen-erating J independent samples {γ1, . . . , γ J } and computing Monte Carlo estimates: 
+
+ˆϕB ≈ 1
+
+J
+
+> J
+
+X
+
+> j=1
+
+F (γj ), (36) yields unbiased expectations of arbitrary nonlinear functionals 
+
+F of the RM. This includes channel capacity and bit error rate. Such capability is unavailable from deterministic architectures that output a single point estimate [20], [21]. This stochastic sampling provides access to the aleatoric variability captured by the learned distribution. It does not constitute explicit epistemic uncertainty quantification over model parameters [85]. The practical benefit remains significant. When the RM serves as input to downstream decisions, Monte Carlo integration over samples provides more robust decisions than a single prediction [44]. As detailed in Section VI, pre-trained diffusion models also serve as powerful learned priors for inverse reconstruction. The generative distribution provides regularization needed to resolve the ill-posedness of sparse-to-dense recovery [86], [130]. 19 
+
+VI. L EARNING -B ASED METHODS FOR SOURCE -A GNOSTIC 
+
+RADIO MAPPING 
+
+Source-agnostic RM reconstruction is more challenging than forward prediction [23], [24]. The transmitter parameters are latent or unavailable. As the sampling rate decreases, the problem transitions from well-posed interpolation to a severely ill-posed inverse problem [25], [85]. Table XIII provides a problem-driven decision guide organized by scenario characteristics. 
+
+A. CNN-Based Methods 
+
+CNNs provide the foundational framework for source-agnostic reconstruction, treating the task as sparse-to-dense spatial completion [23], [24]. Table XIV summarizes repre-sentative methods. The foundational masked reconstruction objective isolates the loss to observed indices Ωt:
+
+min 
+
+> w
+
+1
+
+T
+
+> T
+
+X
+
+> t=1
+
+PΩt
+
+  ˜Ψt − pw( ˘Ψt) 2 
+
+> F
+
+. (37) 
+
+1) Masked Completion Paradigm: The earliest approaches use fully convolutional autoencoders with binary observation masks [23]. The mask distinguishes true low-power regions from unmeasured voids. Skip connections and dual-path routing prevent irreversible mixing of signal and environment channels during early convolutions [137]. DeepREM [24] pushes the sparsity limit to 5% with adversarial loss for distribution consistency. RobUNet [120] advances generalization to unseen building layouts through dual channel and pixel attention. 
+
+Tutorial takeaway: Masked completion works reliably at moderate sparsity above 5%. Its limitation is that the binary mask treats all unmeasured locations identically. There is no mechanism to distinguish geometrically predictable LoS voids from complex NLoS shadow zones. 
+
+2) Vision Task Reformulation: SRResNet [133] redefines RM reconstruction as super-resolution, recovering continu-ous maps from one-sixteenth sample density. The template-perturbation method [134] bridges exemplar-based inpainting with radio depth maps, aligning the filling sequence with transmitter-to-receiver signal paths. For cross-band extrapo-lation, CF-CGN [88] employs variable-weight cycle-consistent generative networks: 
+
+Lcyc = E∥Ψi,j (Ψ j,i (Ij )) − Ij ∥2 
+
+> F
+
++ E∥Ψj,i (Ψ i,j (Ii)) − Ii∥2 
+
+> F
+
+,
+
+(38) enforcing bijective cross-band mappings suitable for massive MIMO precoding. 
+
+3) High-Dimensional Tensor Extension: CAED [23] extends the baseline to a 3D Frobenius norm for voxel environments with decoder dilation and structural pruning. A multitask super-resolution framework [135] recovers path loss, delay spread, angular spread, and LoS status simultaneously. Homoscedastic uncertainty provides dynamic weight adaptation: 
+
+LM T L (W, σ ) = X
+
+> m
+
+Lm
+
+2σ2
+
+> m
+
++ X
+
+> m
+
+log( σm). (39) ROASMP [131] formulates RM prediction as online robust 4D tensor completion spanning space, frequency, and time. It uses temporal pre-filling with an attention-based forgetting factor, followed by CP decomposition with ℓ1-norm regular-ization to reject outliers. Online optimization via ADMM with recursive least squares enables dynamic tracking of low-rank subspaces across streaming measurements [131]. 
+
+4) Practical Deployment Challenges: Real-world deploy-ment introduces challenges beyond algorithms. A cross-AP inference paradigm [138] derives target access point RMs from neighboring AP maps via positional pre-convolution. MoENet [115] fuses transfer learning with uncertainty-aware mixture of experts using morphological features. NAS-REC [136] achieves zero-shot UAV outage map reconstruction without pre-training. 
+
+Tutorial takeaway: CNN-based inverse methods are the most mature and computationally efficient option, suitable for edge devices [23], [24]. Their limitation is the inability to produce diverse reconstructions or quantify uncertainty, which becomes critical below 5% sampling rates where the solution is non-unique. 
+
+B. ViT-Based Methods 
+
+ViTs offer a structural advantage for inverse problems: they natively process variable-sized sparse point sets as input tokens [25], [29]. CNNs must rasterize sparse measurements onto a dense grid, introducing zero-padding that wastes capacity [28]. The Transformer structure restoration (TSR) framework [139] employs alternating self-attention and axial attention modules. This reduces complexity from O(n2) to O(2 n3/2).Standard L2 loss averages multiple plausible patterns, yielding blurred reconstructions. TSR addresses this via a high-receptive field (HRF) perceptual loss using a pre-trained segmentation network: 
+
+Lhrf = E
+
+h ϕhrf (R) − ϕhrf ( ˜R)2i
+
+, (40) where ϕhrf is the structural feature extractor. The total loss balances accuracy with perceptual structure: Lfinal = λL2L2 +
+
+λhrf Lhrf .RadioFormer [25] decouples environmental priors from sparse observations through dual-stream self-attention. Building maps are processed as patch-level tokens. Sparse observations are encoded as pixel-level tokens by summing coordinate and value embeddings. The two streams interact via cross-stream cross-attention (CCA). Observation features FO serve as queries, while building features FB provide keys and values: 
+
+Q = WQFO , K = WK FB , V = WV FB , (41) CA (Q, K, V ) = Softmax 
+
+ QK ⊤
+
+√d
+
+
+
+V. (42) This reflects the physical intuition that each measurement queries surrounding geometry to infer local propagation [25]. STORM [29] defines the task as continuous point-set function regression, eliminating grid resolution bottlenecks. It processes variable-sized sample sets and embeds physical equivariance for translation and rotation. A weighted direction vector governed by the strongest signal measurements establishes a canonical 20 
+
+TABLE XIII: Practitioner decision guide for source-agnostic RM reconstruction. As sparsity increases and prior knowledge diminishes, the paradigm transitions from deterministic completion to probabilistic generation. 
+
+Scenario Sampling Rate Tx Location Env. Prior Recommended Paradigm Representative Methods 
+
+Dense grid, known Tx >10% Known Building map CNN masked completion Masked AE [23], RobUNet [120] Sparse random, known Tx 1–10% Known Building map ViT / CNN+GAN RadioFormer [25], DeepREM [24] Ultra-sparse ( <1%) <1% Known Building map ViT (equivariant) / Diffusion STORM [29], [44] Trajectory-based sparse Sparse traj. Known Building map Diffusion (residual) RRDDM [126] Unknown Tx, sparse obs. 1–10% Unknown Building map Diffusion (joint Tx estimation) RadioTrace [127] No ground samples 0% Known Satellite imagery GAN (satellite-driven) SC-GAN [37] Multi-band tensor Sparse per-band Known Partial bands CNN cross-band / Tensor CF-CGN [88], ROASMP [131] 3D volumetric sparse Sparse 3D Known 3D model Latent diffusion (PnP) [132] Quantized satellite obs. Low-bit Known Coarse Gradient-free diffusion [130] 
+
+TABLE XIV: Summary of CNN-based methods for source-agnostic RM reconstruction.                                                                
+
+> Method Core Architecture Sparsity Input Type Key Innovation Loss
+> Masked Completion
+> Masked AE [23] Conv. autoencoder 10–50% Sparse grid Binary mask for unmeasured voids Masked Frobenius DeepREM [24] U-Net + Pix2Pix cGAN ≥5% Sparse random Adversarial loss for distribution consistency MSE + adversarial RobUNet [120] ResNet + dual attention 5–20% Sparse grid (unseen layouts) Channel & pixel attention for boundaries MSE
+> Vision Task Reformulation
+> SRResNet [133] Super-resolution ResNet ∼6% Low-res grid RM as super-resolution problem Full-grid MSE Template-Perturb. [134] Exemplar inpainting Large voids Sparse + radio depth Fill sequence follows Tx →Rx path Physics-prioritized CF-CGN [88] Cycle-consistent GAN Cross-band Band i→jVariable-weight cycle-consistency Cycle loss
+> High-Dimensional Tensor Extension
+> CAED [23] 3D conv. autoencoder Extreme 3D 3D voxel Decoder dilation + structural pruning 3D Frobenius Multitask SR [135] Multi-channel SR Variable Multi-param. tensor Homoscedastic uncertainty weighting LM T L
+> ROASMP [131] CP decomp. + ADMM-RLS Streaming 4D Space ×freq ×time Online robust tensor completion ℓ1-reg. CP
+> Practical Deployment
+> MoENet [115] MoE + transfer learning Data-scarce Sparse + SimNet score Uncertainty-aware expert fusion Similarity-guided NAS-REC [136] Neural architecture search Zero-shot UAV outage data No pre-training dataset required Adaptive NAS
+
+pose: 
+
+v(r) = 
+
+> N
+
+X
+
+> n=1
+
+exp(˜ γn)( rn − r), (43) where ˜γn is the normalized RSS at the n-th location. Physical equivariance is hard-coded by aligning coordinates with this dominant propagation direction: 
+
+xn = [˜ γn, (U (rn − r)) ⊤]⊤, (44) where U is the rotation matrix aligning with v(r). If the entire environment and transmitter are translated or rotated, the RM transforms accordingly. By constructing features in a transmitter-relative frame, STORM guarantees this equivariance structurally [29]. This eliminates the need for data augmentation to learn basic spatial symmetries. STORM extends to active sensing via causal self-attention for joint estimation and next-best-point selection. 
+
+Tutorial takeaway: ViTs offer the greatest advantage when measurements are extremely sparse and spatially irregular [25], [29]. Processing each measurement as an independent token avoids the information dilution of grid rasterization at sub-1% sampling rates. The STORM equivariance encoding is a broadly applicable design principle for any RM with translation or rotation symmetry. 
+
+C. GAN-Based Methods 
+
+Inverse GAN methods have shifted from point-by-point regression to cell-level global generation [36], [90]. The condi-tional GAN maps an environment x to an RSRP distribution y.Physical priors from empirical models are integrated through residual estimation: y = Strue − ˆSempirical ⊙ Mask . This restricts the generator to learning high-frequency residual shadows [90]. ACT-GAN [36] extracts multi-scale contexts via aggregated contextual transformation blocks with varying dilation rates. Convolutional block attention modules enforce spatial attention on dense building edges. A composite loss synergizes MSE, perceptual, style, and adversarial terms [36]. SC-GAN [37] bypasses ground-level measurements by leveraging satellite imagery. The input is a dual-channel tensor of a building map and transmitter map. No intermediate RSS measurements are required. Commercial satellite imagery pro-vides 0.3–1 m resolution, meeting typical RM grid requirements. However, satellite imagery lacks building height information, electromagnetic material properties, and temporal currency. These limitations confine SC-GAN to macroscopic coverage estimation where building footprint geometry dominates [37]. 
+
+Tutorial takeaway: GAN-based inverse methods suit scenar-ios where paired ground truth is unavailable [37], [125]. Their limitation relative to diffusion models is mode collapse in deep shadow zones. The GAN may generate plausible but physically incorrect patterns with no uncertainty quantification. 
+
+D. Diffusion-Based Methods 
+
+Deterministic models output a single point estimate mini-mizing mean squared error [20], [21]. However, this is insuf-ficient when downstream applications require nonlinear RM functionals [44], [85]. Consider an NLoS location where RSS fluctuates between −85 and −95 dBm. A deterministic model 21 
+
+> Fig. 5: Illustration of the forward noising process and the reverse denoising process in diffusion-based radio map reconstruction..
+
+predicts −90 dBm. Channel capacity C = B log 2(1 + SNR )
+
+is concave in linear-scale power. By Jensen’s inequality, the point estimate systematically overestimates expected capacity [85]. This bias can reach several bits/s/Hz in low-SNR regimes. Diffusion models resolve this by generating J samples from 
+
+p(γ|M ) and computing unbiased Monte Carlo estimates: 
+
+ˆϕB ≈ 1
+
+> J
+
+PJj=1 F (γj ) [44]. Fig. 5 visualizes the forward noising and reverse denoising processes in diffusion-based radio map reconstruction. 
+
+1) Bayesian Inverse Estimation and Learned Priors: 
+
+RadioDiff-Inverse [58] frames reconstruction as Bayesian max-imum a posteriori estimation ˆxM AP = arg max x p(x)p(y|x).A pre-trained diffusion model provides the prior p(x). The reverse generation is corrected via likelihood-weighted Monte Carlo sampling: 
+
+pwgt θ (xit−1|xt, y t−1)= exp 
+
+
+
+− ∥xit−1 − μθ ∥2
+
+2σ2
+
+> t
+
++ ∥yt−1 − Ax it−1∥2
+
+2c2 
+
+> t
+
+σ2
+
+> t
+
+
+
+. (45) A notable property is training-free operation. It transfers a diffusion prior from natural images to the RF domain without wireless-specific fine-tuning [58]. Both domains share piecewise-smooth structures with sharp boundaries. Edge priors from natural images regularize shadow boundary reconstruction. However, three conditions degrade this transfer. First, RMs exhibit distance-dependent power decay with no natural image counterpart. Second, multipath fading patterns are physically meaningful but a natural image prior smooths them away. Third, the RM dynamic range exceeds 100 dB, far beyond 8-bit images. Natural image priors are effective for macro-scale shadowing but should not be relied upon for fine-grained multipath recovery [85]. Domain-specific priors trained on wireless data are preferable for such cases. 
+
+2) Architectural Adaptations for Blind Completion: When environmental priors are absent, the conditional decoupled diffusion model [44] splits the forward process into image attenuation and noise enhancement. High-dimensional pixels are mapped to a condensed latent space via a variational autoencoder. Multi-scale conditions are extracted using a Swin-B Transformer. A dual-branch U-Net simultaneously predicts drift cθ and noise ϵθ :
+
+min  
+
+> θ
+
+Et, x0,ϵ,y
+
+∥c − cθ ∥2 + ∥ϵ − ϵθ ∥2 . (46) The latent-domain plug-and-play framework [132] addresses 3D spatio-spectral generation. It factorizes the dense ten-sor into spatial loss fields and power spectral density via 
+
+X = PRr=1 Sr ◦ cr . Natural image denoisers are plugged into ADMM optimization within the reduced latent space to accelerate inference. 
+
+3) Handling Extreme Observational Degradations: For low-bit quantized satellite measurements with model y =
+
+Q(Hx + n), the step-function quantizer has zero gradient almost everywhere [130]. Standard gradient-based likelihood guidance fails completely. A gradient-free closed-form posterior 22 
+
+sampling replaces the quantized likelihood with a truncated Gaussian approximation [130]. Within each quantization bin 
+
+[li, u i), the conditional distribution is modeled as a Gaussian truncated to that interval. Mean and variance are computed an-alytically via the error function, yielding a closed-form update 
+
+ˆxpost  
+
+> 0
+
+= ˆ x0|t + γ2 
+
+> t
+> s
+
+HT ∆ requiring no gradient computation. 
+
+4) Physics-Informed Sensing and Localization: RadioDiff-Loc [76] addresses NLoS source localization under extreme constraints without power calibration. It combines power-invariant normalization with multi-channel conditioning. A physics-informed sampling strategy inspired by knife-edge diffraction optimizes sensor placement [76]. Fisher information matrix analysis establishes that building vertices maximize mutual information, with Jjj ∝ 1/s 2 
+
+> j
+
+. This reduces the required sampling rate to under one percent while enabling sub-meter localization. 
+
+E. Summary and Practitioner Guidance 
+
+Table XV reveals a clear stratification. CNN completion offers the lowest cost for moderate sparsity above 5% [23], [24]. ViT architectures achieve state-of-the-art performance at extreme sparsity by handling irregular point sets and encoding physical symmetries [25], [29]. GAN methods fill the niche of absent paired ground truth via satellite imagery or cycle-consistency [37], [125]. Diffusion models offer the broadest capability profile at the cost of higher latency [44], [85]. Acceleration paradigms from Section V-E are equally applicable here. A unifying insight is that below the threshold where the inverse problem becomes non-unique, reconstruction must transition from deterministic regression to probabilistic gen-eration [85]. This is an information-theoretic necessity: when observations cannot uniquely determine the solution, the model must draw upon a learned prior. Reconstruction quality is then bounded by the fidelity of that prior [44], [58]. VII. O PTICS -I NSPIRED ELECTROMAGNETIC MAPPING 
+
+METHODS 
+
+The methods in Sections V and VI treat RM construction as image-level regression. This section reviews an alternative paradigm inspired by neural rendering [52], [106], [112]. NeRF and 3DGS construct continuous, physics-grounded represen-tations by explicitly modeling the volumetric propagation process. Table XVI identifies when optics-inspired methods offer genuine advantages over traditional neural networks. 
+
+A. Neural Radiance Fields for RM Construction 
+
+Migrating optical NeRF to the RF domain presents significant physical challenges [106], [112]. Unlike visible light, RF signals interact with obstacles through absorption, reflection, diffraction, and scattering. RF signals are complex-valued, with phase governing constructive and destructive interference. RF hardware provides far lower spatial sampling than optical cameras. Table XVII establishes the mathematical mapping between optical and RF rendering domains. 
+
+1) Foundational Voxelized Modeling: NeRF 2 [106] dis-cretizes 3D space into micro-voxels based on the Huygens-Fresnel principle. Each voxel is a secondary source character-ized by complex attenuation δ and re-emitted signal S. The received signal from direction ω is: 
+
+R(ω) = 
+
+Z D
+
+> 0
+
+HP (r,ω )→PRX S(P (r, ω ), −ω) dr, (47) where D is the propagation distance. The cumulative atten-uation is H = exp( R r 
+
+> 0
+
+ˆδ d ˆr), converting the product into a tractable summation in the logarithmic domain [106]. Dual complex-domain MLPs with positional encoding capture high-frequency spatial variations. A turbo-learning mechanism gen-erates synthetic datasets from sparse real-world measurements [112]. 
+
+2) Physics-Embedded Neural Channel Synthesis: Subse-quent work embeds physical propagation rules into the ren-dering equation [140]. A key innovation decouples free-space propagation from object reflection. Reflection points are treated as virtual transmitters, relieving the network from learning distance-based attenuation. The neural channel synthesis equa-tion is: 
+
+H(f ) = X
+
+> r∈L
+
+X
+
+> p∈P
+
+wrp Arp ej(ψrp −2πf d p/c ), (48) where r indexes multipath trajectories and p indexes sampled voxel points along each ray. wrp is the volumetric density weight, Arp the amplitude attenuation, and ψrp the phase shift [140]. A critical detail is phase prediction. The complex exponential 
+
+ejψ involves a non-differentiable modulo 2π operation. The model instead predicts in-phase and quadrature components: 
+
+I = A cos ψ and Q = A sin ψ. Both are smooth, continuous functions with well-defined gradients. Amplitude and phase are recovered post-hoc via A = pI2 + Q2 and ψ = arctan( Q/I ).This I/Q decomposition is broadly applicable to any neural architecture in the complex RF domain [52], [140]. 
+
+3) Generalizable Wireless Radiance Fields: The preceding frameworks rely on per-scene optimization. The generalizable wireless radiance field (GWRF) [141] addresses this by treating the target spatial spectrum as an interpolation of adjacent trans-mitters. A multi-head Transformer treats sampled voxels along a ray as tokenized sequences. Cross-attention learns cumulative attenuation weights driven by spatial geometry. Specialized attention heads hardcode low-level physical knowledge [141]. GWRF achieves zero-shot cross-scene generalization. In unseen environments, it achieves 26.9% MSE reduction and 10.2% PSNR improvement over NeRF 2 without retraining. GWRF-generated spatial spectra reduce AoA estimation errors by 61.6% compared to using only 50% of real data [141]. 
+
+Tutorial takeaway: NeRF-based methods provide the highest fidelity for complex-valued channel reconstruction in a specific environment [106], [112]. MLP-based ray-marching incurs 200+ ms latency. They are best suited for offline digital twin construction. GWRF partially alleviates per-scene retraining but requires measurements from neighboring transmitters. 23 
+
+TABLE XV: Cross-architecture comparison for source-agnostic RM reconstruction. “Min. Sampling” is the lowest reported rate with reasonable quality. 
+
+Capability CNN Completion ViT GAN Diffusion 
+
+Min. sampling rate ∼5% [24] ∼0.01% [29] ∼5% ∼1% (trained); 0% (prior transfer) [58] Unknown Tx handling ✗ Partial [29] ✗ ✓ [127] Probabilistic output ✗ ✗ ✗ ✓(MC sampling) [85] Cross-band reconstruction CF-CGN [88] ✗ ✗ Latent PnP [132] Real-time ( <100 ms) ✓ ✓ ✓ Turbo/Flow only [18], [129] 3D volumetric support CAED [23] ✗ ✗ [42], [132] Zero-shot (no wireless training) ✗ ✗ ✗ ✓ [58] 
+
+TABLE XVI: When to use optics-inspired methods versus traditional neural networks. The trade-off is between physical fidelity per scene and generalization across scenes. 
+
+Deployment Condition Traditional NN NeRF 3DGS Rationale 
+
+Fixed env., variable Tx locations ✓ ✗ ✗ NeRF/3DGS require retraining per Tx Fixed env., fixed Tx, max fidelity ✗ ✓ ✓ Scene optimization captures fine multipath Real-time inference ( <10 ms) ✓ ✗ ✓ 3DGS: ∼5 ms; NeRF: ∼200 ms Angle power spectrum needed ✗ ✓ ✓ 3DGS outputs directional energy via splatting Complex-valued CSI (amp. + phase) Limited ✓ ✓ Optics methods natively model complex fields Generalization to unseen envs. ✓ ✗∗ ✗ Per-scene optimization prevents transfer Large-scale city ( >1 km 2) ✓ ✗ ✗ Per-scene training is intractable at scale Sparse measurements ( <100) ✗ ✓ ✓ Physics-grounded rendering regularizes Dynamic Tx and Rx (6D CKM) ✗ ✗ ✓† BiWGS supports X2X via bidirectional splatting  
+
+> ∗GWRF achieves zero-shot cross-scene generalization; †BiWGS supports 6D but requires per-scene training.
+
+TABLE XVII: Mapping of physical formulations: optical NeRF versus RF NeRF.                                            
+
+> Attribute Optical NeRF RF NeRF [106] Target domain Visible light (real-valued intensity) RF signals (complex-valued: amplitude & phase) Radiated quantity Color c(r,d)Re-emitted signal S(P(r, ω ),−ω)
+> Volumetric property Volume density σ(r)Complex attenuation δ(P) = ∆ a e j∆θ
+> Transmittance T(t) = exp( −Rσ(s)ds )HP→PRX = exp( Rˆδ(P)dˆr)
+> Rendering integral C(r) = RT(t)σ(t)c(t)dt R(ω) = RD
+> 0HP→PRX S(P, −ω)dr
+> Loss function MSE on pixel colors NMSE on complex signals
+
+B. 3DGS-Based Methods 
+
+3DGS overcomes NeRF’s ray-marching latency through ex-plicit anisotropic Gaussian primitives rendered via parallelizable rasterization [52]. Migrating optical 3DGS to the RF domain requires complex-domain representations and hemispherical antenna models rather than planar cameras. 
+
+1) Complex-Domain Gaussian Splatting: WRF-GS [52] reinterprets 3D Gaussians as virtual transmitters. Optical color and opacity are replaced with signal strength and environmental attenuation. The multi-path received signal is: 
+
+y =
+
+> L−1
+
+X
+
+> l=0
+
+A ∆Al ej(φ+∆ φl), (49) where ∆Al and ∆φl are the amplitude and phase of the l-th path. A Mercator projection maps 3D space to a hemispherical sensing plane [52]. The Mercator distortion factor 1/ cos 2(θel )
+
+is negligible for terrestrial communications with θel < 30 ◦. For UAV or satellite links with significant high-elevation energy, elevation-dependent compensation or alternative spherical projections should be used. Optical alpha-blending is replaced by EM splatting following cascaded wave attenuation. WRF-GS+ introduces deformable Gaussians to decouple static large-scale fading from dynamic small-scale fading [52]. 
+
+2) MLP-Free Fourier-Legendre Synthesis: GSRF [142] treats each 3D Gaussian as a secondary RF source via the Huygens-Fresnel principle. It replaces spherical harmonics with a Fourier-Legendre expansion (FLE): 
+
+ψk(α, β ) = 
+
+> L
+
+X
+
+> l=0
+> l
+
+X
+
+> m=−l
+
+c(k) 
+
+> ml
+
+eimα P ml (cos β), (50) which decouples azimuth and elevation with complex coef-ficients c(k) 
+
+> ml
+
+encoding amplitude and phase. Combined with orthographic splatting and a frequency-domain consistency loss, GSRF operates entirely without MLPs [142]. 
+
+3) Complex Superposition via Inverse Source Formulation: 
+
+nGRF [143] formulates the problem as an electromagnetic inverse source problem governed by the Helmholtz equation. It realizes distance- and direction-dependent attenuation via the Mahalanobis distance of anisotropic Gaussian bases. Crucially, nGRF identifies that optical alpha-blending is physically inad-equate for RF [143]. Electromagnetic waves undergo coherent 24 
+
+superposition rather than strict occlusion. The aggregate signal is an unordered complex summation: 
+
+H(prx , p tx ) = 
+
+> N
+
+X
+
+> i=1
+
+wi(prx ) · Ci, (51) where constructive and destructive interference emerge from the phase relations of Ci = Cre i + jC im i . Unlike optical alpha-blending, the spatial weights wi are deliberately not normalized. Energy conservation is maintained through covariance matrix scaling alongside complex superposition [143]. nGRF achieves 220 × faster inference than NeRF baselines. 
+
+4) 6D Channel Knowledge Maps via Bidirectional Splatting: 
+
+BiWGS [144] extends to 6D channel knowledge maps (CKMs) for dynamic transmitter and receiver movement. It introduces bidirectional spherical harmonics (BSH) to fit complex scatter-ing coefficients from multiple virtual projection planes. BiWGS hard-codes electromagnetic reciprocity into the network structure [144]. Rather than soft loss penalties, it enforces strict symmetry through exact parameter sharing across reciprocal BSH coefficient index pairs. This guarantees 
+
+hA→B = hB→A by construction. To balance optimization across paths spanning vastly differ-ent power levels, BiWGS transforms spatial spectra to logarith-mic scale during loss computation [144]. In linear domain, LoS gradients exceed NLoS gradients by a factor of √R ≈ 10 5 for a 100 dB range. After logarithmic transformation, the gradient becomes ∂LdB /∂P ∝ 1/P , inversely weighting by signal strength. This compresses the gradient dynamic range from √R to O(log R), amplifying training signals from weak NLoS paths. This log-domain strategy is broadly applicable to any RM model operating across large dynamic ranges. 
+
+C. Discussion 
+
+Table XVIII summarizes the comparison. In terms of physical fidelity, NeRF and 3DGS demonstrate a substantial advantage [52], [106]. By replacing black-box pixel generation with wave propagation mechanics, 3DGS methods achieve significant SNR improvements in spatial spectrum prediction. 3DGS intrinsically captures angle power spectra through directional splatting, a capability traditional networks lack [52], [142]. The most critical bottleneck is the static environment assump-tion [112], [143]. Any change in environment or transmitter requires complete retraining. Even with optimization, 3DGS retraining takes tens of minutes and NeRF hours. Traditional networks encode the transmitter as an explicit input and generalize without retraining [20], [40]. Two future directions are promising. First, hybrid repre-sentations where a base model extracts environmental priors to dynamically condition Gaussian attributes in real-time. By decoupling static scatterers from dynamic objects, only a minimal Gaussian subset needs updating [52]. Second, amortized inference paradigms where a feed-forward encoder predicts 3D Gaussian parameters from sparse measurements in a single forward pass, reducing construction time from minutes to milliseconds [141]. 
+
+Tutorial summary: Practitioners should select optics-inspired methods for high-fidelity digital twins of specific known environments, especially when complex-valued CSI or an-gular spectra are required [52], [106]. Traditional networks are preferred for cross-environment generalization, dynamic transmitter configurations, or real-time city-scale operation [20], [40]. Table XVI provides a systematic reference. VIII. P HYSICS -I NFORMED METHODS FOR RM CONSTRUCTION 
+
+The methods in Sections V–VII are predominantly data-driven [20], [40], [106]. They learn the mapping from inputs to RMs by minimizing empirical loss on training data. No explicit mechanism enforces compliance with electromagnetic propagation laws. While effective when data is abundant and representative, purely data-driven models can violate physical principles in out-of-distribution regions [51], [54]. This section surveys physics-informed RM construction, which embeds electromagnetic knowledge into the data, loss function, or network architecture [41], [56], [57]. Table XIX summarizes the three integration levels. Table XX catalogs plug-and-play physics modules that practitioners can adopt without fundamental redesign. 
+
+A. A Taxonomy of Embeddable Physical Knowledge 
+
+Not all physical knowledge carries equal computational cost or utility for neural network integration [54]. This tutorial identifies three categories ordered by increasing physical depth. 
+
+1) Geometric and Environmental Knowledge: The most accessible category comprises knowledge from spatial geometry [20], [68]. This includes binary or height-encoded building maps, LoS/NLoS classification, fractional LoS ratios via 3D Bresenham algorithms, and edge and corner detectors. These features are inexpensive to extract from GIS or CAD data. They can be concatenated as additional input channels to any backbone. Their limitation is that they encode only the location of wave-obstacle interactions, not the electromagnetic response [73]. 
+
+2) Electromagnetic Propagation Knowledge: The second category derives from Maxwell’s equations and their asymptotic approximations [51], [110]. This includes FSPL from the Friis equation, material-dependent reflection and transmission coeffi-cients from Fresnel equations using ITU-R P.2040, diffraction losses from the uniform theory of diffraction (UTD), and projected antenna radiation patterns [73], [105]. These features encode quantitative electromagnetic responses. However, they require frequency-dependent parameters and may need per-pixel computation, incurring substantial preprocessing cost. 
+
+3) Wave Equation and PDE-Level Knowledge: The deepest category derives from governing partial differential equations (PDEs), principally the Helmholtz equation ∇2u + k2u = −f
+
+[41], [145]. Embedding this knowledge requires evaluating differential operators on the predicted field. This serves as either preprocessing features or loss-level constraints. This category provides the strongest physical regularization but is the most computationally demanding [51], [146]. 
+
+Tutorial takeaway: The three categories are not mutually exclusive and can be combined hierarchically. A practical recipe is to begin with geometric features as baseline input channels. 25 
+
+TABLE XVIII: Comparison of learning-based methods for RM construction. “Training” refers to per-scene optimization time. 
+
+Attribute Traditional NN NeRF-Based 3DGS-Based 
+
+Environment modeling Requires explicit 3D geometry as input Learns geometry from sparse measurements Learns scatterer geometry; can use LiDAR init. Response to Tx changes Zero-shot via Tx input encoding Retraining required (hours); GWRF partial Retraining (tens of minutes); no zero-shot Training time per scene Seconds to hours 2–8 hours (MLP optimization) 10–60 minutes (explicit params) Inference latency CNN: ∼5 ms; Diffusion: 60 ms–19 s ∼200 ms (ray-marching) ∼5 ms (rasterization) Complex-valued support Typically real-valued Native via I/Q decomposition Native via EM splatting Spatial resolution Grid-limited (1–10 m) Continuous (arbitrary coords) Continuous (arbitrary coords) Scalability City-scale feasible Single building scale Single building scale Physical Prior: The Helmholtz Equation  Data-Level Injection: Electromagnetic Feature Engineering 
+
+Loss-Level Regularization: Embedding Physical Constraints 
+
+∇ 2 𝑢𝑢 𝑥𝑥 , 𝑦𝑦 + 𝑘𝑘 2 𝑥𝑥 , 𝑦𝑦 𝑢𝑢 𝑥𝑥 , 𝑦𝑦 = −𝑓𝑓 𝑥𝑥 , 𝑦𝑦 
+
+𝑢𝑢 𝑥𝑥 , 𝑦𝑦  : Signal Strength (Spatial Distribution) 
+
+∇ 2∶ Laplace Operator 
+
+𝑘𝑘  𝑥𝑥 , 𝑦𝑦  : Wave Number (Attenuation Factor) 
+
+𝑓𝑓  𝑥𝑥 , 𝑦𝑦  : Signal Source Term 
+
+Governing law defining the fundamental relationship between signal attenuation, spatial propagation, and source distribution. 
+
+ℒPLN  = ℒPDE  + ℒBC  + ℒSource 
+
+Forces the latent representations extracted under ultra−sparse 
+
+observations to strictly conform to wave propagation dynamics 
+
+𝑘𝑘 eff 
+
+2 𝑥𝑥  ≜ − ∇ 2 𝐴𝐴 𝑥𝑥 𝐴𝐴 𝑥𝑥 + 𝜖𝜖 
+
+Locate EM Singularities 
+
+Generate Spatial Masks 
+
+Guide Generative Models 
+
+Compute Effective Wavenumber 
+
+𝑘𝑘 eff  
+
+> 2
+
+≤ 0
+
+Network Training 
+
+Constraint Loop 
+
+PDE Residuals 
+
+(ℒPLN )
+
+Dirichlet Boundary Conditions ( ℒBC )
+
+Source Node Loss (ℒSource )
+
+Fig. 6: The paradigm of physics-informed neural networks for radio map construction. The framework is fundamentally grounded in the Helmholtz equation, which governs electromagnetic wave propagation behaviors such as diffraction and reflection (left). Physical priors are integrated through a dual-driven mechanism: (top right) data-level injection via electromagnetic feature engineering, which utilizes the effective wavenumber ( k2
+
+> eff
+
+) to locate spatial singularities and guide generative models; and (bottom right) loss-level regularization, which embeds partial differential equation (PDE) residuals, Dirichlet boundary conditions, and source node losses into a joint constraint loop ( LPLN )to force latent representations to strictly conform to physical wave dynamics. TABLE XIX: Comparison of physics-informed integration strategies for RM construction. Each level operates at a different pipeline stage with distinct computational trade-offs.             
+
+> Integration Level Core Mechanism Primary Advantage Key Bottleneck
+> Data level Extraction of EM laws and topological features into input tensors Cross-frequency and cross-antenna generalization without retraining Offline preprocessing cost for 3D ray intersection Loss level Embedding PDEs and boundary conditions as penalty terms in training Physical consistency under extreme sparsity Gradient magnitude mismatch between physical and data losses Architecture level Mapping physical algorithms onto network topology via unrolling or routing Deep structural alignment with wave propagation dynamics High memory cost; risk of physical hallucinations
+
+Add electromagnetic features such as FSPL and antenna gain for cross-frequency generalization. Incorporate PDE constraints only when strict physical consistency is required and sufficient computational budget is available. 
+
+B. Data-Level Integration: Electromagnetic Feature Engineer-ing 
+
+Data-level integration transforms electromagnetic laws into physics-informed feature tensors concatenated with the network input [68], [73]. This approach is backbone-agnostic. The resulting tensors can be paired with any architecture without modifying the loss or topology. Since input design choices are discussed in Section III-B , this subsection focuses on the specific engineering techniques and their computational trade-offs. 
+
+1) Material and Antenna Properties: Multi-band operations require explicit electromagnetic feature fusion [73], [105]. Rather than feeding raw permittivity values, researchers com-pute physical reflectance and transmittance from ITU standards. Radio depth maps that physically anchor attenuation to building distributions are generated via logarithmic distance path loss and inverse distance weighting [30], [35]. The 3D antenna gain is projected onto the 2D propagation plane using trigonometric 26 
+
+TABLE XX: Plug-and-play physics-informed modules for RM construction. “Backbone Agnostic” indicates applicability to any architecture without modification.                                                                                        
+
+> Module Level Physical Knowledge Integration Method Agnostic Representative Method & Gain
+> FSPL + antenna gain channel Data Friis equation + 3D gain slice Concat as input channel ✓[73]: cross-freq. generalization ITU material reflectance/transmittance Data Fresnel equations + ITU-R P.2040 Concat as input channel ✓[68]: cross-material generalization Fractional LoS map Data 3D Bresenham ray-obstacle intersection Concat as input channel ✓[147]: 13% accuracy improvement Radio depth map Data Distance fading + obstruction ratio Concat as input channel ✓TiRE-GAN [35], RadioGAT [30]
+> k2
+> ef f singularity mask Data Helmholtz-derived amplitude curvature Spatial mask for diffusion ✓RadioDiff-k2[41]: 45.5% NMSE reduction LoS path loss anchor Loss Free-space propagation law Additive penalty term ✓[55]: LoS power consistency VIE/MoM residual Loss Volume integral equation + Green’s func. Physical loss LP HY Partial ∗PEFNet [51]: R2>0.99
+> Helmholtz PDE residual Loss ∇2u+k2u=−fdiscretized LP IN N penalty Partial ∗PhyRMDM [145]: 37.2% NMSE gain ADMM unrolling Arch. Iterative optimization structure Layer-by-layer mapping ✗DULRTC-RME [132]: 25.81 dB PSNR Geometric-optics cross-attention Arch. Transmission boundaries as prompts Spatial cross-attention ✓†iRadioDiff [58]: RMSE 6.36 dB Reciprocity parameter sharing Arch. EM reciprocity hA→B=hB→AHard weight symmetry ✗BiWGS [144]: guaranteed reciprocity Log-domain loss transform Loss Dynamic range compression L=∥10 log 10 ( ˆP)−10 log 10 (P)∥2✓Gradient variance reduction [144]
+> ∗Requires precomputation of VIE/PDE matrices; †Requires diffusion backbone with cross-attention layers.
+
+decomposition: FSPL + G2D = 20 log 10 
+
+ 4πDf co
+
+
+
++ G(Φ 2D , Θ2D ). (52) This projection is effective for fixed-downtilt antennas where elevation variance is small [105]. In active beamforming scenarios where the beam direction varies in 3D, this ap-proximation discards volumetric radiation characteristics. Full 3D tensor representations become necessary, as discussed in Section III-B . Within its scope, this integration enables cross-frequency generalization without retraining [73]. 
+
+2) Geometric Occlusion Features: For 3D building deploy-ments, 3D Bresenham line generation computes the intersection ratio between transmitter-receiver paths and structures [147]. The resulting fractional LoS maps provide continuous occlusion features. This approach achieves a 13% accuracy improvement over models without this physical prior [147]. Specialized terrain simulators extract cumulative knife-edge diffraction loss and 3D elevation angles for mountainous environments [148], [149]. 
+
+3) PDE-Derived Feature Maps: In complex multipath environments, applying the Helmholtz equation directly as a loss function is unstable in non-physical latent spaces [41]. RadioDiff-k2 [41] instead computes the effective wavenumber during preprocessing: 
+
+k2 
+
+> ef f
+
+(x) ≜ − ∇2A(x)
+
+A(x) + ϵ , (53) where A is the field amplitude from the RM. Physically, k2 
+
+> ef f
+
+<
+
+0 localizes electromagnetic singularities such as deep fading dips and sharp shadowing boundaries [41]. These indicators are transformed into spatial masks that guide the diffusion process. This achieves a 45.5% NMSE reduction purely through improved conditioning of the diffusion prior. 
+
+4) Topological Filtering for Dynamic Environments: Dy-namic environments with moving sources introduce multipath artifacts that corrupt the input feature space [93], [113]. Topological data analysis (TDA) distinguishes genuine sources from transient reflections via the concept of persistence. A genuine radiation source produces a broad peak that persists across a wide threshold range. A multipath artifact produces a narrow peak with low persistence. Formally, the 0-th persistent homology group assigns each local maximum a birth and death level. Peaks with persistence below a physical threshold are filtered as artifacts [150]. The computational complexity is O(n2) to O(n3), where n is the grid point count. For a 
+
+256 × 256 grid, this can require several seconds on standard hardware. 
+
+5) Reflection on Preprocessing Costs: Explicit physical feature engineering improves generalization but shifts compu-tation to offline preprocessing [73], [147]. Per-pixel 3D line-of-sight computation operates at O(P 3) complexity. For scenarios exceeding 256 × 256 grids, preprocessing can consume 10 ×–100 × the wall-clock time of inference [51]. For example, four-channel physics feature computation on 1024 × 1024 tensors requires approximately 27 seconds per scenario, compared to sub-second inference. These preprocessing pipelines constitute a bottleneck for real-time reconstruction. 
+
+Tutorial takeaway: Data-level integration is the most acces-sible entry point. It requires no modification to the network or loss. Start with FSPL and fractional LoS maps for low cost and high impact. Add material properties when cross-frequency generalization is needed [73]. Consider PDE-derived features such as k2 
+
+> ef f
+
+only for multipath-sensitive reconstruction [41]. 
+
+C. Loss-Level Regularization: Embedding Physical Constraints 
+
+Loss-level integration translates electromagnetic principles into penalty terms [51], [145]. This constrains predictions to satisfy physical laws even where no measurements exist [54]. 
+
+1) Multipath Parameter Consistency: Under sparse sampling, constraining multipath propagation logic provides essential regularization [55]. The LoS path power is anchored to the theoretical free-space value: 
+
+P L (dB ) = 20 log 10 (d) + 20 log 10 (fc) + 20 log 10 
+
+ 4πc
+
+
+
+.
+
+(54) This requires prior knowledge of the transmitter location to compute distance d. In source-agnostic scenarios, this constraint is ill-posed [29]. Frameworks must either include an auxiliary localization module or relax the constraint into a relative spatial consistency loss. Additionally, a ReLU-based unidirectional penalty ensures NLoS path delays remain strictly greater than the theoretical LoS minimum [55]. 
+
+2) Numerical Solver Embedding: PEFNet [51] directly embeds the volume integral equation (VIE) and its method of 27 
+
+moments (MoM) discretization: 
+
+LP HY = 1
+
+N ∥(I + W χ )E′tot − Einc ∥, (55) where I is the identity matrix, W the Green’s function coefficient matrix, and χ the permittivity contrast matrix. The data loss becomes a residual compensation mechanism: 
+
+LDAT = 1
+
+N ∥pl ′ − pl dat ∥. (56) PEFNet achieves R2 > 0.99 on RadioMapSeer with cross-scene generalization [51]. Inference latency is approximately 1.1 seconds, compared to hours for classical numerical solvers. 
+
+3) Gradient Pathologies and Dynamic Balancing: Combin-ing physical and data losses introduces gradient pathologies [51], [54]. The physical loss LP HY operates on electric field residuals in V/m. The data loss LDAT operates on path loss in dB. Gradient norms frequently differ by two to three orders of magnitude. Uncalibrated, data-driven gradients overpower physics-based regularization. Three balancing strategies have been applied successfully in RM construction. First, dynamic adjustment monitors the relative training rate of each loss component [135]. Components that train too fast are penalized, and those that lag are boosted. Second, homoscedastic uncertainty weighting treats each loss weight 1/(2 σ2
+
+> m
+
+) as a learnable parameter that adapts automatically [135]. Third, adaptive annealing gradually increases λP HY from zero over a warmup period of Ewarmup 
+
+epochs [145]. This allows the network to first learn the basic data distribution. Premature enforcement of strong constraints disrupts early-stage feature learning. 
+
+Tutorial takeaway: When combining physical and data losses, never use a fixed weighting ratio without validation. Start with a warmup schedule where λP HY = 0 for the first 10–20% of training. Then transition to uncertainty-based weighting. Monitor the gradient norm ratio ∥∇L P HY ∥/∥∇L DAT ∥ during training. If this ratio exceeds 100 or falls below 0.01, the balancing mechanism is failing. 
+
+4) Helmholtz Equation Embedding: PhyRMDM [145] op-erates a dual-network structure where the initial stage applies physical constraints via the 2D Helmholtz equation: 
+
+∇2u(x, y ) + k2(x, y )u(x, y ) = −f (x, y ), (57) where u(x, y ) is the radio signal strength, k(x, y ) the wavenum-ber, and f (x, y ) the source term. The continuous Laplacian is discretized using central differences [146]. As illustrated in Fig. 6, the physics-informed loss LP LN is decomposed into three complementary components that jointly form a constraint loop during network training: 
+
+LP LN = LP DE + LBC + LSource . (58) The first component LP DE penalizes violations of the Helmholtz equation across the entire spatial domain. It evaluates the PDE residual at every grid point by computing the discrete Laplacian of the predicted field ˆu and checking consistency with the local wavenumber and source term [54], [145]. This residual-based penalty constrains the predicted field to conform to wave propagation dynamics even in regions lacking measurement samples. The second component LBC 
+
+enforces Dirichlet boundary conditions at the interfaces between free space and physical obstacles [145]. At building walls and structural boundaries, the electromagnetic field must satisfy material-dependent boundary constraints. By penalizing deviations from these boundary values, LBC ensures that the predicted field correctly reflects the attenuation and reflection behavior imposed by the environmental geometry [147]. The third component LSource constrains the predicted source term at the known transmitter location [145]. It anchors the radiation origin by penalizing discrepancies between the predicted field at the source node and the theoretical emission pattern. This prevents the network from generating physically plausible wave fields that originate from incorrect spatial locations. The three components address complementary physical aspects: LP DE 
+
+governs wave propagation in free space, LBC governs wave-obstacle interaction at boundaries, and LSource governs the radiation origin. Together, they force the latent representations extracted under ultra-sparse observations to strictly conform to wave propagation dynamics [145]. This discretization introduces a truncation error of O(∆ x2) [151]. At 28 GHz with λ ≈ 10 .7 mm and grid resolution ∆x = 1 m, the fourth derivative ∂4u/∂x 4 scales as (2 π/λ )4 ≈ 1.2 × 10 9 m−4.The resulting truncation error can exceed the actual path loss variation per cell. In practice, higher-order finite difference schemes or multi-scale refinements are needed [152]. Once properly discretized, the combined regularization LP LN yields a 37.2% NMSE improvement at 1–10% sampling rates over diffusion-only baselines [145]. 
+
+D. Architecture-Level Mapping: Structural Isomorphism 
+
+Architecture-level integration establishes an isomorphism between network topology and the physical evolution process [57], [132]. This achieves the deepest structural alignment with electromagnetic dynamics. 
+
+1) Algorithm Unrolling: Algorithm unrolling maps classical iterative optimizers onto deep cascaded networks layer by layer [57], [132]. DULRTC-RME [132] formulates RM estimation as low-rank tensor completion: 
+
+min  
+
+> X,E
+> 3
+
+X
+
+> i=1
+
+αi∥X (i)∥∗ + λ∥E∥ 1 + f (X ) + g(E), (59) where α1, α 2, α 3 are learnable nuclear norm weights optimized via backpropagation. By unrolling ADMM, each forward propagation follows closed-form derivations with CNNs re-placing proximal operators. This achieves 25.81 dB PSNR at 10% sampling [132]. RadioDUN [57] maps an alternating sparse recovery algorithm into a physics-inspired architecture. It achieves stable reconstruction from as few as 9 spatial measurements. A practical constraint is memory footprint. With K unrolled blocks, DULRTC-RME stores O(K · N 2) intermediate tensors during backpropagation. Empirically, K = 6 blocks on a 256 ×
+
+256 map consume approximately 24 GB of GPU memory [132]. 
+
+2) Differentiable Physical Components: Hard physical occlu-sion logic disrupts backpropagation due to zero gradients. Non-linear activation functions construct soft indicator functions 28 
+
+[103]. The formulation I = 1 −tanh( POL ) creates a continuous occlusion indicator, where POL = P OL is the cumulative intersection depth. Gradients flow seamlessly for environment reconstruction [103]. Complex diffraction scenarios, tradition-ally requiring recursive computation as in the Vogler model, have been replaced by multi-head attention with positional encoding [153]. 
+
+3) Physics-Informed Generative Architectures: iRadioDiff [58] extracts transmission boundaries and signal discontinuity priors from geometrical optics. These are injected as physical prompts through spatial cross-attention to control the denoising trajectory. Removing these priors degrades RMSE from 6.36 to 9.62 dB, a 51% increase confirming the critical role of architecture-level physical embedding [58]. DeepRT [154] constructs a wireless environment knowledge pool based on ray-tracing principles. Reflection and diffraction priors are mapped into large model latent spaces through relation-aware modules. It achieves 4 ms inference latency, a speedup of approximately 3 × 10 5 over classical ray tracing [154]. It is important to note that the connection between language model sequence modeling and electromagnetic prop-agation remains an open research question. The success likely stems from the high-dimensional representational capacity and structured prior injection, rather than intrinsic alignment between linguistic and electromagnetic sequence structures. 
+
+4) Physical Hallucinations: Definition and Detection: 
+
+A critical limitation of architecture-level methods in non-physical latent spaces is the inability to guarantee compliance with Maxwell’s equations [51], [54]. This introduces physical hallucinations, defined as follows. 
+
+Definition (Physical Hallucination). A physical hallucination is a generated spatial field that struc-turally deviates from macroscopic electromagnetic laws. It is characterized by one or more violations: (i) energy conservation violation, where integrated local power exceeds the bound from source radiation and minimum path loss; (ii) reciprocity violation, where |hA→B − hB→A|2 > ϵ exceeds a physical threshold [144]; (iii) boundary condition violation, where the predicted field fails to satisfy Dirichlet or Neumann conditions imposed by the geometry [145]. Detecting hallucinations requires post-generation physics verification, such as evaluating PDE residuals or checking en-ergy conservation via spatial integration [41], [51]. Developing operationally useful detection metrics remains an important open challenge. It would transform physical consistency from an informal aspiration into a verifiable engineering guarantee. 
+
+Tutorial takeaway: Practitioners should pair architecture-level methods with lightweight post-hoc consistency checks. At minimum, verify that the total integrated power does not exceed the source power minus minimum path loss. For reciprocity-critical applications such as time-division duplex (TDD) systems, verify that the predicted channel satisfies 
+
+hA→B ≈ hB→A at symmetric transceiver pairs. 
+
+E. Summary and Practitioner Guidance 
+
+The three levels represent complementary paradigms with distinct costs and capabilities. Table XXI provides a structured quantitative comparison. 
+
+1) Scenario-Specific Recommendations: For offline network planning where several seconds of latency is acceptable, data-level integration is the pragmatic first choice [73], [147]. Physics-derived feature tensors can be paired with any backbone without modifying the training objective. Cross-frequency and cross-antenna gains are most pronounced when labeled target data is limited. For sparse measurement reconstruction below 10% sampling rate, loss-level integration is recommended [51], [145]. PDE and multipath constraints confine the solution space to feasible electromagnetic manifolds. This is essential when data alone cannot determine a unique reconstruction. PEFNet requires knowledge of transmitter locations [51]. Source-agnostic set-tings require joint source position estimation. For real-time digital twin synchronization below 100 ms latency, architecture-level integration with flow matching or lightweight diffusion backbones is most appropriate [58], [154]. DeepRT’s MoE-based routing and iRadioDiff’s geometric-optics masks retain physical awareness at real-time latencies. The residual risk of physical hallucinations necessitates post-hoc consistency checks. For severely data-constrained scenarios with fewer than 1,000 labeled samples, a combination of data-level and loss-level integration offers the best return [57]. RadioDUN achieves competitive reconstruction from 9 measurement points. Physics-derived priors effectively substitute for large labeled datasets. 
+
+2) Open Challenges: Three challenges define the frontier across all integration levels. First, online computation of data-level features must be made efficient for dynamic environment updates [41], [73]. Current offline preprocessing limits real-time applicability. Second, principled methods for automatic physical-data loss balancing are needed [54], [135]. Meta-learned weighting schedules or second-order gradient alignment could eliminate manual tuning. Third, operationally useful definitions and detection metrics for physical hallucinations are required [51]. The formal definition in Section VIII-D 4 pro-vides a starting point. Translating these criteria into lightweight differentiable verification layers remains an unsolved problem that would provide the rigorous foundation for next-generation physics-informed RM construction. IX. O PEN ISSUES AND FUTURE DIRECTIONS 
+
+Learning-based RM construction has achieved significant milestones [5], [13]. However, the transition toward ubiquitous 6G environmental awareness remains constrained by several open challenges. These span two axes: modeling of uncharted propagation scenarios and algorithmic frontiers in inverse problems and physics-data co-design. This section identifies the most pressing issues, drawing upon the architectural insights, physical embedding strategies, and dataset limitations discussed throughout this tutorial. Fig. 7 organizes these challenges along three complementary axes. 
+
+A. Modeling Complex and Emerging Propagation Scenarios 1) Beam-Aware RM Construction: Current research predom-inantly addresses spatial field prediction for omnidirectional or 29 
+
+TABLE XXI: Quantitative comparison of representative physics-informed methods. Metrics are from the original publications on their respective benchmarks.                                                                   
+
+> Method Level Physical Knowledge Key Result Preproc. Inference Backbone
+> [73] Data ITU reflectance + FSPL + antenna Cross-freq. generalization ∼27 s <1 s Any encoder-decoder RadioDiff-k2[41] Data k2
+> ef f singularity mask 45.5% NMSE reduction Seconds 0.76 s Diffusion model [147] Data Fractional LoS map 13% accuracy gain ∼14 ms <14 ms U-Net PEFNet [51] Loss VIE/MoM residual R2>0.99 O(N2)1.1 s Any differentiable model PhyRMDM [145] Loss Helmholtz PDE + BC + source 37.2% NMSE gain None (online) ∼1 s Diffusion model DULRTC-RME [132] Arch. ADMM unrolling PSNR 25.81 dB at 10% None <1 s Dedicated unrolled DeepRT [154] Arch. MoE + RT knowledge pool 3×10 5speedup vs. RT Offline pool 4 ms MoE backbone iRadioDiff [58] Arch. Geometric-optics prompts RMSE 6.36 dB Feature extract. ∼0.76 s Diffusion + cross-att. RadioDUN [57] Arch. ADMM + shadow prior Stable from 9 measurements None <1 s Dedicated unrolled
+
+Open Challenges & Future Directions 
+
+Complex Propagation Scenarios (Sec. IX-A) 
+
+Advanced Inversion 
+
+& Optimization (Sec. IX-B) 
+
+Foundation Models 
+
+& Unified Frameworks (Sec. IX-C)    
+
+> Beam-aware RM with continuous w∈CNt
+> Non-terrestrial networks: satellite-to-ground links
+> Maritime propagation: dynamic ocean surfaces
+> Confined environments: tunnels and pipelines
+> Multi-source radiation inversion and separation
+> Blind inversion under uncalibrated observations
+> Differentiable inversion for network optimization
+> Cross-domain pre-training and transfer learning
+> Amortized inference for real-time NeRF/3DGS
+> Differentiable physics verification layers
+> Constrained generation on EM feasible manifolds
+> Standardized hallucination benchmarks and metrics
+
+Fig. 7: Open research challenges and future directions for learning-based radio map construction, organized along three axes: complex propagation scenarios, advanced inversion and optimization, and foundation models with unified frameworks. 
+
+fixed-beam antennas [20], [40]. Beam-aware modeling, where the RM is conditioned on a continuous beamforming vector 
+
+w ∈ CNt , remains largely unexplored beyond BeamCKMDiff [71]. Two bottlenecks impede progress. First, beam-specific propagation datasets are scarce. BeamCKM [71] is currently the only public benchmark. Second, integrating continuous beam parameters increases the conditioning dimensionality. Architectures must decouple spatial geometry from high-dimensional beam sweeping [5]. The adaLN-based conditioning in Section III-B 3 provides a template. Extending it to joint spatial-beam-frequency conditioning at scale remains open. 
+
+2) Non-Terrestrial and Confined Environments: Satellite-to-ground propagation is governed primarily by LoS conditions with dynamic atmospheric perturbations [155]–[157]. Models must translate macroscopic atmospheric statistics from satellite remote sensing into electromagnetic attenuation maps [158]. This requires multi-modal feature extraction capabilities with no close analogue in terrestrial RM literature. Maritime propagation presents challenges from ocean surface dynamics that continuously alter scattering geometries [159]. Tunnels and enclosed pipelines introduce extreme multipath from high-reflectivity metallic surfaces [160]. The variable effective propagation range in curved versus straight segments is incompatible with fixed-size tensor architectures. Adaptive-scale mechanisms such as dynamic sequence modeling or variable-resolution graph networks are needed [32]. 
+
+B. Frontiers in Advanced Inversion and Optimization 1) Multi-Source Radiation Inversion: Existing source-agnostic frameworks are generally limited to a single radiation source [29], [85]. Multi-source environments introduce the challenge of disentangling overlapping spectral signatures from unknown emitters [81], [82]. The number of distinct configura-tions consistent with sparse observations grows exponentially with source count. No existing method provides theoretical identifiability guarantees. The Monte Carlo sampling capability of diffusion models [44], [85] offers a natural tool to explore the multi-modal posterior distribution. Designing optimal sampling strategies and robust inversion algorithms for multi-source cartography remains a critical unsolved problem. 30 
+
+2) Blind Parameter Inversion Under Uncalibrated Observa-tions: Real-world sensor data is corrupted by unknown noise floors, position drift, and device-specific antenna variations [8], [11], [97]. Developing unsupervised blind inversion frameworks that maintain fidelity despite uncalibrated observations is essential for autonomous network operation. The physics-informed loss strategies of Section VIII-C provide a starting point. However, their current formulations assume calibrated measurements [51], [145]. Extending them to jointly estimate noise model parameters alongside the RM remains open. 
+
+3) Differentiable Inversion for Network Optimization: 
+
+A trained neural network acts as a differentiable surrogate model [6], [20]. Given a target coverage, gradients can be backpropagated to optimize base station parameters. However, as discussed in Section V-A 2, this faces severe optimization pathology. Transmitter locations encoded as binary masks or Gaussian heatmaps produce fragmented gradients under naive descent [40]. Overcoming this requires novel differentiable rendering techniques, hybrid discrete-continuous solvers, or reinforcement learning formulations that bypass gradient pathol-ogy [9], [161]. 
+
+C. Toward Foundation Models and Unified Frameworks 1) Cross-Domain Pre-Training and Transfer: The success of DINOv2-ViT [27] and RadioDiff-Inverse [58] in transferring visual priors to the wireless domain suggests cross-domain pre-training is viable [75], [115]. However, natural images differ from RMs in distance-dependent decay, dynamic range, and multipath patterns [58]. Developing domain-specific foundation models pre-trained on large-scale wireless data is a more principled path [74]. The key question is whether a single model can span indoor offices, urban canyons, and maritime surfaces without catastrophic forgetting. 
+
+2) Amortized Inference for Real-Time Optics-Inspired Meth-ods: Per-scene optimization in NeRF and 3DGS fundamentally limits applicability to dynamic environments [52], [106], [143]. Amortized inference would reduce RM construction from minutes to milliseconds. The goal is a feed-forward encoder 
+
+Eϕ that directly predicts scene representation parameters from sparse measurements in a single forward pass. Concretely, for 3DGS-based methods, the encoder would map a sparse measurement set M = {(ri, si)}Ni=1 to the full set of Gaussian parameters: 
+
+{μk, Σk, C re k , C im k }Kk=1 = Eϕ(M), (60) where μk and Σk are position and covariance of the k-th Gaussian, and Cre k + jC im k is its complex scattering coefficient. Training Eϕ requires a large dataset of scene-measurement pairs. This paradigm has shown success in optical 3DGS [141] but has not been explored in the RF domain. It represents a high-impact research opportunity for bridging the latency gap between optics-inspired fidelity and real-time deployment requirements. 
+
+3) Closing the Physical Hallucination Gap: The formal defi-nition of physical hallucinations in Section VIII-D 4 establishes a conceptual foundation [51], [54]. Operationally useful detec-tion and mitigation strategies remain absent. Three research directions are identified. First, differentiable physics-verification layers that evaluate PDE residuals, energy conservation, and reciprocity during inference would enable real-time detection [41], [145]. Second, constrained generation mechanisms that project diffusion outputs onto the feasible electromagnetic manifold at each denoising step would provide generation-time guarantees [44], [85]. Third, standardized hallucination benchmarks, analogous to adversarial robustness benchmarks in computer vision, would enable systematic comparison across methods [4]. X. C ONCLUDING REMARKS 
+
+This tutorial has systematically surveyed the data foun-dations, neural architectures, and physics-informed strate-gies for learning-based RM construction. A central thesis emerges: the progression from purely data-driven models toward physics-data dual-driven frameworks is a necessity dictated by the information-theoretic structure of the problem. When observations are sparse and propagation is complex, data alone cannot uniquely determine the RM. The model must draw upon physical priors to resolve ambiguity. The three levels of physics integration surveyed in Section VIII provide progressively deeper embedding of electromagnetic knowledge. Input-level feature engineering offers the lowest entry barrier. Loss-level PDE regularization constrains solutions to feasible electromagnetic manifolds. Architecture-level structural isomor-phism achieves the deepest alignment with wave propagation dynamics. Each level trades computational cost for physical fidelity. Several converging trends point toward the future of the field. Differentiable ray tracing enables joint simulation-optimization. Foundation model pre-training supports cross-environment generalization. Amortized inference can bring real-time rendering to optics-inspired methods. Formal hallucination detection provides deployment assurance. Together, these trends suggest a future where RM construction transitions from an offline, per-scenario engineering task to an always-on, physi-cally rigorous component of the wireless network infrastructure. Achieving this vision requires sustained collaboration between the wireless communications, computational electromagnetics, and machine learning communities. The most powerful RM models will be those that respect the physics they seek to represent. REFERENCES [1] S. Dang, O. Amin, B. Shihada, and M.-S. Alouini, “What should 6G be?” Nature Electronics , vol. 3, no. 1, pp. 20–29, 2020. [2] N. Cheng, F. Chen, W. Chen, Z. Cheng, Q. Yang, C. Li, and X. Shen, “6G omni-scenario on-demand services provisioning: vision, technology and prospect(in chinese),” Sci Sin Inform , vol. 54, pp. 1025–1054,, 2024. [3] J. Chen, X. Yin, X. Cai, and S. Wang, “Measurement-based massive mimo channel modeling for outdoor los and nlos environments,” Ieee Access , vol. 5, pp. 2126–2140, 2017. [4] M. Boban and V. Degli-Esposti, “White paper on radio channel modeling and prediction to support future environment-aware wireless communication systems,” Arxiv Preprint Arxiv:2309.17088 , 2023. [5] Y. Zeng, J. Chen, J. Xu, D. Wu, X. Xu, S. Jin, X. Gao, D. Gesbert, S. Cui, and R. Zhang, “A tutorial on environment-aware communications via channel knowledge map for 6G,” IEEE Commun. Surveys Tuts. ,vol. 26, no. 3, pp. 1478–1519, 2024. 31 
+
+[6] S. Jiang, Q. Qu, X. Pan, A. Agrawal, R. Newcombe, and A. Alkhateeb, “Learnable wireless digital twins: Reconstructing electromagnetic field with neural representations,” Arxiv Preprint Arxiv:2409.02564 , 2024. [7] X. Shen, J. Gao, M. Li, C. Zhou, S. Hu, M. He, and W. Zhuang, “Toward immersive communications in 6G,” Frontiers Comput. Science ,vol. 4, p. 1068478, 2023. [8] Z. Becvar, J. Plachy, P. Mach, A. Nikolov, and D. Gesbert, “Machine learning for channel quality prediction: From concept to experimental validation,” IEEE Trans. Wireless Commun. , vol. 23, no. 10, pp. 14 605– 14 619, 2024. [9] Y. Okawa, N. Morita, J. Kakuta, and M. Ogawa, “Optimal base station sleep control via multi-agent reinforcement learning with data-driven radio environment map calibration,” in 2024 IEEE 99th Vehicular Technology Conference (VTC2024-Spring) . IEEE, 2024, pp. 1–6. [10] W. Guo and S. Wang, “Mobile crowd-sensing wireless activity with measured interference power,” IEEE Wireless Commun. Lett. , vol. 2, no. 5, pp. 539–542, 2013. [11] H. Sallouha, S. Sarkar, E. Krijestorac, and D. Cabric, “Rem-u-net: Deep learning based agile rem prediction with energy-efficient cell-free use case,” Ieee Open J. Signal Process. , vol. 5, pp. 750–765, 2024. [12] H. Li, H. Wang, Z. Shen, and Y. Shi, “Intelligent reconstruction algorithm of electromagnetic map based on propagation model,” J. Commun. Netw. , vol. 26, no. 5, pp. 533–544, 2024. [13] M. Vasudevan and M. Yuksel, “Machine learning for radio propagation modeling: A comprehensive survey,” Ieee Open J. Commun. Society ,vol. 5, pp. 5123–5153, 2024. [14] R. Wahl, G. W ¨olfle, P. Wertz, P. Wildbolz, and F. Landstorfer, “Dominant path prediction model for urban scenarios,” in Proceedings of 14th IST mobile and wireless communications summit , 2005, pp. 1–5. [15] T. Rautiainen, G. Wolfle, and R. Hoppe, “Verifying path loss and delay spread predictions of a 3D ray tracing propagation model in urban environment,” in Proceedings IEEE 56th Vehicular Technology Conference , vol. 4. IEEE, 2002, pp. 2470–2474. [16] J. Mladenovi ´c, A. Ne ˇskovi ´c, and N. Ne ˇskovi ´c, “An overview of propagation models based on deep learning techniques,” Int. J. Electrical Eng. Computing , vol. 6, no. 1, pp. 18–25, 2022. [17] J. Hoydis, F. A ¨ıt Aoudia, S. Cammerer, M. Nimier-David, N. Binder, G. Marcus, and A. Keller, “Sionna rt: Differentiable ray tracing for radio propagation modeling,” in 2023 IEEE Globecom Workshops (GC Wkshps) . IEEE, 2023, pp. 317–321. [18] X. Wang, P. Zheng, N. Cheng, R. Sun, J. Chen, K. Tao, Z. Yin, Z. Liu, and Y. Zeng, “Radiodiff-turbo: Lightweight generative large electromagnetic model for wireless digital twin construction,” in IEEE INFOCOM 2025 - IEEE Conference on Computer Communications Workshops (INFOCOM WKSHPS) , 2025, pp. 1–6. [19] N. Sagir and Z. H. Tugcu, “Machine-learning-based path loss predic-tion for vehicle-to-vehicle communication in highway environments,” 
+
+Applied Sciences , vol. 14, no. 17, p. 7545, 2024. [20] R. Levie, C¸ . Yapar, G. Kutyniok, and G. Caire, “RadioUNet: Fast radio map estimation with convolutional neural networks,” IEEE Trans. Wireless Commun. , vol. 20, no. 6, pp. 4001–4015, 2021. [21] J.-H. Lee, O. G. Serbetci, D. P. Selvam, and A. F. Molisch, “Pmnet: Robust pathloss map prediction via supervised learning,” in GLOBE-COM 2023-2023 IEEE Global Communications Conference . IEEE, 2023, pp. 4601–4606. [22] Y. Li, C. Zhang, W. Wang, and Y. Huang, “Rmtransformer: Accurate radio map construction and coverage prediction,” in 2025 IEEE 101st Vehicular Technology Conference (VTC2025-Spring) . IEEE, 2025, pp. 1–5. [23] Y. Teganya and D. Romero, “Deep completion autoencoders for radio map estimation,” IEEE Trans. Wireless Commun. , vol. 21, no. 3, pp. 1710–1724, 2021. [24] A. Chaves-Villota and C. A. Viteri-Mera, “Deeprem: Deep-learning-based radio environment map estimation from sparse measurements,” 
+
+Ieee Access , vol. 11, pp. 48 697–48 714, 2023. [25] Z. Fang, K. Liu, K. Chen, Q. Liu, J. Zhang, L. Song, and Y. Wang, “Radioformer: A multiple-granularity radio map estimation trans-former with 1 \textpertenthousand spatial sampling,” Arxiv Preprint Arxiv:2504.19161 , 2025. [26] Y. Ansari, N. Tiyal, E. F. Flushing, and S. Razak, “Prediction of indoor wireless coverage from 3d floor plans using deep convolutional neural networks.” in LCN , 2021, pp. 435–438. [27] C. Liaq, Y. Zheng, J. Wang, and S. Liu, “Visual transformer based unified framework for radio map estimation and optimized site selection,” 
+
+Ieice Trans. Commun. , 2025. [28] K. Liu, C. Qiu, K. Chen, Q. Zheng, L. Song, and Y. Wang, “Paying deformable attention to sparse spatial observations for deep radio map estimation,” IEEE Trans. Cogn. Commun. Netw. , 2025. [29] T. M. Hehn, T. Orekondy, O. Shental, A. Behboodi, J. Bucheli, A. Doshi, J. Namgoong, T. Yoo, A. Sampath, and J. B. Soriaga, “Transformer-based neural surrogate for link-level path loss prediction from variable-sized maps,” in GLOBECOM 2023-2023 IEEE Global Communications Conference . IEEE, 2023, pp. 4804–4809. [30] X. Li, S. Zhang, H. Li, X. Li, L. Xu, H. Xu, H. Mei, G. Zhu, N. Qi, and M. Xiao, “Radiogat: A joint model-based and data-driven framework for multi-band radiomap reconstruction via graph attention networks,” 
+
+IEEE Trans. Wireless Commun. , vol. 23, no. 11, pp. 17 777–17 792, 2024. [31] G. Chen, Y. Liu, T. Zhang, J. Zhang, X. Guo, and J. Yang, “A graph neural network based radio map construction method for urban environment,” IEEE Commun. Lett. , vol. 27, no. 5, pp. 1327–1331, 2023. [32] J. Perdomo, M. A. Gutierrez-Estevez, C. Zhou, and J. F. Monserrat, “Wirelessnet: An efficient radio access network model based on heterogeneous graph neural networks,” Ieee Access , 2025. [33] A. Shibli and T. Zanouda, “Data-driven radio environment map estimation using graph neural networks,” in 2024 IEEE International Conference on Communications Workshops (ICC Workshops) . IEEE, 2024, pp. 650–655. [34] S. Zhang, A. Wijesinghe, and Z. Ding, “Rme-gan: A learning framework for radio map estimation based on conditional generative adversarial network,” IEEE Internet Things J. , vol. 10, no. 20, pp. 18 016–18 027, 2023. [35] Y. Zhou, A. Wijesinghe, Y. Ma, S. Zhang, and Z. Ding, “Tire-gan: Task-incentivized generative learning for radiomap estimation,” IEEE Wireless Commun. Lett. , 2025. [36] Q. Chen, J. Yang, M. Huang, and Q. Zhou, “Act-gan: Radio map construction based on generative adversarial networks with act blocks,” 
+
+Iet Commun. , vol. 18, no. 19, pp. 1541–1550, 2024. [37] Z. Pan, Z. Bangning, W. Heng, M. Wenfeng, and G. Daoxing, “Sc-gan: A spectrum cartography with satellite internet based on pix2pix generative adversarial network,” China Commun. , vol. 22, no. 2, pp. 47–61, 2025. [38] S. Sarkar, M. H. Manshaei, M. Krunz, and H. Ravaee, “Recugan: A novel generative ai approach for synthesizing rf coverage maps,” in 
+
+2024 33rd International Conference on Computer Communications and Networks (ICCCN) . IEEE, 2024, pp. 1–9. [39] Y. Ma, C. Zhang, C. He, and X. Li, “Radio map estimation using a cyclegan-based learning framework for 6g wireless communication,” 
+
+Digital Commun. Netw. , 2025. [40] X. Wang, K. Tao, N. Cheng, Z. Yin, Z. Li, Y. Zhang, and X. Shen, “Radiodiff: An effective generative diffusion model for sampling-free dynamic radio map construction,” IEEE Trans. Cogn. Commun. Netw. ,vol. 11, no. 2, pp. 738–750, 2025. [41] X. Wang, Q. Zhang, N. Cheng, R. Sun, Z. Li, S. Cui, and X. Shen, “Radiodiff-k2: Helmholtz equation informed generative diffusion model for multi-path aware radio map construction,” IEEE J. Sel. Areas Commun. , vol. 44, pp. 2318–2333, 2026. [42] X. Wang, Q. Zhang, N. Cheng, J. Chen, Z. Zhang, Z. Li, S. Cui, and X. Shen, “Radiodiff-3d: A 3d× 3d radio map dataset and generative diffusion based benchmark for 6g environment-aware communication,” 
+
+IEEE Trans. Netw. Sci. Eng. , vol. 13, pp. 3773–3789, 2026. [43] X. Luo, L. Zhizhen, Z. Peng, X. Dongkuan, and Y. Liu, “Rm-gen: Conditional diffusion model-based radio map generation for wireless networks,” in 2024 IFIP Networking Conference (IFIP Networking) .IEEE, 2024, pp. 543–548. [44] X. Luo, Z. Li, Z. Peng, M. Chen, and Y. Liu, “Denoising diffusion probabilistic model for radio map estimation in generative wireless networks,” IEEE Trans. Cogn. Commun. Netw. , vol. 11, no. 2, pp. 751–763, 2025. [45] Z. Liu, S. Zhang, Q. Liu, H. Zhang, and L. Song, “Wifi-diffusion: Achieving fine-grained wifi radio map estimation with ultra-low sampling rate by diffusion models,” IEEE J. Sel. Areas Commun. ,2025. [46] S. Fu, Z. Wu, D. Wu, and Y. Zeng, “Generative ckm construction using partially observed data with diffusion model,” in 2025 IEEE 101st Vehicular Technology Conference (VTC2025-Spring) . IEEE, 2025, pp. 1–5. [47] L. Zhao, Z. Fei, X. Wang, J. Luo, and Z. Zheng, “3d-radiodiff: An altitude-conditioned diffusion model for 3d radio map construction,” 
+
+IEEE Wireless Commun. Lett. , 2025. 32 
+
+[48] Z. Dai, D. Wu, Y. Zeng, X. Xu, X. Wang, and Z. Fei, “Bs-1-to-n: Diffusion-based environment-aware cross-bs channel knowledge map generation for cell-free networks,” Arxiv Preprint Arxiv:2507.23236 ,2025. [49] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” 
+
+Advances Neural Inf. Process. Syst. , vol. 33, pp. 6840–6851, 2020. [50] X. Wang, K. Tao, N. Cheng, Z. Yin, Z. Li, Y. Zhang, and X. Shen, “RadioDiff: An effective generative diffusion model for sampling-free dynamic radio map construction,” Ieee Trans. Cognit. Commun. Networking, Early Access , pp. 1–13, 2024. [51] F. Jiang, T. Li, X. Lv, H. Rui, and D. Jin, “Physics-informed neural networks for path loss estimation by solving electromagnetic integral equations,” IEEE Trans. Wireless Commun. , vol. 23, no. 10, pp. 15 380– 15 393, 2024. [52] L. Zhang, H. Sun, S. Berweger, C. Gentile, and R. Q. Hu, “Rf-3dgs: Wireless channel modeling with radio radiance field and 3d gaussian splatting,” IEEE Trans. Wireless Commun. , vol. 25, pp. 10 419–10 433, 2026. [53] H. Jia, W. Chen, Z. Huang, L. Wang, H. Xiao, N. Jia, K. Wu, S. Lai, B. Tian, and Y. Yue, “Physics-informed representation alignment for sparse radio-map reconstruction,” in Proceedings of the 33rd ACM International Conference on Multimedia , 2025, pp. 12 352–12 360. [54] G. E. Karniadakis, I. G. Kevrekidis, L. Lu, P. Perdikaris, S. Wang, and L. Yang, “Physics-informed machine learning,” Nature Rev. Phys. ,vol. 3, no. 6, pp. 422–440, 2021. [55] L. Liu, X. Chen, Z. Tang, M. Ma, and W. Zhang, “Pinn and gnn-based rf map construction for wireless communication systems,” in 2025 International Conference on Future Communications and Networks (FCN) . IEEE, 2025, pp. 1–6. [56] X. Feng, J. Xiong, X. Liu, X. Zhang, H. Zhao, and J. Wei, “Physics-guided language model via low-rank adaptation for path loss prediction,” 
+
+IEEE Trans. Cogn. Commun. Netw. , 2025. [57] T. Chen, Z. Zhou, Z. Fang, W. Zou, K. Liu, K. Chen, Y. Zhang, and Y. Wang, “Radiodun: A physics-inspired deep unfolding network for radio map estimation,” Arxiv Preprint Arxiv:2506.08418 , 2025. [58] X. Wang, T. Yuan, Y. Cao, N. Cheng, R. Sun, and W. Zhuang, “iradiodiff: Physics-informed diffusion model for indoor radio map construction and localization,” in ICC 2026 - IEEE International Conference on Communications , 2026, pp. 1–6. [59] S. R. Doha and A. Abdelhadi, “Deep learning in wireless communication receivers: A survey,” Ieee Access , vol. 13, pp. 113 586–113 605, 2025. [60] B. Feng, M. Zheng, W. Liang, and L. Zhang, “A recent survey on radio map estimation methods for wireless networks,” Electronics , vol. 14, no. 8, p. 1564, 2025. [61] X. Wang, P. Zheng, H. Jia, N. Cheng, R. Sun, C. Zhou, and X. Shen, “Radiodiff-flux: Efficient radio map construction via generative denoise diffusion model trajectory midpoint reuse,” IEEE Trans. Cogn. Commun. Netw. , vol. 12, pp. 4882–4895, 2026. [62] A. Taflove, S. C. Hagness, and M. Piket-May, “Computational electro-magnetics: the finite-difference time-domain method,” Electrical Eng. Handbook , vol. 3, no. 629-670, p. 15, 2005. [63] C. A. Balanis, Antenna theory: analysis and design . John wiley & sons, 2016. [64] D. P. Kingma, M. Welling et al. , “An introduction to variational autoencoders,” Foundations Trends® Machine Learning , vol. 12, no. 4, pp. 307–392, 2019. [65] Y. Song, J. Sohl-Dickstein, D. P. Kingma, A. Kumar, S. Ermon, and B. Poole, “Score-based generative modeling through stochastic differential equations,” Arxiv Preprint Arxiv:2011.13456 , 2020. [66] B. D. Anderson, “Reverse-time diffusion equation models,” Stochastic Processes and their Applications , vol. 12, no. 3, pp. 313–326, 1982. [67] P. Vincent, “A connection between score matching and denoising autoencoders,” Neural computation , vol. 23, no. 7, pp. 1661–1674, 2011. [68] W. Lu, Z. Lu, J. Yan, and S. Gao, “Sip2net: Situational-aware indoor pathloss-map prediction network for radio map generation,” in ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2025, pp. 1–2. [69] C.-W. Pyo, H. Sawada, and T. Matsumura, “Radioresunet: Wireless measurement by deep learning for indoor environments,” in 2022 25th International Symposium on Wireless Personal Multimedia Communi-cations (WPMC) . IEEE, 2022, pp. 104–109. [70] C. Pyo, H. Sawada, and T. Matsumura, “A deep learning-based indoor radio estimation method driven by 2.4 ghz ray-tracing data,” Ieee Access ,vol. 11, pp. 138 215–138 228, 2023. [71] Z. Jin, L. You, X. Li, Z. Gao, Y. Liu, X.-G. Xia, and X. Gao, “Channel fingerprint construction for massive mimo: A deep conditional generative approach,” IEEE Trans. Wireless Commun. , 2025. [72] Y. Qiu, X. Chen, K. Mao, X. Ye, H. Li, F. Ali, Y. Huang, and Q. Zhu, “Channel knowledge map construction based on a UAV-assisted channel measurement system,” Drones , vol. 8, no. 5, p. 191, 2024. [73] W. Chen and J. Chen, “Diffraction and scattering aware radio map and environment reconstruction using geometry model-assisted deep learning,” IEEE Trans. Wireless Commun. , vol. 23, no. 12, pp. 19 804– 19 819, 2024. [74] Z. Wang, J. Zhang, H. Du, D. Niyato, S. Cui, B. Ai, M. Debbah, K. B. Letaief, and H. V. Poor, “A tutorial on extremely large-scale MIMO for 6G: Fundamentals, signal processing, and applications,” IEEE Commun. Surveys Tuts. , vol. 26, no. 3, pp. 1560–1605, 2024. [75] R. K. Jaiswal, M. Elnourani, S. Deshmukh, and B. Beferull-Lozano, “A data-driven transfer learning method for indoor radio map estimation,” 
+
+IEEE Trans. Veh. Technol. , 2025. [76] X. Wang, Q. Zhang, and N. Cheng, “Radiodiff-loc: Diffusion model enhanced scattering congnition for nlos localization with sparse radio map estimation,” Arxiv Preprint Arxiv:2509.01875 , 2025. [77] P. Zhen, D. Guo, J. Hu, and H. Wang, “Radiation source localization using radio maps: A computer vision approach,” IEEE Wireless Commun. Lett. , 2025. [78] Y. Zheng, C. Liao, J. Wang, and S. Liu, “A transformer-based network for unifying radio map estimation and optimized site selection,” in 
+
+2024 IEEE International Conference on Acoustics, Speech, and Signal Processing Workshops (ICASSPW) . IEEE, 2024, pp. 610–614. [79] X. Wang, L. Fu, N. Cheng, R. Sun, T. Luan, W. Quan, and K. Al-dubaikhy, “Joint flying relay location and routing optimization for 6G UAV–IoT networks: A graph neural network-based approach,” Remote Sens. , vol. 14, no. 17, p. 4377, 2022. [80] S. Oh and N.-H. Myung, “MIMO channel estimation method using ray-tracing propagation model,” Electronics Lett. , vol. 40, no. 21, p. 1, 2004. [81] B. Lim and M. Vu, “Interference analysis for coexistence of terrestrial networks with satellite services,” IEEE Trans. Wireless Commun. , vol. 23, no. 4, pp. 3146–3161, 2023. [82] L. Zhao, Z. Fei, X. Wang, J. Huang, Y. Li, and Y. Zhang, “Imnet: Interference-aware channel knowledge map construction and localiza-tion,” IEEE Wireless Commun. Lett. , vol. 14, no. 3, pp. 856–860, 2025. [83] C. You, B. Zheng, and R. Zhang, “Wireless communication via double irs: Channel estimation and passive beamforming designs,” IEEE Wireless Commun. Lett. , vol. 10, no. 2, pp. 431–435, 2020. [84] J. Chen, R. Gao, J. Wang, S. Sun, and Y. Wu, “Channel gain map construction based on subregional learning and prediction,” IEEE Trans. Veh. Technol. , 2025. [85] T. N. Ha and D. Romero, “Bayesian radio map estimation: Funda-mentals and implementation via diffusion models,” Arxiv Preprint Arxiv:2508.06037 , 2025. [86] X. Wang, Z. Fang, N. Cheng, R. Sun, Z. Li et al. , “Radiodiff-inverse: Diffusion enhanced bayesian inverse estimation for isac radio map construction,” Arxiv Preprint Arxiv:2504.14298 , 2025. [87] C. Wang, B. Ai, R. He, M. Yang, S. Zhou, L. Yu, Y. Zhang, Z. Qiu, Z. Zhong, and J. Fan, “Channel path loss prediction using satellite images: A deep learning approach,” Ieee Trans. Machine Learning Commun. Netw. , vol. 2, pp. 1357–1368, 2024. [88] C. Xie, L. You, Z. Jin, J. Tang, X. Gao, and X.-G. Xia, “Cf-cgn: Channel fingerprints extrapolation for multi-band massive mimo transmission based on cycle-consistent generative networks,” IEEE J. Sel. Areas Commun. , 2025. [89] J.-H. Lee and A. F. Molisch, “A scalable and generalizable pathloss map prediction,” IEEE Trans. Wireless Commun. , vol. 23, no. 11, pp. 17 793–17 806, 2024. [90] Y. Zheng, J. Wang, X. Li, J. Li, and S. Liu, “Cell-level rsrp estimation with the image-to-image wireless propagation model based on measured data,” IEEE Trans. Cogn. Commun. Netw. , vol. 9, no. 6, pp. 1412–1423, 2023. [91] A. Goldsmith, Wireless communications . Cambridge university press, 2005. [92] B. Feng, M. Zheng, W. Liang, and L. Zhang, “Ipp-net: A generalizable deep neural network model for indoor pathloss radio map prediction,” in ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2025, pp. 1–2. [93] Q. Gao, Q. Zhu, Z. Lin, P. T. Mathiopoulos, Y. Zhao, Y. Huang, J. Wang, and Q. Wu, “Time-variant radio map reconstruction with optimized distributed sensors in dynamic spectrum environments,” IEEE Internet Things J. , 2025. 33 
+
+[94] E. Christopher, H. S. Dhillon, and R. M. Buehrer, “Characterizing the first-arriving multipath component in 5g millimeter wave networks: Toa, aoa, and non-line-of-sight bias,” IEEE Trans. Wireless Commun. ,vol. 21, no. 3, pp. 1602–1620, 2021. [95] W. C. Lee, “Estimate of local average power of a mobile radio signal,” 
+
+IEEE Transactions on vehicular technology , vol. 34, no. 1, pp. 22–27, 2006. [96] E. A. Lee and D. G. Messerschmitt, Digital communication . Springer Science & Business Media, 2012. [97] C. T. Cisse, V. Guillet, O. Baala, F. Spies, and A. Caminada, “Fine tuning an ai-based indoor radio propagation model with crowd-sourced data,” in 2024 18th European Conference on Antennas and Propagation (EuCAP) . IEEE, 2024, pp. 1–5. [98] P. Zeng and J. Chen, “Uav-aided joint radio map and 3d environment reconstruction using deep learning approaches,” in ICC 2022-IEEE International Conference on Communications . IEEE, 2022, pp. 5341– 5346. [99] C. E. Rasmussen, “Gaussian processes in machine learning,” in Summer school on machine learning . Springer, 2003, pp. 63–71. [100] G. A. Deschamps, “Ray techniques in electromagnetics,” Proc. IEEE ,vol. 60, no. 9, pp. 1022–1035, 1972. [101] S. Bakirtzis, K. Qiu, J. Chen, H. Song, J. Zhang, and I. Wassell, “Rigorous indoor wireless communication system simulations with deep learning-based radio propagation models,” Ieee J. Multiscale Multiphysics Computational Techn. , vol. 10, pp. 58–68, 2024. [102] G. Wolfle and F. M. Landstorfer, “Dominant paths for the field strength prediction,” in VTC’98. 48th IEEE Vehicular Technology Conference. Pathway to Global Wireless Revolution (Cat. No. 98CH36151) , vol. 1. IEEE, 1998, pp. 552–556. [103] S. Bakirtzis, M. Fiore, J. Zhang, and I. Wassell, “Solving maxwell’s equations with non-trainable graph neural network message passing,” 
+
+Arxiv Preprint Arxiv:2405.00814 , 2024. [104] S. Bakirtzis, C¸ agkan Yapar, K. Qui, I. Wassell, and J. Zhang, “Indoor radio map dataset,” 2024. [Online]. Available: https: //dx.doi.org/10.21227/c0ec-cw74 [105] F. Jaensch, G. Caire, and B. Demir, “Radio map prediction from aerial images and application to coverage optimization,” IEEE Trans. Wireless Commun. , 2025. [106] Y. Yang, M. Ma, H. Wu, Q. Yu, X. You, J. Wu, C. Peng, T. S. P. Yum, A. H. Aghvami, G. Y. Li, J. Wang, G. Liu, P. Gao, X. Tang, C. Cao, J. Thompson, K. K. Wong, S. Chen, Z. Wang, M. Debbah, S. Dustdar, F. Eliassen, T. Chen, X. Duan, S. Sun, X. Tao, Q. Zhang, J. Huang, W. Zhang, J. Li, Y. Gao, H. Zhang, X. Chen, X. Ge, Y. Xiao, C. X. Wang, Z. Zhang, S. Ci, G. Mao, C. Li, Z. Shao, Y. Zhou, J. Liang, K. Li, L. Wu, F. Sun, K. Wang, Z. Liu, K. Yang, J. Wang, T. Gao, and H. Shu, “6G Network AI Architecture for Everyone-Centric Customized Services,” IEEE Netw. , vol. 37, no. 5, pp. 71–80, 2023. [107] B. S. Shawel, D. H. Woldegebreal, and S. Pollin, “A deep-learning approach to a volumetric radio environment map construction for uav-assisted networks,” Int. J. Antennas Propag. , vol. 2024, no. 1, p. 9062023, 2024. [108] Y. Zhao, Q. Zhu, Z. Lin, L. Guo, Q. Wu, J. Wang, and W. Zhong, “Temporal prediction for spectrum environment maps with moving radiation sources,” Iet Commun. , vol. 17, no. 5, pp. 538–548, 2023. [109] C¸ . Yapar, F. Jaensch, R. Levie, G. Kutyniok, and G. Caire, “Overview of the first pathloss radio map prediction challenge,” IEEE Open Journal of Signal Processing , vol. 5, pp. 948–963, 2024. [110] R. G. Kouyoumjian and P. H. Pathak, “A uniform geometrical theory of diffraction for an edge in a perfectly conducting surface,” Proceedings of the IEEE , vol. 62, no. 11, pp. 1448–1461, 1974. [111] S. Bakirtzis, C¸ . Yapar, K. Qiu, I. Wassell, and J. Zhang, “The first indoor pathloss radio map prediction challenge,” in ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2025, pp. 1–2. [112] E. Krijestorac and D. Cabric, “Deep learning based active spatial channel gain prediction using a swarm of unmanned aerial vehicles,” Arxiv Preprint Arxiv:2310.04547 , 2023. [113] C. Zhao, R. Zhang, J. Wang, D. Niyato, G. Sun, H. Du, Z. Li, A. Jamalipour, and D. I. Kim, “Temporal spectrum cartography in low-altitude economy networks: A generative ai framework with multi-agent learning,” IEEE Trans. Mobile Comput. , 2025. [114] R. Mkrtchyan, E. Ghukasyan, K. Petrosyan, H. Khachatrian, and T. P. Raptis, “Vision transformers for efficient indoor pathloss radio map prediction,” Electronics , vol. 14, no. 10, p. 1905, 2025. [115] R. K. Jaiswal, M. Elnourani, S. Deshmukh, and B. Beferull-Lozano, “Leveraging transfer learning for radio map estimation via mixture of experts,” IEEE Trans. Cogn. Commun. Netw. , 2025. [116] R. Levie, C¸ . Yapar, G. Caire, and G. Kutyniok, “Fast radio propagation prediction with deep learning,” in Compressed Sensing in Information Processing . Springer, 2022, pp. 301–335. [117] F.-H. Lin, T.-H. Huang, C.-K. Wen, and T. Q. Duong, “Geo2commap: Deep learning-based mimo throughput prediction using geographic data,” 
+
+IEEE Wireless Commun. Lett. , 2025. [118] R. Mkrtchyan, A. Manukyan, H. Khachatrian, and T. P. Raptis, “Fusion of pervasive rf data with spatial images via vision transformers for enhanced mapping in smart cities,” Arxiv Preprint Arxiv:2508.03736 ,2025. [119] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in Medical Image Computing and Computer-Assisted Intervention–MICCAI 2015: 18th International Conference, Munich, Germany, October 5-9, 2015, Proceedings, Part III 18 . Springer, 2015, pp. 234–241. [120] S. Shao, K. Liu, Q. Liu, S. Zhang, K. Chen, and L. Song, “Robunet: A radio map construction method with a strong generalization capability,” in GLOBECOM 2024-2024 IEEE Global Communications Conference .IEEE, 2024, pp. 2268–2274. [121] X. Li, R. Liu, S. Xu, S. G. Razul, and C. Yuen, “Transpathnet: A novel two-stage framework for indoor radio map prediction,” in ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2025, pp. 1–2. [122] X. Wen, S. Fang, and Y. Fan, “Reconstruction of radio environment map based on multi-source domain adaptive of graph neural network for regression,” Sensors , vol. 24, no. 8, p. 2523, 2024. [123] O. E. Dare, K. Okokpujie, E. Adetiba, O. Idowu-Bismark, A. Abayomi, R. J. Kala, E. Owolabi, and U. C. Ukpong, “Development of a conditional generative adversarial network model for television spectrum radio environment mapping,” Ieee Access , vol. 12, pp. 197 632–197 644, 2024. [124] Y. Wang, S. Sun, N. Liu, L. Xu, and L. Wang, “Two-stage radio map construction with real environments and sparse measurements,” IEEE Wireless Commun. Lett. , vol. 14, no. 4, pp. 969–973, 2025. [125] S. Roger, M. Brambilla, B. C. Tedeschini, C. Botella-Mascarell, M. Co-bos, and M. Nicoli, “Deep-learning-based radio map reconstruction for v2x communications,” IEEE Trans. Veh. Technol. , vol. 73, no. 3, pp. 3863–3871, 2023. [126] T. Ruan, Y. Huang, Q. Zhu, C. Hao, and Q. Wu, “Multi-stage rf emitter search and geolocation with uav: A cognitive learning-based method,” 
+
+IEEE Trans. Veh. Technol. , vol. 72, no. 5, pp. 6349–6362, 2023. [127] L. Wang, J. Hu, D. Jiang, and Z. Chen, “A robust learning frame-work for spatial-temporal-spectral radio map prediction,” Expert Syst. Applications , p. 129351, 2025. [128] Z. Jin, L. You, J. Wang, X.-G. Xia, and X. Gao, “An i2i inpainting approach for efficient channel knowledge map construction,” IEEE Trans. Wireless Commun. , vol. 24, no. 2, pp. 1415–1429, 2024. [129] J. Wang, J. Zhang, Y. Sun, Y. Zhang, T. Jiang, and L. Xia, “Electromag-netic wave property inspired radio environment knowledge construction and artificial intelligence based verification for 6g digital twin channel,” 
+
+Frontiers Inf. Technol. & Electronic Eng. , vol. 26, no. 2, pp. 260–277, 2025. [130] C. Xu, D. Tang, A. Seretis, and C. Sarris, “A diffusion-based propagation model for path loss prediction in indoor environments,” in 2025 19th European Conference on Antennas and Propagation (EuCAP) . IEEE, 2025, pp. 1–5. [131] F. Zhou, C. Wang, G. Wu, Y. Wu, Q. Wu, and N. Al-Dhahir, “Accurate spectrum map construction for spectrum management through intelligent frequency-spatial reasoning,” IEEE Trans. Commun. , vol. 71, no. 7, pp. 3932–3945, 2023. [132] Y. Wang, X. Wu, L. Xu, N. Liu, and L. Wang, “Dulrtc-rme: A deep unrolled low-rank tensor completion network for radio map estimation,” in ICASSP 2025-2025 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2025, pp. 1–5. [133] X. Wang, K. Guan, D. He, Z. Zhang, H. Zhang, J. Dou, and Z. Zhong, “Super-resolution of wireless channel characteristics: A multitask learning model,” IEEE Trans. Antennas Propag. , vol. 71, no. 10, pp. 8197–8209, 2023. [134] S. Zhang, T. Yu, B. Choi, F. Ouyang, and Z. Ding, “Radiomap inpainting for restricted areas based on propagation priority and depth map,” IEEE Trans. Wireless Commun. , vol. 23, no. 8, pp. 9330–9344, 2024. [135] A. Ivanov, K. Tonchev, V. Poulkov, and A. Manolova, “Deep learning for reduced sampling spatial 3-d rem reconstruction,” Ieee Open J. Commun. Society , vol. 5, pp. 2287–2301, 2024. [136] Y. He, L. Wang, M. Shen, G. Huang, H. Huang, and H. Zhao, “Radio map reconstruction based on nas enhanced deep regularization 34 
+
+completion for uav communications,” in 2025 IEEE 101st Vehicular Technology Conference (VTC2025-Spring) . IEEE, 2025, pp. 1–5. [137] S. K. Vankayala, S. Kumar, I. Roy, D. Thirumulanathan, S. Yoon, and I. S. Kanakaraj, “Radio map estimation using a generative adversarial network and related business aspects,” in 2021 24th International Symposium on Wireless Personal Multimedia Communications (WPMC) .IEEE, 2021, pp. 1–6. [138] K. D. Polyzos, Q. Lu, and G. B. Giannakis, “Weighted ensembles for adaptive active learning,” IEEE Trans. Signal Process. , vol. 72, pp. 4178–4190, 2024. [139] Z. Chen, D. Guo, N. Yang, X. Wang, H. Wang, and J. Xie, “Radio map reconstruction based on transformer from sparse measurement,” in 2024 IEEE 24th International Conference on Communication Technology (ICCT) . IEEE, 2024, pp. 917–923. [140] E. Krijestorac, H. Sallouha, S. Sarkar, and D. Cabric, “Agile radio map prediction using deep learning,” in ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) . IEEE, 2023, pp. 1–2. [141] A. Doshi, J. Namgoong, and T. Yoo, “Radio dip-completing radio maps using deep image prior,” in GLOBECOM 2023-2023 IEEE Global Communications Conference . IEEE, 2023, pp. 1543–1548. [142] W. Locke, N. Lokhmachev, Y. Huang, and X. Li, “Radio map estimation with deep dual path autoencoders and skip connection learning,” in 
+
+2023 IEEE 34th Annual International Symposium on Personal, Indoor and Mobile Radio Communications (PIMRC) . IEEE, 2023, pp. 1–6. [143] F. V. Massoli, T. Bakker, T. Hehn, T. Orekondy, and A. Behboodi, “Simulating, fast and slow: Learning policies for black-box optimization,” 
+
+Arxiv Preprint Arxiv:2406.04261 , 2024. [144] J. C. Hauffen, P. Jung, and G. Caire, “A deep unfolding-based scalarization approach for power control in d2d networks,” Arxiv Preprint Arxiv:2410.16104 , 2024. [145] H. Jia, W. Chen, Z. Huang, H. Xiao, N. Jia, K. Wu, S. Lai, and Y. Yue, “Rmdm: Radio map diffusion model with physics informed,” in 
+
+Proceedings of the 33rd ACM International Conference on Multimedia (MM)’25 . Association for Computing Machinery, 2025. [146] A. Bayliss, C. I. Goldstein, and E. Turkel, “An iterative method for the Helmholtz equation,” J. Comput. Phys. , vol. 49, no. 3, pp. 443–457, 1983. [147] A. Ahmadi, A. Bhattacharya, M. Gratuze, S. G. Cloutier, and R. Al Hadi, “Unet-based deep learning pathloss estimator with boundary condition input,” in 2025 IEEE Radio and Wireless Symposium (RWS) . IEEE, 2025, pp. 9–12. [148] K. Suto, S. Bannai, K. Sato, and T. Fujii, “Propagation graph repre-sentation learning and its implementation in direct path representation,” in 2023 IEEE Wireless Communications and Networking Conference (WCNC) . IEEE, 2023, pp. 1–6. [149] G. Chen, Y. Liu, J. Zhang, T. Zhang, K. Liu, and J. Yang, “Gprt: A gaussian process regression based radio map construction method for rugged terrain,” IEEE Internet Things J. , 2025. [150] P. Q. Viet and D. Romero, “Spatial transformers for radio map estima-tion,” in ICC 2025-IEEE International Conference on Communications .IEEE, 2025, pp. 6155–6160. [151] Y. A. Erlangga, C. Vuik, and C. W. Oosterlee, “On a class of preconditioners for solving the helmholtz equation,” Appl. Numer. Math ,vol. 50, no. 3-4, pp. 409–425, 2004. [152] J.-W. Shin, Y.-J. Lee, and H.-N. Kim, “Reduced-complexity maximum likelihood direction-of-arrival estimation based on spatial aliasing,” IEEE Trans. Signal Process. , vol. 62, no. 24, pp. 6568–6581, 2014. [153] W. Chen and J. Chen, “Learning blockage and reflection geometry for mimo beam map construction,” in ICC 2025-IEEE International Conference on Communications . IEEE, 2025, pp. 2321–2326. [154] M. Li, T. Wu, Z. Dong, X. Liu, Y. Lu, S. Zhang, Z. Wu, Y. Zhang, L. Yu, and J. Zhang, “Deeprt: a hybrid framework combining large model architectures and ray tracing principles for 6g digital twin channels,” 
+
+Electronics , vol. 14, no. 9, p. 1849, 2025. [155] H. Al-Hraishawi, H. Chougrani, S. Kisseleff, E. Lagunas, and S. Chatzinotas, “A survey on nongeostationary satellite systems: The communication perspective,” Ieee Commun. Surveys & Tuts. , vol. 25, no. 1, pp. 101–132, 2022. [156] C. Hao, X. Wan, D. Feng, Z. Feng, and X.-G. Xia, “Satellite-based radio spectrum monitoring: Architecture, applications, and challenges,” 
+
+IEEE Netw. , vol. 35, no. 4, pp. 20–27, 2021. [157] F. Davarian, “Earth-satellite propagation research,” IEEE Commun. Mag. ,vol. 32, no. 4, pp. 74–79, 2002. [158] B. Al Homssi, A. Al-Hourani, K. Wang, P. Conder, S. Kandeepan, J. Choi, B. Allen, and B. Moores, “Next generation mega satellite net-works for access equality: Opportunities, challenges, and performance,” 
+
+IEEE Commun. Mag. , vol. 60, no. 4, pp. 18–24, 2022. [159] L. Peng, K. Yang, J. Wu, C. Wen, T. Peng, and X. Li, “Machine learning methods comparison for maritime wireless signal strength prediction,” 
+
+Eng. Applications Artificial Intelligence , vol. 158, p. 111357, 2025. [160] N. Cheng, F. Lyu, W. Quan, C. Zhou, H. He, W. Shi, and X. Shen, “Space/aerial-assisted computing offloading for IoT applications: A learning-based approach,” IEEE J. Select. Areas Commun. , vol. 37, no. 5, pp. 1117–1129, 2019. [161] X. Wang, M. Umehira, M. Akimoto, B. Han, and H. Zhou, “Green spectrum sharing framework in b5g era by exploiting crowdsensing,” 
+
+Ieee Trans. Green Commun. Netw. , vol. 7, no. 2, pp. 916–927, 2022.

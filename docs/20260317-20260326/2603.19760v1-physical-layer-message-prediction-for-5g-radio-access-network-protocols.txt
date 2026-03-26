@@ -1,0 +1,269 @@
+Title: Physical Layer Message Prediction for 5G Radio Access Network Protocols
+
+URL Source: https://arxiv.org/pdf/2603.19760v1
+
+Published Time: Mon, 23 Mar 2026 00:38:51 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Physical Layer Message Prediction for 5G Radio Access Network Protocols 
+
+Jonathan Ebert and Peter Rost 
+
+Communications Engineering Lab (CEL) Karlsruher Institute of Technology (KIT) , Germany 
+
+{jonathan.ebert, peter.rost }@kit.edu 
+
+Abstract —Protocol reverse engineering stands as the cutting-edge approach in security research. This paper presents aframework capable of reverse engineering the communications within a mobile communication system. Our focus is on systems released by the 3GPP, with an emphasis on 5G NR. Our approach leverages the available context and syntax of the 5G standard to predict subsequent messages. This approach relies on a Transformer model and is trained based on an open-source 5G system implementation, emulating a base station and several user equipments. The prediction targets messages at the physical layer. 
+
+Index Terms —Message Prediction, Smart Jammer, 3GPP, 5G, Transformer, Radio Access Network 
+
+I. I NTRODUCTION 
+
+A. Problem Description 
+
+This research addresses protection against jamming and the enhancement of robustness in wireless communication protocols. In particular, we focus on the Fifth Generation (5G) mobile communication system as standardized by the 3rd Gen-eration Partnership Project (3GPP). Owing to the use of free-space wireless transmission in 5G, the system is inherently vulnerable to eavesdropping by potential adversaries. A key objective of this work is the prediction of future transmissions, as an attacker capable of accurately forecasting messages may be able to overshadow or disrupt them. Transmission prediction in 5G presents significant chal-lenges, as accurate forecasting requires consideration of the hidden internal states of the communicating entities. To ad-dress this, we develop a prediction framework based on protocol reverse engineering (PRE), extended to incorporate user state information. This paper specifically concentrates on prediction at the physical layer. The PRE framework takes as input the mes-sages exchanged between communication entities, focusing on control-plane messages, since user-plane data are encrypted and thus not accessible for analysis. We focus on predicting messages at the physical layer because this capability can facilitate attacks such as inter-cepting downlink control information, e.g., shown by Ashik and Hossain [1]. Alternatively, prediction can be used to distinguish legitimate transmissions from those that are being jammed, like what was demonstrated in [2]. 
+
+B. Related Work 
+
+State of the art PRE utilizes unencrypted messages or the protocol’s implementation to extract information [3], [4]. PRE mainly follows one of two strategies: the first involves deriving a state machine and associating messages with state transitions, while the second involves directly uncovering hidden patterns within message flows to forecast communication. One example of working directly with patterns in exchanged messages is the PREUNN method [5]. This is an automated PRE technique that leverages various machine learning models to reverse engineer unencrypted HTTP and FTP traffic. Their findings reveal that long short-term memory (LSTM) models demonstrate considerable promise and successfully generate new traffic for system fuzzing. To infer the state machine, Wei et. al [6] introduce a method to utilize large language models (LLMs). With targeted prompt engineering, they were able to extract state machines from the implementation of the protocols. In our case, the implementa-tion is proprietary and beyond our reach. This led us to adopt Transformers, the core machine learning framework behind LLMs. 
+
+C. Contribution 
+
+We introduce a Transformer-based message predictor de-signed to infer future messages based on the contextual information and states of the communication scenario and its participants. Our system supports variable-length encrypted data and takes into account the time-frequency positions of messages as well as 5G-specific metadata. It also accommo-dates distinct traffic patterns across different user equipments (UEs). We can forecast a slot in a 5G transmission scenario involving as many as 10 mobile phones, with good accuracy. This work should be seen as proof-of-concept since, to our knowledge, there exists no work we could compare with. The prediction is made without any jammer present and is intended to represent the baseline performance. II. P RELIMINARIES 
+
+A. 5G Messages and Physical Channels 
+
+The 3GPP specification outlines various channels at the physical layer. A channel in 3GPP refers to a section of the spectrum allocated for specific uses. The channels relevant to this study will be detailed in the next section. Further information can be found in the standard [7], [8]. 
+
+> arXiv:2603.19760v1 [cs.NI] 20 Mar 2026
+
+The uplink channels from UE to base station (gNB) are the physical uplink shared channel (PUSCH) and physical uplink control channel (PUCCH). The PUSCH is used for uplink user data transmission, and the PUCCH transmits channel state information used for rate adaptation, and power settings, to name a few use cases. In the downlink direction, two channels are relevant to this work. The physical downlink control channel (PDCCH) and the physical downlink shared channel (PDSCH). The PDSCH occupies most of the downlink resources and transports the user data and some control messages. The control channel conveys the unencrypted downlink control information (DCI), which can be provided in different formats. The format 0 0 and 0 1 convey the uplink grant information, informing the UE when it is allowed to send data on the PUSCH. On the other side, a DCI with format 1 0 or 1 1 indicates the position of data in the PDSCH for a specific UE. The radio network temporary identity (RNTI) specifies the UEs that are associated with a particular PDCCH message. The RNTI is a unique identifier allocated by the 5G network to differentiate UEs. In time domain, the 5G physical layer is structured in slots and system frames. A system frame is divided into 10 slots. In our case, a slot corresponds to 1 ms . System frames are identified by the system frame number (SFN), an integer number ranging from 0 to 1023. The physical spectrum and the slot structure can be seen in Figure 1. 
+
+B. Transformer 
+
+The machine learning architecture used in our research is called Transformer and was introduced by Vaswani et al. [9] in 2017. They rapidly outperformed traditional machine learning methods such as recurrent neural networks and LSTM [10], first in language processing and later in a broader field of applications. We chose this architecture because they showed remarkable results, for different lengths of input. For instance, when using ChatGPT, we don’t have to worry about the length of our questions; within reasonable limits, it can handle varying input sizes without issue. We utilize the implementation of Andrej Karpathy, known as nanoGPT [11], where we tuned the hyperparameter to fit our task. III. S YSTEM SETUP 
+
+Our study is centered on forecasting protocol messages, and the goal is to predict the content of the next slot based on the content of the past 10 slots. The uplink and downlink are thereby combined. To test the system, different setups are simulated. In the first setup, two UEs are connected to a gNB. Traffic is generated in downlink direction using the software iperf3 for both UEs using TCP and no speed limitation. Taking the same configurations into account, the number of UEs was modified between 2, 3, and 10. In the fourth configuration, the three traffic directions, downlink, uplink, and bi-directional, are each assigned to one UE. 
+
+Physical Channel gNB UE-1 UE-N ...
+
+> Slot 0
+> Slot 1
+> Slot 2
+> Slot 3
+> Slot 4
+> Slot 5
+> Slot 6
+> Slot 7
+> Slot 8
+> Slot 9
+> System Frame Duration =  10 ms
+> PDCCH
+> PDSCH
+> SSB
+
+f
+
+t
+
+> Fig. 1. Exemplary system setup with one gNB and multiple UEs. The SSB is the first signal detected and allows for synchronization with the base station signal. PDCCH carries control information for the individual terminals, and the PDSCH carries data signals. Each system frame is divided into 10 slots, in this configuration, each of 1ms.
+
+The UEs are connected to the gNB with a perfect chan-nel without noise. The recording duration is configured to approximately 500 s . Band n3 and a bandwidth of 20 MHz 
+
+were utilized for all setups. 
+
+A. Environment 
+
+For data generation, we rely on the open-source implemen-tation srsRAN [12] and GNU Radio for channel emulation. srsRAN provides a full-stack 5G implementation for gNB and UE. For the 5G core network, we utilize open5gs [13], an open-source solution. Using this implementation, we are able to wiretap the communication between gNB and UE on physical layer providing access to all control signalling, which is not encrypted compared to user plane payload. We focus on the PHY layer as this information is accessible to a jammer as shown in the work of Falkenberg and Wietfeld [14]. Using the control messages, one can extract which channel occupies which resources of the OFDM grid.          
+
+> 2024-11-26T08:33:52.600134 [PHY] [265.8] PDCCH: format=1_0 rnti=0x4601 PDSCH: rnti=0x4601 prb=[0, 96) symb=[1, 14)
+> Listing 1. Exemplary control messages exchanged between gNB and UE (shortened version for a PDCCH message).
+
+Listing 1 shows the exemplary data used for our research. The first entries after the date of recording are the corre-sponding layer, and the SFN, in this case, the physical layer (PHY) and SFN 265. The slot number is the first decimal, i.e., 8. Afterwards, the different channel names are given; in this case, it is a downlink control message transmitted by the PDCCH and the downlink data transmission over the PDSCH. For channels with flexible resource assignment like PDSCH, we need the subcarriers used and the occupied slots. The subcarriers are indicated by the physical resource block (PRB) number. The slots are given with the entry symb . For example, both channels contain an entry for the RNTI, indicating the target UE of this message. The PDCCH also has the DCI indicator, given as format in Listing 1. In this case, the DCI is 1 0, which indicates that in this frame the UE receives data through the PDSCH. 
+
+B. Data Preprocessing and Tokenization 
+
+A Transformer needs the input to be represented in a set of tokens. All possible tokens used in our setup are listed in Listing 2. The tokenization represents the outcome of several development iterations. In total, there are 32 tokens. It starts with an empty token, which can be used when a slot contains no message. The hexadecimal digits from 0 to F serve multiple purposes, e.g., RNTI, slot number, PRB, and symbol number-ing. A colon indicates the start of the slot and a semicolon the end. The comma is used to separate channels and to separate the start and end of the time-frequency intervals. We represent time resources enclosed by parentheses and frequency resources enclosed by square brackets. The last part of the tokens contains all the non-single-character tokens. In earlier experiments, we used PDCCH without the information about the DCI. Later, two new tokens were added to include this information. 
+
+" ", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", ":", ";", " ,", "/", "[", "]", "(", ")", "PHY: PDCCH", "PHY: PDSCH", "PHY: PRACH", "PHY: PUCCH", "PHY: PUSCH", "PHY: PDCCH - DCI:0 0", "PHY: PDCCH - DCI:1 0"  
+
+> Listing 2. List of all tokens used to represent the physical layer messages exchanged.
+
+The result of tokenizing the control messages, as seen in Listing 1, is illustrated in Table I. Thereby, the SFN is omitted, and only the slot is extracted. The RNTI is shortened to two digits, and all decimal numbers in the messages are converted to hexadecimal for the tokens.           
+
+> TABLE I TOKENIZATION PROCESS
+> Message entry Tokens [PHY] [265.8] 8: PDCCH: format=1 0PHY: PDCCH - DCI:1 0rnti=0x4601 01 ,PDSCH: PHY: PDSCH rnti=0x4601 01 prb=[0, 96) [0, 60] symb=[1, 14) (1, E) ;
+
+IV. M ESSAGE PREDICTOR 
+
+To predict the tokens of the next slot, we propose aTransformer-based setup, see Figure 2. This Transformer has an input window length of 1024 tokens and predicts the 1025th token of the sequence. During validation, this procedure is       
+
+> 8:PHY: PDCCH - DCI1 0... 9:PHY: PDSCH01[0,6]... 0:PHY: PDSCH07[C,12]... 1:PHY: PDCCH - DCI1 0... 2:PHY: PDCCH - DCI1 0... 3:PHY: PUCCH0A(0,E)... 4:PHY: PDCCH - DCI1 0... 5:PHY: PDCCH - DCI0 0... 6:PHY: PDSCH02[6,C]... 7:PHY: PDCCH - DCI1 0...
+
+Message Prediction Transformer                 
+
+> 8:PHY: PDCCH - DCI1 0...
+> Fig. 2. The message predictor has approximately 10 slots as input and predicts the following slot. The number of slots in the input depends on the number of tokens per slot. The maximum number of input tokens is 1024. Sampling is repeated until the separator token is sampled. TABLE II HYPERPARAMETER FOR TRANSFORMER -BASED PREDICTOR
+> Parameter Value Input length 1024 Embedding dimensions 8Layers 3 (Decoder structure) Multi-head attention 8Tokens 32 Model parameter size ∼2700 Batch size 2048 Training epochs 4000 Training dataset size ∼250 k tokens
+> Validation dataset size ∼63 k tokens
+
+repeated until the slot separator token is predicted. Using a slot separator allows for flexible token counts per slot. Table II lists the hyperparameters used for the Transformer-based predictor. These values stem from various experiments and may still allow for further optimization, which lies beyond the scope of this fundamental work. 
+
+A. Syntax Checker 
+
+The first training runs showed the vulnerability of the predictor to error propagation. Often, the sequence starts reasonably, while the later tokens suffer from more errors. Errors in the predicted channels can be acceptable, but when the slot number is already wrong, this introduces unnecessary errors. During evaluation, a syntax checker is added to reduce error propagation. First, the syntax checker compares the slot numbering, if it is counting up, with the exception that 0 follows 9. After the slot number, a colon needs to appear, and then the channels start. Each channel needs to be separated with a comma, and each channel’s message needs to start with the layer and channel description. After that, the RNTI can follow. If a square bracket or bracket starts, it must be followed by two integer numbers separated by a comma and closed with the corresponding closing bracket. 
+
+B. Validation Metrics - Levenshtein distance 
+
+To get a similarity measure of sequences, the Levenshtein metric [15] takes two sequences and compares what it takes to transform one into the other. Allowed operations are adding, removing, and changing entries. 2 3 4 6 7 8 2 3 4 6 7 8 511 2 3 5 6 7 
+
+Sequence 1 Edit operations Sequence 2  
+
+> Fig. 3. Two example sequences with the Levenshtein distance of three.
+
+As an example, two sequences can be seen in Fig. 3. To transform the first into the second, the following steps must be performed: add 1 at the beginning, change 4 to 5, and remove 8, i.e., the Levenshtein distance is three. The Levenshtein distance between the sequences x and y
+
+is denoted as, L (x, y), where y ∈ Nk and x ∈ Nl.One flaw of the Levenshtein distance arises when comparing two reference sequences y1 ∈ Nk1 and y2 ∈ Nk2 where 
+
+k1 > k 2 with x1 ∈ Nl1 and x2 ∈ Nl2 respectively. Provided that the Levenshtein distances for these cases are equal, i.e., L(x1, y1) = L(x2, y2), it follows that x1 and y1 have a higher number of matching tokens compared to the tokens shared between x2 and y2. However, the Levenshtein distance metric does not convey this information. Therefore, we apply the relative Levenshtein (RL) distance. 
+
+Definition 1 (Relative Levenshtein): 
+
+RL (x, y) := L(x, y)
+
+k .
+
+This measure returns the percentage of wrong tokens, com-pared to the total length k of the reference sequence y.A relative Levenshtein distance of 0 means a correct predic-tion. Other results of the RL don’t directly indicate the type of error. Figure 4 depicts a scenario in which the RL distance is always equal to 1 with different sequences. Reference Empty All wrong Half correct, more samples  
+
+> Fig. 4. Three different sequences with the same RL distance of 1.
+
+C. Validation Metrics - Precision 
+
+In addition to the Levenshtein distance, we can also in-vestigate the precision of tokens and fields in the prediction. The control messages can be denoted as a sequence of tokens T = {t0, . . . , t n}. Additionally, we define a subset 
+
+C = {c0, . . . , c n}, where ci is one of the channel tokens. During evaluation, we extract all channel tokens that appear and store them in Cval = {cval  
+
+> 0
+
+, . . . , c val  
+
+> n
+
+}. Then P( ci) = P( cval  
+
+> i
+
+)
+
+gives the frequency in percent of this token. To measure how often the token was predicted correctly, we use the true positive (TP) function TP (ci) = P( ci ∈ C val | ci ∈ C pred )= E 
+
+ |ci ∈ C val ∧ ci ∈ C pred ||ci ∈ C pred |
+
+
+
+,
+
+where Cval denotes the validation sequence and Cpred the predicted sequence. If the channel was predicted correctly, then we can also evaluate the precision of the RNTI denoted as r. The RNTI true positive function is defined as TP (r|ci) = P( r ∈ T val | r ∈ T pred ∧ ci ∈ C val ∧ ci ∈ C pred )= E 
+
+ |r ∈ T val ∧ r ∈ T pred ∧ ci ∈ C val ∧ ci ∈ C pred ||ci ∈ C pred |
+
+
+
+,
+
+where r represents the tokens that resemble the RNTI. We conducted additional evaluations, but for brevity, we have excluded them from this paper. V. R ESULTS 
+
+We focus our discussion on the results obtained with the syntax checker, as they outperform those without. Neverthe-less, some figures report both configurations for comparison. First, we present the results of the data set using 2 UEs with data received in downlink. From the validation set, 11 consecutive slots are chosen randomly. The initial 10 slots act as the input for the predictor, while the 11th serves as reference for evaluating the prediction. One such reference can be seen in Table I. The sampled tokens for the same input can be seen in Listing 3. The alternating colors represent the borders of the tokens.                                  
+
+> 8:PHY: PDCCH -DCI:1 0 01,PHY:PDSCH 01[0,60]
+> (1,E),PHY: PUCCH 01(0,E);
+> Listing 3. Predicted tokens for slot number 8 with same 10 previous slots inputed as in Table I.
+
+The initial segment is accurately predicted, indicating that both the syntax and content can be effectively learned by the Transformer. The last channel, the PUCCH, is not in the reference output and is added wrongly by the Transformer. Still, the syntax seems reasonable, but not all added tokens are needed in this case, i.e., the Levenshtein distance is 9. The output probabilities for the consecutive tokens drawn from the Transformer can be seen in Fig. 5. The color indicates the probability that the Transformer assigns to each token. Typically, the probability is close to 1, suggesting that tokens are very predictable, with only a 0 10 20 30 
+
+1
+
+10 
+
+20 
+
+30 
+
+Transformer Output - Token 
+
+> Sampling step
+
+0
+
+0.2
+
+0.4
+
+0.6
+
+0.8
+
+1 
+
+> Token probability
+> Fig. 5. For each sample, the output probabilities of the Transformer are shown. The original input contains 10 slots, and the 11th is predicted. There are 30 tokens drawn until the end token is sampled in the last step.
+
+single option being evident. In some cases, more options are possible, for example, in sample 21, two options, “comma” and “semicolon” are possible. Here, the “comma” carries a greater probability, however, if the Transformer opted for the second alternative, the result displayed in Listing 3 would be correct. 
+
+A. Validation with multiple UEs 
+
+First, we discuss the Levenshtein distance and the rela-tive Levenshtein distance. When more users are added to the system, the complexity increases, and as expected, the Levenshtein distance increases, as can be seen in the box plots in Fig. 6. The 2UE - DL , 3UE - DL , and 10UE - DL scenarios are using the same setup, but with different numbers of UEs. 
+
+0 25 50 75 100 
+
+2UE - DL 
+
+3UE - DL 
+
+10UE - DL 
+
+3UE mixed 
+
+with syntax checker 
+
+0 25 50 75 100 
+
+w/o syntax checker  
+
+> Fig. 6. Levenshtein distance for the different scenarios
+
+The 3UE mixed setup differs from the previous setups, because each UE has a different traffic pattern. So far, we cannot definitively explain the reason for the improved per-formance. A possible explanation is that the scheduler used is more predictable in this setup. In this scenario, the channels are scheduled more regularly, which has a substantial effect on the Levenshtein distance. If a channel is predicted that does not actually appear in the validation data, this leads to several incorrect tokens. Conversely, if the predicted channel is correct, then only its parameters may be wrong, which results in a smaller Levenshtein distance. 
+
+0 0.2 0.4 0.6 0.8 1
+
+2UE - DL 
+
+3UE - DL 
+
+10UE - DL 
+
+3UE mixed 
+
+with syntax checker 
+
+0 0.2 0.4 0.6 0.8 1
+
+w/o syntax checker  
+
+> Fig. 7. Relative Levenshtein distance for the different scenarios
+
+The increase of the Levenshtein distance for the increasing number of UEs is not only expected because of the growing complexity of the system, but also because each slot contains more messages. This leads to an increase in tokens per slot. Taking a look at the relative Levenshtein distance results in Fig. 7, we see that all three scenarios with the same traffic direction but an increasing number of users perform nearly equally on average. Only the outliers are getting worse with the increasing number of UEs. Table III presents the precision results for two of the four scenarios. We don’t show the 2 and 3 UE DL scenarios because they perform similarly to the 10 UE scenario. Each channel token is given with its relative frequency P( ci)
+
+and how often it is predicted correctly through TP( ci). Ad-ditionally, when predicted correctly, we determined how often the RNTI is also predicted correctly, denoted as TP( r|ci).                                 
+
+> TABLE III FREQUENCY AND PRECISION OF CHANNELS
+> Token P( ci)TP( ci)TP( r|ci)
+> 10 UEs  PDSCH 28.90% 77.46% 39.69% PDCCH - DL 31.90% 85.71% 61.38% PUCCH 36.69% 85.27% 22.98% PUSCH 1.10% 8.16% 0.00% PDCCH - UL 1.42% 0.00% 0.00% 3 UEs mixed  PDSCH 20.47% 99.19% 91.62% PDCCH - DL 20.47% 99.19% 92.97% PUCCH 14.22% 85.00% 73.33% PUSCH 27.94% 100.00% 86.67% PDCCH - UL 16.90% 98.70% 82.08%
+
+By adding more UEs, the Transformer has proven to scale well with the complexity. However, with each added UE, the mean number of tokens per slot increases. This implies that the number of slots represented in the input is inversely proportional to the number of UEs. The model can be changed to accommodate a longer window of input tokens. For now, a new Transformer is trained on each scenario, and no cross-evaluation is performed. This should be addressed in further research. VI. C ONCLUSION 
+
+In this work, we proposed a Transformer-based model to predict frames of a 5G communication system. Our experi-ments reveal that the syntax and latent states of the system are learnable by a Transformer model. The proposed method of representing the content of a slot yields promising results. The system performs well when accommodating messages of differing lengths across slots. The number of UEs can be varied without a significant decrease in the performance of the prediction. REFERENCES [1] M. H. Ashik and M. Hossain, “ReaperPulse: A Targeted Energy-Efficient Control Channel Jamming in 5G,” in Proceedings of the 2025 ACM Workshop on Wireless Security and Machine Learning , Jun. 2025, pp. 2–7. [2] M. Varotto, S. Valentin, and S. Tomasin, “Detecting 5G Signal Jammers Using Spectrograms with Supervised and Unsupervised Learning,” in 
+
+2024 IEEE International Conference on Communications Workshops (ICC Workshops) , Jun. 2024, pp. 767–772. [3] M. A. Beddoe, “Network protocol analysis using bioinformatics algo-rithms,” Toorcon 26.6 , pp. 1095–1098, 2004. [4] J. Narayan, S. K. Shukla, and T. C. Clancy, “A survey of automatic protocol reverse engineering tools,” ACM Computing Surveys , vol. 48, no. 3, pp. 40:1–40:26, 2015. [5] V. Kiechle, M. B¨ orsig, S. Nitzsche, I. Baumgart, and J. Becker, “Preunn: Protocol reverse engineering using neural networks,” 8th Int. Conf. Inf. Systems Security and Privacy , pp. 345–356, 2023. [6] H. Wei, Z. Du, H. Huang, Y. Liu, G. Cheng, L. Wang, and B. Mao, “Inferring state machine from the protocol implemen-tation via large language model,” preprint [Online]. Available: http://arxiv.org/abs/2405.00393. [7] 3GPP, “NR; Physical layer procedure for control,” 3GPP, Tech. Rep. TS38.213 v18.2.0, May 2024. [8] ——, “NR; Physical layer procedure for data,” 3GPP, Tech. Rep. TS38.214 v18.2.0, May 2024. [9] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. u. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances Neural Inf. Proc. Sys. , vol. 30. Curran Associates, Inc., 2017. [10] T. Lin, Y. Wang, X. Liu, and X. Qiu, “A survey of transformers,” AI Open , vol. 3, pp. 111–132, 2022. [11] A. Karpathy, “nanogpt,” 2024. [Online]. Available: https://github.com/ karpathy/nanoGPT [12] srs. srsran project. [Online]. Available: https://www.srsran.com/5g [13] S. Lee. open5gs. [Online]. Available: https://open5gs.org/ [14] R. Falkenberg and C. Wietfeld, “FALCON: An accurate real-time monitor for client-based mobile network data analytics,” in IEEE Global Com. Conf. (GLOBECOM) , 2019. [15] V. Levenshtein, “Binary codes capable of correcting deletions, insertions and reversals,” Soviet Physics Doklady , no. 10, p. 707, 1966.

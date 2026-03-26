@@ -1,6 +1,274 @@
 {
-  "generated_at": "2026-03-26T01:38:21.278974+00:00",
+  "generated_at": "2026-03-26T01:47:28.011304+00:00",
   "updated_date": "20260317-20260326",
   "carryover_days": 9,
-  "items": []
+  "items": [
+    {
+      "id": "2603.22866v1",
+      "title": "Aerial Agentic AI: Synergizing LLM and SLM for Low-Altitude Wireless Networks",
+      "abstract": "Low-Altitude Wireless Networks (LAWNs), composed of Unmanned Aerial Vehicles (UAVs) and mobile terminals, are emerging as a critical extension of 6G. However, applying Large Language Models in LAWNs faces three major challenges: 1) Computational and energy constraints; 2) Communication and bandwidth limitations; 3) Real-time and reliability conflicts. To address these challenges, we propose Aerial Agentic AI, a hierarchical framework integrating UAV-side fast-thinking Small Language Model (SLMs) with BS-side slow-thinking Large Language Model (LLMs). First, we design SLM-based Agents capable of on-board perception, short-term memory enhancement, and real-time decision-making on the UAVs. Second, we implement a LLM-based Agent system that leverages long-term memory, global knowledge, and tool orchestration at the Base Station (BS) to perform deep reasoning, knowledge updates, and strategy optimization. Third, we establish an efficient hierarchical coordination mechanism, enabling UAVs to execute high-frequency tasks locally while synchronizing with the BS only when necessary. Experimental results validate the effectiveness of the proposed Aerial Agentic AI.",
+      "authors": [
+        "Li Dong",
+        "Feibo Jiang",
+        "Kezhi Wang",
+        "Cunhua Pan",
+        "Dong In Kim",
+        "Ekram Hossain"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT"
+      ],
+      "published": "2026-03-24T07:11:34+00:00",
+      "link": "https://arxiv.org/pdf/2603.22866v1",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "LLM and SLM integration for 6G wireless networks",
+      "llm_evidence_cn": "大语言模型与小语言模型在6G无线网络中的协同",
+      "llm_evidence": "大语言模型与小语言模型在6G无线网络中的协同",
+      "canonical_evidence": "大语言模型与小语言模型在6G无线网络中的协同",
+      "llm_tldr_en": "Proposes a hierarchical AI framework for UAV networks to balance real-time decision-making and computation.",
+      "llm_tldr_cn": "提出一种分层AI框架，通过协同大小语言模型解决无人机无线网络中的计算与实时性挑战。",
+      "llm_tldr": "提出一种分层AI框架，通过协同大小语言模型解决无人机无线网络中的计算与实时性挑战。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "deep learning in communication systems",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.22866v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.20926v1",
+      "title": "Deep Adaptive Rate Allocation in Volatile Heterogeneous Wireless Networks",
+      "abstract": "Modern multi-access 5G+ networks provide mobile terminals with additional capacity, improving network stability and performance. However, in highly mobile environments such as vehicular networks, supporting multi-access connectivity remains challenging. The rapid fluctuations of wireless link quality often outpace the responsiveness of existing multipath schedulers and transport-layer protocols. This paper addresses this challenge by integrating Transformer-based path state forecasting with a new multipath splitting scheduler called Deep Adaptive Rate Allocation (DARA). The proposed scheduler employs a deep reinforcement learning engine to dynamically compute optimal congestion window fractions on available paths, determining data allocation among them. A six-component normalised reward function with weight-mediated conflict resolution drives a DQN policy that eliminates the observation-reaction lag inherent in reactive schedulers. Performance evaluation uses a Mininet-based Multipath Datagram Congestion Control Protocol testbed with traces from mobile users in vehicular environments. Experimental results demonstrate that DARA achieves better file transfer time reductions compared to learning-based schedulers under moderate-volatility traces. For buffered video streaming, resolution improvements are maintained across all tested conditions. Under controlled burst scenarios with sub-second buffer constraints, DARA achieves substantial rebuffering improvements whilst state-of-the-art schedulers exhibit near-continuous stalling.",
+      "authors": [
+        "Gregorio Maglione",
+        "Veselin Rakocevic",
+        "Markus Amend",
+        "Touraj Soleymani"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT",
+        "cs.LG"
+      ],
+      "published": "2026-03-21T20:03:56+00:00",
+      "link": "https://arxiv.org/pdf/2603.20926v1",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Transformer-based path state forecasting in wireless networks",
+      "llm_evidence_cn": "无线网络中基于Transformer的路径状态预测",
+      "llm_evidence": "无线网络中基于Transformer的路径状态预测",
+      "canonical_evidence": "无线网络中基于Transformer的路径状态预测",
+      "llm_tldr_en": "Integrates Transformer-based forecasting with DRL for adaptive rate allocation in heterogeneous wireless networks.",
+      "llm_tldr_cn": "结合Transformer预测与深度强化学习，实现异构无线网络中的自适应速率分配。",
+      "llm_tldr": "结合Transformer预测与深度强化学习，实现异构无线网络中的自适应速率分配。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "attention",
+      "matched_requirement_id": "req-1",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.20926v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.18727v1",
+      "title": "Non-linear in-band interference cancellation on base of conjugate gradients method",
+      "abstract": "This paper investigates one possible solution to the problem of self-interference cancellation (SIC) arising in the design of in-band full-duplex (IBFD) communication systems. Self-interference cancellation is performed in the digital domain using multilayer nonlinear models adapted via gradient-based optimization. The presence of local minima and saddle points during the adaptation of multilayer models limits the direct use of second-order methods due to the indefiniteness of the hessian matrix. The mixed Newton method can address the saddle-point issue; however, it requires significant computational resources. In this work, a conjugate gradient (CG) method constructed on the base of the mixed Newton method (MNM) is proposed. The method exploits information from mixed second-order derivatives of the loss function without explicit computation the full hessian matrix. As a result, the proposed approach achieves a higher convergence rate than first-order methods while requiring significantly lower computational resources than conventional second-order methods when adapting multilayer nonlinear self-interference cancellers in full-duplex communication systems.",
+      "authors": [
+        "Alexander Degtyarev",
+        "Sergei Bakhurin",
+        "Nikita Yudin"
+      ],
+      "primary_category": "math.OC",
+      "categories": [
+        "math.OC"
+      ],
+      "published": "2026-03-19T10:20:44+00:00",
+      "link": "https://arxiv.org/pdf/2603.18727v1",
+      "tags": [
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Multilayer nonlinear models for self-interference cancellation in transceivers",
+      "llm_evidence_cn": "用于收发机自干扰消除的多层非线性模型",
+      "llm_evidence": "用于收发机自干扰消除的多层非线性模型",
+      "canonical_evidence": "用于收发机自干扰消除的多层非线性模型",
+      "llm_tldr_en": "Applies multilayer nonlinear models and conjugate gradient methods for digital self-interference cancellation.",
+      "llm_tldr_cn": "应用多层非线性模型和共轭梯度法进行数字域自干扰消除。",
+      "llm_tldr": "应用多层非线性模型和共轭梯度法进行数字域自干扰消除。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "deep learning applications in transceiver design",
+      "matched_requirement_id": "req-7",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.18727v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.23128v1",
+      "title": "Agentic Verifier-in-the-Loop Solver Orchestration for Cell-Free Massive MIMO Downlink Power Control",
+      "abstract": "Cell-free massive multiple-input multiple-output (MIMO) systems can provide uniformly strong service through distributed access points, but performance still depends critically on downlink power control. Existing methods are typically selected offline and then applied uniformly across channel and load regimes, even though no single solver is uniformly best. We therefore propose VISO-PC, a verifier-in-the-loop solver-orchestration framework in which an agent routes among trusted solvers rather than generating power coefficients directly. Given a structured instance descriptor, the router selects an initial solver and fallback order, and an independent verifier accepts only candidates that satisfy the constraints and produce a valid verified common rate. For fairness-oriented downlink cell-free power control under per-AP constraints, verification-aware orchestration improves accepted rate over all fixed single-solver baselines on a reproducible prototype benchmark. Moreover, a lightweight memory-based router matches the accepted rate of a strong rule-based router while reducing average runtime and fallback rate. These results show that solver orchestration is a practical agentic layer for cell-free massive MIMO downlink power control.",
+      "authors": [
+        "Zhichao Gao"
+      ],
+      "primary_category": "cs.IT",
+      "categories": [
+        "cs.IT"
+      ],
+      "published": "2026-03-24T12:25:27+00:00",
+      "link": "https://arxiv.org/pdf/2603.23128v1",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Agentic orchestration for Massive MIMO power control",
+      "llm_evidence_cn": "用于大规模MIMO功率控制的智能体编排",
+      "llm_evidence": "用于大规模MIMO功率控制的智能体编排",
+      "canonical_evidence": "用于大规模MIMO功率控制的智能体编排",
+      "llm_tldr_en": "Proposes an agentic framework to route among solvers for optimal power control in cell-free massive MIMO.",
+      "llm_tldr_cn": "提出一种智能体框架，在不同求解器间路由以实现无小区大规模MIMO的最优功率控制。",
+      "llm_tldr": "提出一种智能体框架，在不同求解器间路由以实现无小区大规模MIMO的最优功率控制。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "neural networks for wireless communication systems",
+      "matched_requirement_id": "req-8",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.23128v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.22131v2",
+      "title": "WiRD-Gest: Gesture Recognition In The Real World Using Range-Doppler Wi-Fi Sensing on COTS Hardware",
+      "abstract": "Wi-Fi sensing has emerged as a promising technique for gesture recognition, yet its practical deployment is hindered by environmental sensitivity and device placement challenges. To overcome these limitations we propose Wi-Fi Range and Doppler (WiRD)-Gest, a novel system that performs gesture recognition using a single, unmodified Wi-Fi transceiver on a commercial off-the-shelf (COTS) laptop. The system leverages an monostatic full duplex sensing pipeline capable of extracting Range-Doppler (RD) information. Utilizing this, we present the first benchmark of deep learning models for gesture recognition based on monostatic sensing. The key innovation lies in how monostatic sensing and spatial (range) information fundamentally transforms accuracy, robustness and generalization compared to prior approaches. We demonstrate excellent performance in crowded, unseen public spaces with dynamic interference and additional moving targets even when trained on data from controlled environments only. These are scenarios where prior Wi-Fi sensing approaches often fail, however, our system suffers minor degradation. The WiRD-Gest benchmark and dataset will also be released as open source.",
+      "authors": [
+        "Jessica Sanson",
+        "Rahul C. Shah",
+        "Yazhou Zhu",
+        "Rafael Rosales",
+        "Valerio Frascolla"
+      ],
+      "primary_category": "eess.AS",
+      "categories": [
+        "eess.AS"
+      ],
+      "published": "2026-03-23T15:57:03+00:00",
+      "link": "https://arxiv.org/pdf/2603.22131v2",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "deep learning models for Wi-Fi transceiver sensing",
+      "llm_evidence_cn": "用于Wi-Fi收发机感知的深度学习模型",
+      "llm_evidence": "用于Wi-Fi收发机感知的深度学习模型",
+      "canonical_evidence": "用于Wi-Fi收发机感知的深度学习模型",
+      "llm_tldr_en": "Proposes a deep learning benchmark for gesture recognition using monostatic Wi-Fi transceiver sensing.",
+      "llm_tldr_cn": "提出了一种利用单站Wi-Fi收发机感知的深度学习手势识别基准系统。",
+      "llm_tldr": "提出了一种利用单站Wi-Fi收发机感知的深度学习手势识别基准系统。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "deep learning in communication systems",
+      "matched_requirement_id": "req-6",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.22131v2",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.20608v1",
+      "title": "Reinforcement Learning-Based Secure Near-field Directional Modulation Enhanced by Rotatable RIS",
+      "abstract": "This paper investigates secure Directional Modulation (DM) design enhanced by a rotatable active Reconfigurable Intelligent Surface (RIS). In conventional RIS-assisted DM networks, the security performance gain is limited due to the multiplicative path loss introduced by the RIS reflection path. To address this challenge, a Secrecy Rate (SR) maximization problem is formulated, subject to constraints including the eavesdropper's Direction Of Arrival (DOA) estimation performance, transmit power, rotatable range, and maximum reflection amplitude of the RIS elements. To solve this non-convex optimization problem, three algorithms are proposed: a multi-stream null-space projection and leakage-based method, an enhanced leakage-based method, and an optimization scheme based on the Distributed Soft Actor-Critic with Three refinements (DSAC-T). Simulation results validate the effectiveness of the proposed algorithms. A performance trade-off is observed between eavesdropper's DOA estimation accuracy and the achievable SR. The security enhancement provided by the RIS is more significant in systems equipped with a small number of antennas. By optimizing the orientation of the RIS, a 52.6\\% improvement in SR performance can be achieved.",
+      "authors": [
+        "Yongqiang Li",
+        "Feng Shu",
+        "Shaofan Chen",
+        "Yuanyuan Wu",
+        "Maolin Li",
+        "Zhen Chen",
+        "Hao Jiang",
+        "Jiangzhou Wang"
+      ],
+      "primary_category": "eess.SP",
+      "categories": [
+        "eess.SP"
+      ],
+      "published": "2026-03-21T02:50:25+00:00",
+      "link": "https://arxiv.org/pdf/2603.20608v1",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "Reinforcement learning for secure directional modulation",
+      "llm_evidence_cn": "用于安全方向调制的强化学习",
+      "llm_evidence": "用于安全方向调制的强化学习",
+      "canonical_evidence": "用于安全方向调制的强化学习",
+      "llm_tldr_en": "Uses reinforcement learning to optimize secrecy rates in RIS-enhanced directional modulation networks.",
+      "llm_tldr_cn": "利用强化学习优化RIS增强型方向调制网络中的保密率。",
+      "llm_tldr": "利用强化学习优化RIS增强型方向调制网络中的保密率。",
+      "llm_tags": [
+        "query:dl-comm"
+      ],
+      "matched_query_tag": "query:dl-comm",
+      "matched_query_text": "machine learning techniques for adaptive transceivers",
+      "matched_requirement_id": "req-10",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.20608v1",
+      "carry_days": 1
+    },
+    {
+      "id": "2603.20484v1",
+      "title": "Fluid Antenna Networks Beyond Beamforming: An AI-Native Control Paradigm for 6G",
+      "abstract": "Fluid Antenna Systems (FAS) introduce a new degree of freedom for wireless networks by enabling the physical antenna position to adapt dynamically to changing radio conditions. While existing studies primarily emphasize physical-layer gains, their broader implications for network operation remain largely unexplored. Once antennas become reconfigurable entities, antenna positioning naturally becomes part of the network control problem rather than a standalone optimization task. This article presents an AI-native perspective on fluid antenna networks for future 6G systems. Instead of treating antenna repositioning as an isolated operation, we consider a closed-loop control architecture in which antenna adaptation is jointly managed with conventional radio resource management (RRM) functions. Within this framework, real-time network observations are translated into coordinated antenna and resource configuration decisions that respond to user mobility, traffic demand, and evolving interference conditions. To address the complexity of multi-cell environments, we explore a multi-agent reinforcement learning (MARL) approach that enables distributed and adaptive control across base stations. Illustrative results show that intelligent antenna adaptation yields consistent performance gains, particularly at the cell edge, while also reducing inter-cell interference. These findings suggest that the true potential of fluid antenna systems lies not only in reconfigurable hardware, but in intelligent network control architectures that can effectively exploit this additional spatial degree of freedom.",
+      "authors": [
+        "Ian F. Akyildiz",
+        "Tuğçe Bilen"
+      ],
+      "primary_category": "cs.NI",
+      "categories": [
+        "cs.NI"
+      ],
+      "published": "2026-03-20T20:29:05+00:00",
+      "link": "https://arxiv.org/pdf/2603.20484v1",
+      "tags": [
+        "keyword:DL Comm",
+        "query:DL Comm"
+      ],
+      "llm_score": 8.0,
+      "llm_evidence_en": "AI-native control paradigm for fluid antenna networks in 6G physical layer",
+      "llm_evidence_cn": "6G物理层流体天线网络的AI原生控制范式",
+      "llm_evidence": "6G物理层流体天线网络的AI原生控制范式",
+      "canonical_evidence": "6G物理层流体天线网络的AI原生控制范式",
+      "llm_tldr_en": "Explores AI-native control for fluid antenna systems to enhance 6G physical layer reconfigurability.",
+      "llm_tldr_cn": "探讨6G物理层流体天线系统的AI原生控制，提升天线位置的可重构性。",
+      "llm_tldr": "探讨6G物理层流体天线系统的AI原生控制，提升天线位置的可重构性。",
+      "llm_tags": [
+        "query:dl-comm:composite"
+      ],
+      "matched_query_tag": "query:dl-comm:composite",
+      "matched_query_text": "Papers central to 深度学习和通信收发机结合的文章, especially work that connects or combines: attention; computer vision; end-to-end; physical layer; w; deep learning in communication systems; deep learning applications in transceiver design; neural networks for wireless communication systems; AI enhanced signal processing in communications; machine learning techniques for adaptive transceivers.",
+      "matched_requirement_id": "req-composite-dl-comm",
+      "selection_source": "carryover_cache",
+      "paper_id": "2603.20484v1",
+      "carry_days": 1
+    }
+  ]
 }

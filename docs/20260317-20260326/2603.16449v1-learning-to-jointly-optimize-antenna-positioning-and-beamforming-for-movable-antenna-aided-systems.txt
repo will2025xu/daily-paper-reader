@@ -1,0 +1,815 @@
+Title: Learning to Jointly Optimize Antenna Positioning and Beamforming for Movable Antenna-Aided Systems
+
+URL Source: https://arxiv.org/pdf/2603.16449v1
+
+Published Time: Wed, 18 Mar 2026 01:09:15 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Learning to Jointly Optimize Antenna Positioning and Beamforming for Movable Antenna-Aided Systems 
+
+Yikun Wang ∗† , Yang Li †, Zeyi Ren ∗, Jingreng Lei ∗† , Yik-Chung Wu ∗, and Rui Zhang ‡∗Department of Electrical and Electronic Engineering, The University of Hong Kong, Hong Kong 
+
+†School of Computing and Information Technology, Great Bay University, Dongguan, China 
+
+‡Department of Electrical and Computer Engineering, National University of Singapore, Singapore Emails: {ykwang, renzeyi, leijr, ycwu }@eee.hku.hk, liyang@gbu.edu.cn, elezhang@nus.edu.sg 
+
+Abstract —The recently emerged movable antenna (MA) and fluid antenna technologies offer promising solutions to enhance the spatial degrees of freedom in wireless systems by dynamically adjusting the positions of transmit or receive antennas within given regions. In this paper, we aim to address the joint optimization problem of antenna positioning and beamforming in MA-aided multi-user downlink transmission systems. This problem involves mixed discrete antenna position and continuous beamforming weight variables, along with coupled distance con-straints on antenna positions, which pose significant challenges for optimization algorithm design. To overcome these challenges, we propose an end-to-end deep learning framework, consisting of a positioning model that handles the discrete variables and the coupled constraints, and a beamforming model that handles the continuous variables. Simulation results demonstrate that the proposed framework achieves superior sum rate performance, yet with much reduced computation time compared to existing methods. 
+
+Index Terms —Antenna positioning, combinatorial optimiza-tion, encoder-decoder model, graph neural networks, movable antenna. 
+
+I. I NTRODUCTION 
+
+Movable antenna (MA) [1] and fluid antenna (FA) [2] tech-nologies have garnered significant attention in recent years. Unlike traditional fixed-position antennas, MAs and FAs can dynamically change their positions within a designated area. This flexibility allows antennas to move away from deep-fading positions, thereby improving the channel state and creating more favorable conditions for wireless transmissions. The MA-aided system achieves its optimum performance through antenna positioning [3]. Prior research has explored the antenna positioning problem in continuous space [3]–[6]. They aim to maximize various utility functions, e.g., sum rate, minimum signal-to-interference-plus-noise ratio (SINR), 
+
+The work of Yikun Wang, Yang Li, and Jingreng Lei was supported in part by the National Natural Science Foundation of China (NSFC) under Grant 62571086, in part by Guangdong Basic and Applied Basic Research Foundation under Grant 2025A1515011658, and in part by Guangdong Research Team for Communication and Sensing Integrated with Intelligent Computing (Project No. 2024KCXTD047). The codes for generating the simulation results in this paper are available at: https://github.com/YikunWang-EEE/RL-MA-joint-APS-and-BF. 
+
+by optimizing the MA positions within a continuous des-ignated area. Additionally, some studies have focused on the discrete antenna positioning problem [7]–[10], where the designated area is sampled into multiple position points. As such, the original positioning optimization in continuous space is transformed to a sampling point (SP) selection problem. This approach simplifies the hardware implementation but brings additional challenges for optimization algorithm design: the problem becomes combinatorial, and constrained by the coupled distance requirements between antennas. In [7], [8], graph theory-based approaches were proposed by modeling the problem as a fixed-hop shortest path problem. However, they are only applicable for the single-user scenario, limiting their applicability in multi-user systems when inter-user interference exists. While [9] proposed a generalized Bender’s decom-position method to find the optimal antenna positions and beamformers that minimize the transmit power while ensuring the minimum SINR, this method suffers from exponential complexity in the worst case, which is practically hard for real-time implementation. Moreover, discrete antenna position and rotation joint design has been studied in six-dimensional movable antenna (6DMA) aided systems [10]. Deep learning (DL) has been successfully applied to solve numerous optimization problems in communication systems, owing to its capacity to model complex functions and its affordable real-time deployment compared to iterative-optimization algorithms. However, the joint design of discrete positioning and beamforming poses distinctive challenges. First, the underlying optimization problem encompasses mixed discrete and continuous variables, where the discrete variables induce zero-gradient issues during backpropagation, rendering them difficult to handle within neural network (NN) architec-tures. Furthermore, the NN is required to generate discrete po-sitioning solutions that satisfy the coupled distance constraints, yet ensuring consistent fulfillment of these constraints in the NN’s outputs remains inherently challenging. To fill this gap, we propose a novel DL framework com-prising two distinct NN models that handle positioning and beamforming sequentially. The positioning NN incorporates a graph neural network (GNN)-and-attention-based encoder-
+
+> arXiv:2603.16449v1 [eess.SP] 17 Mar 2026
+
+decoder architecture, which outputs the joint distribution of the positioning solutions. Through a judicious mask design, the generated positioning solutions are guaranteed to satisfy the coupled distance constraints, without any post-processing. Then, a GNN-based beamforming NN is employed to optimize the beamformers, leveraging an optimal solution structure to simplify the mapping to be learned. Furthermore, we introduce an end-to-end training algorithm, where the positioning NN and the beamforming NN are jointly trained in an unsupervised manner. Simulation results demonstrate that the proposed DL framework achieves superior sum rate performance than all baselines, while exhibiting significantly faster inference speed. II. S YSTEM MODEL 
+
+Consider an MA-aided downlink system with one base station (BS) serving K user equipments (UEs). The BS is equipped with M MAs and each UE is equipped with a single fixed-position antenna. The positions of the M MAs can be adjusted simultaneously within a predefined two-dimensional rectangular area, which is divided into N ≫ M SPs for placing the M MAs. The coordinate of the n-th SP is denoted by pn = [ xn, y n]T , where xn and yn represent the coordinates along the x-axis and y-axis, respectively, in the Cartesian coordinate system. Let ˜hk ≜ [˜h1k, ˜h2k, . . . , ˜hN k ]T denote the channel between the N SPs and UE k ∈ K ≜ {1, 2, . . . , K },which is assumed to be known [7]. Define the selected SP set as A ≜ {a1, a 2, . . . , a M }, where 
+
+am ∈ N ≜ {1, 2, . . . , N }. The received SINR of the k-th UE is given by SINR k = hk(A)H wk
+
+> 2
+
+PKl=1 ,l ̸ =k |hk(A)H wl|2 + σ2
+
+> k
+
+, (1) where hk(A) ∈ CM is the channel between the selected 
+
+M SPs and the k-th UE, wk ∈ CM represents the trans-mit beamformer for the k-th UE, and σ2 
+
+> k
+
+is the power of the additive-white-Gaussian-noise. In this paper, we aim to maximize the sum rate by jointly optimizing A and w ≜
+
+[wT 
+
+> 1
+
+, wT 
+
+> 2
+
+, . . . , wTK ]T , which is formally formulated as 
+
+max  
+
+> A,w
+
+R(A, w; h) ≜
+
+> K
+
+X
+
+> k=1
+
+log 2 (1 + SINR k) (2a) s.t. am ∈ N , ∀m ∈ M ≜ {1, 2, . . . , M }, (2b) 
+
+∥pam − pam′ ∥ ≥ dmin , ∀m, m ′ ∈ M , m ̸ = m′,
+
+(2c) 
+
+> K
+
+X
+
+> k=1
+
+∥wk∥2 ≤ Pmax , (2d) where h ≜ [˜hT 
+
+> 1
+
+, ˜hT 
+
+> 2
+
+, . . . , ˜hTK , pT 
+
+> 1
+
+, pT 
+
+> 2
+
+, . . . , pTN ]T denotes the known system parameters, dmin is the minimum distance between two MAs, and Pmax is the maximum transmit power of the BS. Problem (2) is combinatorial, making it NP-hard to find the optimal solution. Furthermore, developing a DL-based approach poses two key challenges: (a) the coupling between discrete and continuous variables; and (b) the highly non-convex discrete constraints in (2c). In the subsequent section, we introduce a novel end-to-end DL framework that addresses these issues by handling the variables A and w sequentially through two distinct NN models. III. P ROPOSED DL F RAMEWORK 
+
+The proposed end-to-end DL framework comprises two NN models: a positioning NN and a beamforming NN. Specifi-cally, the positioning NN takes the system parameter h as the input, and outputs the selected SP set A, i.e., A = Fp(h).Then, the beamforming NN takes A and h as the input, and outputs the beamformer w, i.e., w = Fw(A, h). These models are cascaded and trained jointly to provide near-optimal solutions while satisfying the constraints at the same time. We then detail the design of Fp(·), Fw(·, ·), and the joint training algorithm, respectively. 
+
+A. Design of Fp(·)
+
+Since A consists of discrete variables, to avoid the zero-gradient due to a hard decision, we treat the elements in A as random variables, and strive to learn the conditional probabil-ity of A given any h. Furthermore, due to the coupled distance constraints in (2c), each element of A depends on each other. Consequently, we factorize this conditional probability as 
+
+p(A | h) = 
+
+> M
+
+Y
+
+> t=1
+
+p(am(t) | A t−1, h), (3) where am(t) denotes the selected SP at the t-th step, At−1 ≜
+
+{am(t′)}t−1 
+
+> t′=1
+
+represents all the SPs that have already been selected up to the ( t − 1)-th step, and A0 ≜ ∅. Next, we construct an encoder-decoder model to learn the conditional probability (3), which also guarantees the coupled distance constraints in (2c). 
+
+1) Design of the encoder: The encoder GE(·) aims to build the mapping function from the system parameter h to the embeddings of all SPs denoted as R ≜ [r1, r2, . . . , rN ] ∈
+
+Rnemb ×N , capturing their suitability of antenna positioning, where nemb denotes the embedding dimension. To this end, we model the MA-aided system as a graph, which includes two types of nodes, i.e., K UE-nodes and N SP-nodes, and there exists an edge between each UE-node and each SP-node. We first show a desired permutation invariance (PI)-permutation equivariance (PE) property of GE(·) in the following property. 
+
+Property 1 (PI-PE Property of GE(·)): Let ˆhnk ≜
+
+˜hπ2(n)π1(k), ˆpn = pπ2(n), where π1(·) and π2(·) are permu-tations of the indices in K and N , respectively. The mapping function GE(·) satisfies 
+
+ˆR = GE(ℜ{ ˆh}, ℑ{ ˆh}),
+
+∀π1(·) : K → K , ∀π2(·) : N → N , (4) if and only if R = GE(ℜ{ h}, ℑ{ h}) holds, where ˆh ≜
+
+[ˆhTπ1(1) , ˆhTπ1(2) , . . . , ˆhTπ1(K), pTπ2(1) , pTπ2(2) , . . . , pTπ2(N )]T ,
+
+ˆhk ≜ [hπ2(1) k, h π2(2) k, . . . , h π2(N )k]T , and ˆR ≜
+
+[rπ2(1) , rπ2(2) , . . . , rπ2(N )].To ensure Property 1 , we design an edge-node GNN (EN-GNN) [11] as the foundation architecture of GE(·), where the k-th UE-node feature and n-th SP-node feature of the 
+
+lE-th hidden layer are expressed as f [lE] 
+
+> UE ,k
+
+and f [lE]
+
+> SP ,n
+
+, and the corresponding edge feature is represented by e[lE] 
+
+> nk
+
+. The edge features and SP-node features are initialized as 
+
+e[0]  
+
+> nk
+
+= MLP E
+
+> 1
+
+
+
+ℜ{ ˜hnk }, ℑ{ ˜hnk }
+
+
+
+, ∀k ∈ K , n ∈ N , (5a) 
+
+f [0]  
+
+> SP ,n
+
+= MLP E 
+
+> 2
+
+(pn) , ∀n ∈ N , (5b) where MLP E 
+
+> 1
+
+(·) and MLP E 
+
+> 2
+
+(·) are 2 multi-layer perceptrons (MLPs), and the UE-node features {f [0] 
+
+> UE ,k
+
+}k∈K are initialized as zero. After that, the encoder updates its node and edge features by a node-edge update mechanism, which is expressed as 
+
+f [lE] 
+
+> UE ,k
+
+=MLP [lE]2 f [lE−1]  
+
+> UE ,k
+
+, 1
+
+N
+
+> N
+
+X
+
+> n=1
+
+MLP [lE]1
+
+
+
+f [lE−1]  
+
+> SP ,n
+
+, e[lE−1] 
+
+> nk
+
+!
+
+,
+
+∀k ∈ K ,
+
+(6) 
+
+f [lE] 
+
+> SP ,n
+
+=MLP [lE]4 f [lE−1]  
+
+> SP ,n
+
+, 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+MLP [lE]3
+
+
+
+f [lE−1]  
+
+> UE ,k
+
+, e[lE−1] 
+
+> nk
+
+!
+
+,
+
+∀n ∈ N ,
+
+(7) 
+
+e[lE] 
+
+> nk
+
+= MLP [lE]7 e[lE−1]  
+
+> nk
+
+, 1
+
+N
+
+> N
+
+X
+
+> n′=1
+
+MLP [lE]5
+
+
+
+e[lE−1]  
+
+> n′k
+
+, f [lE−1] 
+
+> UE ,k
+
+
+
+,
+
+1
+
+K
+
+> K
+
+X
+
+> k′=1
+
+MLP [lE]6
+
+
+
+e[lE−1]  
+
+> nk ′
+
+, f [lE−1] 
+
+> SP ,n
+
+!
+
+, ∀k ∈ K , n ∈ N ,
+
+(8) where MLP [lE]1 (·) - MLP [lE]7 (·) are 7 MLPs. After LE layers’ update, the final SP-node feature f [LE] 
+
+> SP ,n
+
+serves as the required embedding rn.
+
+2) Design of the decoder: The decoder obtains the condi-tional probability p(A | h) in M steps. At the t-th step, the decoder firstly extracts the current system state information, i.e., At−1 and h, by a context embedding . Then, the multi-head attention (MHA) is applied between the context vector and 
+
+R, to further extract deeper-level features. Finally, a Pointer 
+
+[12] module is applied to capture the compatibilities between the context vector and R, so as to output the conditional probability p(am(t)|A t−1, h). The next SP am(t) is sampled from this conditional probability. The aforementioned step is repeated for M times, until A is fully determined. The decoding process is illustrated in Fig. 1, where the detailed steps are presented as follows. 
+
+Context Embedding: When t ≥ 2, the context embedding is computed as 
+
+ct = MLP X
+
+> 1
+
+1
+
+t − 1
+
+> t−1
+
+X
+
+> t′=1
+
+MLP X 
+
+> 4
+
+(ram(t′) ),
+
+1
+
+N
+
+> N
+
+X
+
+> n=1
+
+MLP X 
+
+> 2
+
+pn, 1
+
+K
+
+> K
+
+X
+
+> k=1
+
+MLP X
+
+> 3
+
+
+
+ℜ{ ˜hnk }, ℑ{ ˜hnk }
+
+!! 
+
+,
+
+(9)  
+
+> Fig. 1. The illustration of the decoding process.
+
+where ct is a dh-dimensional vector, and MLP X 
+
+> 1
+
+(·, ·)-MLP X 
+
+> 4
+
+(·)
+
+are 4 MLPs. When t = 1, as At−1 = ∅, we use atrainable parameter r∗ ∈ Rdh to replace the first input term of MLP X 
+
+> 1
+
+(·, ·).
+
+MHA: For ease of expression, the index t is omitted. Let 
+
+Nh denote the number of attention heads. The query q[h], the key k[h] 
+
+> n
+
+, and the value v[h] 
+
+> n
+
+at the h-th head are computed as follows: 
+
+q[h] = W[h] 
+
+> Q
+
+c, ∀h = 1 , 2, . . . , N h, (10a) 
+
+k[h] 
+
+> n
+
+= W[h] 
+
+> K
+
+rn, ∀n ∈ N , ∀h = 1 , 2, . . . , N h, (10b) 
+
+v[h] 
+
+> n
+
+= W[h] 
+
+> V
+
+rn, ∀n ∈ N , ∀h = 1 , 2, . . . , N h, (10c) where q[h], k[h] 
+
+> n
+
+, and v[h] 
+
+> n
+
+are all dv-dimensional vectors, dv =
+
+dh/N h, and W[h] 
+
+> Q
+
+, W[h] 
+
+> K
+
+, and W[h] 
+
+> V
+
+are trainable matrices. After that, we compute the relevance scores be-tween the query and all keys. For each decoding step t, we define an available SP set as ¯N ≜n
+
+n ∈ N pn − pam(t′) ≥ dmin , ∀t′ < t 
+
+o
+
+. As such, the rele-vance score with respect to the n-th SP is obtained as 
+
+u[nh] 
+
+> n
+
+=
+
+
+
+(q[nh])T k[nh]
+
+> n
+> √dv
+
+, if n ∈ ¯N ,
+
+−∞ , otherwise ,
+
+(11) where we mask the SPs that have already been chosen or violate the distance constraint (2c) by setting their score as minus infinity. Consequently, we update the context vector by aggregating the value of each SP with the normalized relevance score serving as the corresponding weight: 
+
+ˆc =
+
+> Nh
+
+X
+
+> h=1
+
+"
+
+W[h]
+
+> O
+> N
+
+X
+
+> n=1
+
+eu[h]
+
+> n
+
+PNn′=1 eu[h]
+
+> n′
+
+v[h]
+
+> n
+
+!# 
+
+, (12) where the trainable matrix W[h] 
+
+> O
+
+∈ Rdh×dv maps the multiple aspects generated by MHA back to a unified space. 
+
+Pointer: In the Pointer module, we first adopt a single-head attention mechanism to compute the compatibilities between the updated context vector ˆc and all the SPs as 
+
+un =
+
+(
+
+C · tanh 
+
+ qT kn√dh
+
+
+
+, if n ∈ ¯N ,
+
+−∞ , otherwise , (13) where q = WQˆc and kn = WKrn with trainable matrices 
+
+WQ ∈ Rdh×dh and WK ∈ Rdh×dh , and the compatibili-ties are clipped within [−C, C ] with a hyper-parameter C.Again, we use minus infinity to mask the SPs that have been already selected or violate the distance constraints. Finally, the conditional probability is obtained by normalizing the compatibilities as 
+
+p(am(t) = n | A t−1, h) = eun
+
+PNn′=1 eun′
+
+, ∀n ∈ N . (14) Correspondingly, am(t) is sampled from (14) during the train-ing process to enhance exploration. 
+
+B. Design of Fw(·, ·)
+
+We first exploit the optimal solution structure [13]: 
+
+wk =√pk
+
+
+
+IM + KP
+
+> i=1
+> μi
+> σ2
+> k
+
+hi(A)hi(A)H
+
+−1
+
+hk(A)
+
+
+
+IM + KP
+
+> i=1
+> μi
+> σ2
+> k
+
+hi(A)hi(A)H
+
+−1
+
+hk(A)
+
+,
+
+∀k ∈ K ,
+
+(15) where μ ≜ [μ1, μ 2, . . . , μ K ]T ∈ RK 
+
+> +
+
+and p ≜
+
+[p1, p 2, . . . , p K ]T ∈ RK 
+
+> +
+
+are unknown parameters and should satisfy PKk=1 μk = PKk=1 pk = Pmax such that (2d) can be satisfied. Exploiting this solution structure can simplify the mapping to be learned by the NN, by decreasing the number of unknown parameters from 2KM to 2K.The remaining task is to predict these low-dimensional parameters. For this purpose, we adopt the ENGNN, which consists of two types of nodes, i.e., M MA-nodes and K UE-nodes, and there exists an edge between each MA-node and each UE-node. The edge features are initialized as 
+
+ˆe[0]  
+
+> mk
+
+= MLP W 
+
+> 1
+
+(ℜ{ [hk(A)] m}, ℑ{ [hk(A)] m}),
+
+∀k ∈ K , m ∈ M , (16) and the node features {ˆf [0] 
+
+> MA ,m
+
+}m∈M and {ˆf [0] 
+
+> UE ,k
+
+}k∈K are initialized as zero. Similar to (6)-(8), after LW layers’ update, we obtain μ and p by 
+
+[μk, p k]T = FC (ˆf [LW] 
+
+> UE ,k
+
+), ∀k ∈ K , (17a) 
+
+μ ← Pmax · softmax (μ), (17b) 
+
+p ← Pmax · softmax (p), (17c) where FC (·) is a fully-connected layer, and the softmax activation is employed to normalize μ and p. Finally, μ and 
+
+p are substituted to (15) to get w.
+
+C. Joint Training of Fp(·) and Fw(·, ·)
+
+Based on the probabilistic modeling of p(A| h) in Fp(·), the joint training problem can be formulated as 
+
+max 
+
+> θp,θw
+
+J(θp, θw) = Eh,A∼ p(A| h)[R(A, w; h)] , (18) where θp and θw denote the trainable parameters of Fp(·) and 
+
+Fw(·, ·), respectively, and the original constraints in (2b)-(2d) 
+
+Algorithm 1 Joint Training of Fp(·) and Fw(·, ·) 
+
+> 1:
+
+Input number of epochs N e, steps per epoch N s, and batch size B 
+
+> 2:
+
+Initialize θp and θw 
+
+> 3:
+
+for epoch = 1 , 2, . . . , N e do  
+
+> 4:
+
+for step = 1 , 2, . . . , N s do  
+
+> 5:
+
+Select a batch of input {h} from the training dataset  
+
+> 6:
+
+Output p(A| h), A, and w corresponding to each training sample h 
+
+> 7:
+
+θw ← Adam (θw, −∇ θw J(θp, θw))  
+
+> 8:
+
+θp ← Adam (θp, −∇ θp J(θp, θw))  
+
+> 9:
+
+end for  
+
+> 10:
+
+end for 
+
+are satisfied through the design of Fp(·) and Fw(·, ·). Next, we show how to update θp and θw.
+
+1) Update of θp: Since A is sampled according to p(A| h),
+
+R(A, w; h) is non-differentiable with respect to θp. However, since p(A| h) itself is differentiable with respect to θp, we can calculate the gradient of J(θp, θw) with respect to θp using the Policy-Gradient strategy [14]: 
+
+∇θp J(θp, θw) = Eh
+
+ X
+
+> A∼ p(A| h)
+
+R(A, w; h)∇θp p(A | h)
+
+
+
+= Eh
+
+ X
+
+> A∼ p(A| h)
+
+R(A, w; h)p(A| h)∇θp log p(A | h)
+
+
+
+= Eh,A∼ p(A| h)
+
+R(A, w; h)∇θp log p(A | h) .
+
+(19) Then, θp is updated to maximize (18) by a mini-batch stochas-tic gradient ascent algorithm, which can be implemented with the Adam optimizer [15]. 
+
+2) Update of θw: Since R(A, w; h) is differentiable with respect to w and consequently with respect to θw, we can compute the gradient of J(θp, θw) with respect to θw by 
+
+∇θw J(θp, θw) = Eh,A∼ p(A| h) [∇θw R (A, w; h)] . (20) Consequently, θw is updated to maximize (18) by a mini-batch stochastic gradient ascent algorithm using the Adam optimizer. The joint training algorithm is summarized in Algorithm 1, where the negative gradient is adopted in lines 7 and 8 to set a gradient ascent update in the Adam optimizer. After training, Fp(·) and Fw(·, ·) with parameters θp and θw are used to predict A and w given any h. The proposed overall DL framework is summarized in Fig. 2. IV. N UMERICAL RESULTS 
+
+In this section, we evaluate the performance of the proposed DL framework via numerical results. We consider an MA-aided system where the BS is equipped with [4 , 9] MAs to serve 4 single-antenna UEs. The size of the 2D rectangular transmit area is 2λ×2λ, where each side is uniformly sampled with [5 , 8] points, resulting in {25 , 36 , 49 , 64 } SPs, and the wavelength λ = 60 mm. The minimum distance between Fig. 2. Structure of our proposed DL framework. 
+
+every two MAs is set as dmin = 30 mm. The distance between the k-th UE and the BS, denoted as Dk, is uniformly distributed within [100 , 200] in meters. The noise power is set as −100 dBm. We consider the field-response channel model (see (3)-(6) in [1]) where {˜hk}k∈K is determined by the positions of SPs, the path-response matrix Σk ≜ diag 
+
+n
+
+[η1k, η 2k, . . . , η Lrk]T o
+
+,the elevation angle of departure (AoD) {θk,l t }K,L t
+
+> k=1 ,l t=1
+
+, and the azimuth AoD {ϕk,l t }K,L t
+
+> k=1 ,l t=1
+
+, where Lt = Lr = 16 
+
+are the numbers of transmit paths and receive paths, re-spectively, and ηlrk follows complex Gaussian distribution 
+
+CN  0, L 0D−αk
+
+ with L0 = 34 .5 dB and α = 3 .67 . Besides, the probability density function of AoDs is fAoD (θk,l t , ϕ k,l t ) = cos θk,l t /2π, θ k,l t ∈ [−π/ 2, π/ 2] , ϕ k,l t ∈ [−π/ 2, π/ 2] .For the proposed NN model, all the MLPs are implemented by 2 linear layers, each followed by a ReLU activation function. The encoder of Fp(·) has LE = 3 layers, with 
+
+nemb = 128 and dh = 256 . The number of heads in the MHA model is Nh = 8 . The clipping logit is set to C = 8 .Moreover, Fw(·, ·) has LW = 3 hidden layers, each with a hidden dimension of 64. In the training procedure, the number of epochs is set to 100, where each epoch consists of 50 mini-batches with a batch size of 1024 . A learning rate 10 −4 is adopted to update the trainable parameters θp and θw through Algorithm 1 using the Adam optimizer. After training, we test the performance of the proposed DL framework on a testing set comprising 1000 samples. The implementation of the experiment is under the PyTorch version 2.1.2+cu12, operating on an NVIDIA GeForce GTX 4090 GPU. We consider four baselines for comparison:                 
+
+> We assume that the elevation AoD {θk,l t}K,L t
+> k=1 ,l t=1 ,azimuth AoD
+> {ϕk,l t}K,L t
+> k=1 ,l t=1 , and the path response coefficients {ηlrk}K,L r
+> k=1 ,l r=1 are perfectly estimated [16], enabling the perfect recovery of the channel h.
+> •
+
+Random+WMMSE: This method involves randomly se-lecting M elements from N to construct A. If A violates the constraints in (2c), the selection is repeated until the constraints are satisfied. Subsequently, with the MA positions determined, w is computed using the WMMSE algorithm [17].  
+
+> •
+
+Strongest+WMMSE: For this approach, the average channel gain of each SP with respect to all K UEs is first calculated and treated as the equivalent channel gain for that SP. The SPs exhibiting the strongest channel gains are then selected iteratively over M steps, with SPs violating (2c) masked in each step. Following the positioning, w
+
+is obtained via the WMMSE algorithm.  
+
+> •
+
+Strongest+ZF: This method combines strongest-channel-based positioning with the zero-forcing beamforming [18].  
+
+> •
+
+FP-C: We modify an approach that jointly optimizes continuous antenna positioning and beamforming for MA-aided systems [6]. To obtain discrete antenna posi-tions that satisfy the discrete constraints in (2c), in each iteration of FP-C we project the position of each MA to its nearest discrete SP that satisfies (2c) sequentially. We first compare the sum rate performance under different power budgets. In Fig. 3, with M = 6 and N = 49 , it can be observed that Random+WMMSE and Strongest+ZF 
+
+perform badly due to their heuristic antenna positioning and beamforming strategies, respectively. Moreover, the proposed DL framework outperforms all baselines particularly at higher transmit power. This demonstrates the great capability of the proposed framework in mitigating interference, particularly when inter-user interference becomes stronger. Next, we compare the average computation time across various approaches. It can be observed from Table I that the computation time of the proposed DL framework is substan-tially shorter than the iterative optimization-based methods, including WMMSE and FP-C .Fig. 3. The sum rate performance comparison under different power budgets when M = 6 and N = 49 .TABLE I COMPARISON OF AVERAGE COMPUTATION TIME 
+
+Method Time (ms) Strongest+ZF 3.26 Random+WMMSE 644.37 Strongest+WMMSE 644.66 FP-C 3682.82 Proposed 7.89 
+
+(a) Under different M ’s. (b) Under different N ’s. Fig. 4. The sum rate performance of our proposed DL framework under different M ’s and N ’s. 
+
+Finally, we evaluate the performance of the proposed DL framework across a range of system settings. We first set 
+
+Pmax = 20 dBm and N = 49 , and plot the sum rate against 
+
+M in Fig. 4(a). As observed, the proposed DL framework achieves highest sum rates across different values of M . Next, in Fig. 4(b), we plot the sum rate against N when Pmax = 20 
+
+dBm and M = 6 . As observed from Fig. 4(b), the proposed DL framework achieves superior performance across different values of N . In contrast to heuristic positioning methods such as Strongest and Random which perform poorly, our proposed method achieves the best performance no matter when the number of SPs is limited, or when the number of SPs is sufficient but with more challenging constraints. V. CONCLUSION 
+
+In this paper, we have proposed a novel DL framework for solving the discrete antenna positioning and beamforming design problem in MA-aided multi-user systems. First, an encoder-decoder-based positioning NN has been developed to determine the MA positions, incorporating a sequential decoding strategy with a mask design to handle the discrete variables and the coupled distance constraints. Subsequently, the continuous variables are optimized using a beamforming NN, which leverages an ENGNN model informed by an optimal solution structure. Furthermore, we have introduced a joint training algorithm to jointly optimize the positioning NN and the beamforming NN. Numerical results have shown that the proposed end-to-end DL framework outperforms baseline approaches with much faster computation speed. REFERENCES [1] L. Zhu, W. Ma, and R. Zhang, “Modeling and performance analysis for movable antenna enabled wireless communications,” IEEE Trans. on Wireless Commun. , vol. 23, no. 6, pp. 6234–6250, 2024. [2] K.-K. Wong, A. Shojaeifard, K.-F. Tong, and Y. Zhang, “Fluid antenna systems,” IEEE Trans. on Wireless Commun. , vol. 20, no. 3, pp. 1950– 1962, 2021. [3] W. Ma, L. Zhu, and R. Zhang, “MIMO capacity characterization for movable antenna systems,” IEEE Trans. on Wireless Commun. , vol. 23, no. 4, pp. 3392–3407, 2024. [4] L. Zhu, W. Ma, B. Ning, and R. Zhang, “Movable-antenna enhanced multiuser communication via antenna position optimization,” IEEE Trans. on Wireless Commun. , vol. 23, no. 7, pp. 7214–7229, 2024. [5] Y. Jin, Q. Lin, Y. Li, and Y.-C. Wu, “Handling distance constraint in movable antenna aided systems: A general optimization framework,” in IEEE Int. Workshop Signal Process. Advances Wireless Commun. (SPAWC) , 2024. [6] Z. Cheng, N. Li, J. Zhu, X. She, C. Ouyang, and P. Chen, “Sum-rate maximization for fluid antenna enabled multiuser communications,” 
+
+IEEE Commun. Letters , vol. 28, no. 5, pp. 1206–1210, 2024. [7] W. Mei, X. Wei, B. Ning, Z. Chen, and R. Zhang, “Movable-antenna po-sition optimization: A graph-based approach,” IEEE Wireless Commun. Letters , vol. 13, no. 7, pp. 1853–1857, 2024. [8] W. Mei, X. Wei, Y. Liu, B. Ning, and Z. Chen, “Movable-antenna position optimization for physical-layer security via discrete sampling,” in IEEE Globe Commun. Conf. (GLOBECOM) , 2024. [9] Y. Wu, D. Xu, D. W. K. Ng, W. Gerstacker, and R. Schober, “Movable antenna-enhanced multiuser communication: Jointly optimal discrete antenna positioning and beamforming,” in IEEE Globe Commun. Conf. (GLOBECOM) , 2023. [10] X. Shao, R. Zhang, Q. Jiang, and R. Schober, “6D movable antenna en-hanced wireless network via discrete position and rotation optimization,” 
+
+IEEE J. Sel. Areas Commun. , vol. 43, no. 3, pp. 674–687, 2025. [11] Y. Wang, Y. Li, Q. Shi, and Y.-C. Wu, “ENGNN: A general edge-update empowered GNN architecture for radio resource management in wireless networks,” IEEE Trans. on Wireless Commun. , vol. 23, no. 6, pp. 5330–5344, 2024. [12] I. Bello, H. Pham, Q. V. Le, M. Norouzi, and S. Bengio, “Neural combinatorial optimization with reinforcement learning,” in Int. Conf. on Learn. Representations (ICLR) , 2017. [13] E. Bj¨ ornson, M. Bengtsson, and B. Ottersten, “Optimal multiuser trans-mit beamforming: A difficult problem with a simple solution structure,” 
+
+IEEE Signal Process. Mag. , vol. 31, no. 4, pp. 142–148, 2014. [14] R. Williams, “Simple statistical gradient-following algorithms for con-nectionist reinforcement learning,” Mach. Learn. , 1992. [15] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” 
+
+arXiv:1412.6980 , 2014. [16] W. Ma, L. Zhu, and R. Zhang, “Compressed sensing based channel esti-mation for movable antenna communications,” IEEE Commun. Letters ,vol. 27, no. 10, pp. 2747–2751, 2023. [17] S. S. Christensen, R. Agarwal, E. De Carvalho, and J. M. Cioffi, “Weighted sum-rate maximization using weighted MMSE for MIMO-BC beamforming design,” IEEE Trans. on Wireless Commun. , vol. 7, no. 12, pp. 4792–4799, 2008. [18] Q. Spencer, A. Swindlehurst, and M. Haardt, “Zero-forcing methods for downlink spatial multiplexing in multiuser mimo channels,” IEEE Trans. on Signal Process. , vol. 52, no. 2, pp. 461–471, 2004.

@@ -1,0 +1,603 @@
+Title: BeamAgent: LLM-Aided MIMO Beamforming with Decoupled Intent Parsing and Alternating Optimization for Joint Site Selection and Precoding
+
+URL Source: https://arxiv.org/pdf/2603.18855v1
+
+Published Time: Fri, 20 Mar 2026 01:07:41 GMT
+
+Number of Pages: 11
+
+Markdown Content:
+> 1
+
+# BeamAgent: LLM-Aided MIMO Beamforming with Decoupled Intent Parsing and Alternating Optimization for Joint Site Selection and Precoding 
+
+Xiucheng Wang, Yue Zhang, Nan Cheng 
+
+Abstract —Integrating large language models (LLMs) into wire-less communication optimization is a promising yet challenging direction. Existing approaches either use LLMs as black-box solvers or code generators, tightly coupling them with numerical computation. However, LLMs lack the precision required for physical-layer optimization, and the scarcity of wireless training data makes domain-specific fine-tuning impractical. We propose BeamAgent, an LLM-aided MIMO beamforming framework that explicitly decouples semantic intent parsing from numerical optimization. The LLM serves solely as a semantic translator that converts natural language descriptions into structured spatial constraints. A dedicated gradient-based optimizer then jointly solves the discrete base station site selection and continuous precoding design through an alternating optimization algorithm. A scene-aware prompt enables grounded spatial reasoning without fine-tuning, and a multi-round interaction mechanism with dual-layer intent classification ensures robust constraint verification. A penalty-based loss function enforces dark-zone power constraints while releasing optimization degrees of freedom for bright-zone gain maximization. Experiments on a ray-tracing-based urban MIMO scenario show that BeamAgent achieves a bright-zone power of 84.0 dB, outperforming exhaustive zero-forcing by 7.1 dB under the same dark-zone constraint. The end-to-end system reaches within 3.3 dB of the expert upper bound, with the full optimization completing in under 2 s on a laptop. 
+
+Index Terms —MIMO beamforming, base station site selection, large language model (LLM), intent parsing, wireless agent. 
+
+I. I NTRODUCTION 
+
+# MULTIPLE-INPUT multiple-output (MIMO) beamform-ing is a key enabler for spectral efficiency and spatial multiplexing in fifth-generation (5G) and sixth-generation (6G) wireless systems [1], [2]. In practical deployments, beamform-ing optimization involves two coupled decisions: discrete base station (BS) site selection and continuous precoding matrix design. These decisions rely heavily on accurate channel knowledge, which can be obtained from site-specific radio environment characterization such as channel knowledge maps [3], [4] or radio propagation models [5], [6]. As 6G networks move toward environment-aware communication [7]–[9], the demand for efficient and accessible optimization tools continues to grow. Conventionally, engineers must manually translate deployment objectives into mathematical constraints, screen 
+
+This work was supported by the National Key Research and Development Program of China (2024YFB907500). Xiucheng Wang, Yue Zhang, and Nan Cheng are with the State Key Labora-tory of ISN and School of Telecommunications Engineering, Xidian University, Xi’an 710071, China (e-mail: {xcwang 1,25011210995 }@stu.xidian.edu.cn; dr.nan.cheng@ieee.org); (Corresponding author: Nan Cheng.) .
+
+candidate BS locations, and tune algorithm parameters. This process demands deep domain expertise and considerable time. Recent advances in large language models (LLMs) have demonstrated strong capabilities in natural language understanding and structured reasoning [10]. Several studies have explored the integration of LLMs with wireless network optimization [11]–[13], opening up a promising direction for lowering the barrier of access to complex beamforming design. Several recent studies have explored this direction from different perspectives. ComAgent [14] employs a multi-LLM collaborative architecture in which literature, planning, cod-ing, and scoring agents cooperatively generate solver-ready formulations and simulation code. WirelessAgent [15] builds a cognitive loop of perception, memory, planning, and action for autonomous network slicing management. WirelessAgent++ [16] further automates agent workflow design using Monte Carlo tree search. The prompt-engineering-based real-time feedback and verification framework [17] uses LLMs to directly output physical-layer optimization solutions and iteratively refines them through system feedback. CommLLM [18] coor-dinates multiple agents for knowledge retrieval, collaborative planning, and solution evaluation in communication system design. In addition, NetLLM [19] adapts LLMs to networking tasks through fine-tuning, and in-context learning has been explored for power control [20]. LLMs have also been applied to resource allocation [21], [22] and power control [23]. These works demonstrate the potential of LLMs in wireless network optimization from various angles. Despite their differences in architecture, these methods share a common design pattern: the LLM is deeply involved in the numerical computation process. Specifically, existing ap-proaches assign the LLM one of three roles. The first is a code generator that produces optimization algorithms. The second is a black-box solver that directly outputs numerical solutions. The third is a decision engine that autonomously determines network configurations in a reasoning loop. This coupling introduces three problems. LLM outputs lack the numerical precision required for physical-layer optimization. Constraint satisfaction cannot be guaranteed due to the stochastic nature of LLM inference. System behavior becomes difficult to debug and reproduce. Furthermore, autonomous reasoning loops such as ReAct introduce unpredictability that is undesirable for beamforming tasks where numerical accuracy is critical. A natural remedy might be to fine-tune LLMs on wireless-specific datasets so that they acquire domain knowledge for nu-merical tasks. However, labeled training data for physical-layer 
+
+> arXiv:2603.18855v1 [cs.IT] 19 Mar 2026 2
+
+optimization are extremely scarce. Unlike natural language corpora, generating ground-truth pairs of channel conditions and optimal precoding vectors requires expensive ray-tracing simulations [6] or field measurements. Existing efforts to build telecom-specific LLMs, such as TelecomGPT [24] and WirelessGPT [25], have demonstrated the difficulty of curating sufficient domain data. At the same time, general-purpose LLMs trained on internet text lack knowledge of channel models, antenna array responses, and propagation physics [13]. Although recent work has attempted to adapt LLMs for path loss prediction [26] and multipath generation [27], these efforts require specialized fine-tuning and remain limited to narrow subtasks. Directly applying general-purpose LLMs to beamforming optimization leads to physically implausible outputs. Our key insight is that LLMs excel at semantic understanding and spatial reasoning, while wireless domain knowledge is more naturally embedded in signal processing algorithms and physics-based channel models [3], [28], [28]–[30]. Rather than forcing domain knowledge into the LLM through scarce data, we propose to decouple the two capabilities. Based on this insight, we propose BeamAgent, an LLM-aided MIMO beamforming framework that explicitly separates intent understanding from numerical optimization. The LLM serves solely as a semantic translator that converts natural language into structured constraints, a task well within its pre-trained capabilities. The optimization engine, which encodes wireless domain knowledge through the channel model and the objective function, independently handles numerical solving. BeamAgent adopts a deterministic pipeline architecture consisting of four functional stages. In the first stage, an LLM parses the user’s natural language input into a structured constraint set. A scene-aware prompt embeds the map geometry, receiver coordinates, and semantic-to-spatial mapping rules into the LLM context, enabling grounded spatial reasoning without domain-specific fine-tuning. In the second stage, a multi-round interaction mechanism allows the user to verify and refine the parsed constraints. An ASCII grid preview provides intuitive spatial visualization, and a dual-layer intent classifier combines LLM-based classification with keyword-rule fallback to ensure robustness when the LLM service is unavailable. In the third stage, an alternating optimization algorithm jointly solves the discrete BS site selection and continuous precoding design. A vectorized parallel search evaluates all candidate transmitter locations simultaneously, followed by gradient descent for precoding refinement. A penalty-based reformulation converts the dark-zone power constraint into a smooth surrogate that releases optimization degrees of freedom once the constraint is satisfied. In the fourth stage, the system generates visualization results and performance analysis. Throughout the entire pipeline, the LLM is invoked only in the first two stages. Its output passes through a deterministic post-processing chain before entering the optimizer. The optimization engine runs entirely independent of the LLM, ensuring that solution quality is unaffected by LLM inference variability. The main contributions of this paper are summarized as follows. 1) We propose BeamAgent, the first LLM-aided MIMO beamforming framework that explicitly decouples se-mantic intent parsing from numerical optimization. The LLM acts as a semantic translator that converts natural language descriptions into structured constraints. Adedicated optimization engine independently performs numerical solving. This separation eliminates the impact of LLM numerical hallucinations on optimization results and ensures reproducible system behavior. 2) We design a scene-aware prompt engineering scheme and a robust multi-round interaction mechanism. The prompt encodes the complete physical environment into the LLM context, enabling grounded spatial reasoning without fine-tuning. A dual-layer intent classifier with LLM-based classification and keyword-rule fallback ensures reliable constraint verification even under LLM service unavailability. An incremental constraint update mech-anism allows the LLM to perform delta modifications on existing constraints, maintaining consistency across interaction rounds. 3) We propose an alternating optimization algorithm for joint BS site selection and precoding design. The frame-work combines vectorized exhaustive search for discrete site selection with gradient descent for continuous precod-ing refinement. A penalty-based reformulation converts the dark-zone power constraint into a smooth surrogate loss. The conditional penalty term vanishes once the constraint is satisfied, releasing optimization degrees of freedom for bright-zone gain maximization. 4) We validate BeamAgent in an urban scenario of 224 m 
+
+× 222 m with a 4 ×4 MIMO configuration. Experimental results show a bright-zone power of 84.0 dB, outperform-ing exhaustive zero-forcing by 7.1 dB under the same dark-zone constraint. The end-to-end system reaches within 3.3 dB of the expert upper bound, with the full optimization completing in under 2 s on a laptop. The remainder of this paper is organized as follows. Section II reviews the related work. Section III presents the system model and problem formulation. Section IV describes the proposed BeamAgent framework. Section V provides numerical results and analysis. Section VI concludes the paper. II. R ELATED WORK 
+
+A. LLM-Aided Wireless Network Optimization 
+
+The integration of LLMs into wireless communication has evolved rapidly since 2023 [12], [13]. Early work focused on in-context learning (ICL), where LLMs make optimization de-cisions through prompting alone. Zhou et al. [20] demonstrated that formatting power control problems as natural language prompts with demonstration examples enables performance comparable to deep reinforcement learning. The LLM-xApp framework [22] applied optimization by prompting to O-RAN resource management, becoming the first LLM-powered xApp validated on a real 5G testbed. LLMs have also been explored for adaptive resource allocation [21] and power control [23] using prompt-based approaches. A parallel line of research has pursued domain-specific fine-tuning. TelecomGPT [24] established a pipeline for adapting 3
+
+general-purpose LLMs to telecom through continual pre-training on 3GPP documents and instruction tuning. Wire-lessGPT [25] proposed a generative pre-trained multi-task framework for wireless communication. Recent work has also attempted to adapt LLMs for physical-layer tasks such as path loss prediction [26] and multipath generation [27]. These fine-tuned methods achieve higher accuracy than prompting but require task-specific training data that is expensive to obtain in the wireless domain. Multi-agent architectures have become the dominant paradigm for complex wireless tasks [11]. WirelessAgent [15] implements a cognitive loop of perception, memory, planning, and action via LangGraph for network slicing management. ComAgent [14] coordinates five specialized agents in aperception-planning-action-reflection loop, achieving a 72% solution success rate across 25 wireless tasks including MIMO beamforming. WirelessAgent++ [16] further automates agent workflow design itself using Monte Carlo tree search over workflow topologies. CommLLM [18] deploys multi-agent retrieval, planning, and evaluation for communication system design. The PE-RTFV framework [17] uses a dual-LLM architecture where one LLM generates structured prompts and another produces physical-layer solutions through iterative feedback. Despite the diversity of these approaches, they share a common pattern: the LLM is deeply involved in the numerical computation process. In ICL and prompt-based methods, the LLM directly outputs numerical solutions whose precision is limited by tokenization. In fine-tuned models, the LLM replaces the conventional solver entirely. In multi-agent systems, the LLM either generates optimization code or autonomously makes decisions in a reasoning loop. BeamAgent departs from all three paradigms by restricting the LLM to semantic intent parsing and delegating all numerical computation to a dedicated optimization engine. 
+
+B. Joint BS Site Selection and Precoding Optimization 
+
+Joint transmitter placement and precoding design is a classical problem in wireless network planning [31]. Con-ventional approaches decouple the two variables and solve them sequentially: the BS location is first determined through coverage analysis or combinatorial search, and the precoding matrix is then optimized for the fixed location. Alternating optimization has been widely used in related joint design problems, such as joint IRS phase shift and precoding [32] and joint antenna position and beamforming in movable antenna systems [33]. Radio environment characterization through channel knowledge maps [3], [4] and radio map construction [28], [34], [35] provides the channel data foundation for such optimization. Ray-tracing simulators [6] enable site-specific propagation prediction but are computationally expensive. Data-driven methods have been applied to BS placement in recent years. Mallik and Villemaud [36] proposed a deep rein-forcement learning framework for EMF-aware BS deployment using a conditional GAN as a digital twin. TelePlanNet [37] applied LLMs with reinforcement learning for site selection, achieving 78% planning-construction consistency. Qiu et al. [38] created an LLM-based wireless network design method integrated with ray-tracing propagation models, demonstrat-ing the potential of LLMs in combinatorial site placement optimization. However, existing joint optimization methods universally assume that the optimization constraints are specified by domain experts in advance. Which receivers should be enhanced, which should be suppressed, and where the transmitter may be placed are treated as given inputs. No prior work has addressed the front-end problem of extracting these constraints from natural language descriptions. BeamAgent fills this gap by integrating LLM-based intent parsing as a first-class component of the optimization pipeline. 
+
+C. LLM-Based Intent Understanding for Network Optimization 
+
+Intent-driven networking has attracted increasing attention as a means to lower the barrier of network management. Mekrache et al. [39] proposed an LLM-centric approach for intent-based management of next-generation networks, demonstrating natural language to network service descriptor translation. The Confucius framework [40] presented multi-agent LLM intent-driven network management at ACM SIGCOMM 2025. Wang et al. [41] proposed the NetConfEval framework that employs fine-tuned GPT models to translate network requirements into JSON and API calls for network configuration. These intent-driven systems focus on network-layer tasks such as service orchestration, slice configuration, and protocol automation. The translation target is typically a network descriptor or an API call, which operates at a higher level of abstraction than physical-layer optimization parameters. In contrast, BeamAgent requires the LLM to perform spatial reasoning over a physical coordinate system. The translation target is a set of geometric constraints, including bounding box coordinates and maximize/minimize objectives, that directly pa-rameterize a beamforming optimization problem. This grounded spatial reasoning task differs fundamentally from the network-layer intent parsing addressed by prior work and demands a scene-aware prompt design that encodes the deployment geometry into the LLM context. 
+
+D. Summary and Positioning of This Work 
+
+Table I summarizes the key differences between BeamAgent and representative existing methods. Three distinguishing features are highlighted. First, BeamAgent explicitly decouples the LLM from nu-merical optimization. Existing methods assign the LLM a computational role as a code generator, a black-box solver, or an autonomous decision engine. BeamAgent restricts the LLM to semantic intent parsing. All numerical computation is performed by a dedicated gradient-based optimizer. This separation eliminates the impact of LLM numerical imprecision on solution quality. Second, BeamAgent operates at the physical layer and jointly optimizes BS site selection and precoding design. Most LLM-aided wireless systems target network-layer tasks such as resource allocation, slicing, or protocol automation. 4
+
+Joint site selection and beamforming over site-specific ray-tracing channels has not been addressed by prior LLM-aided frameworks. Third, BeamAgent introduces grounded spatial reasoning into the LLM pipeline. Existing intent-driven systems translate natural language into network descriptors or API calls. BeamA-gent translates natural language into geometric constraints over a physical coordinate system. This requires the LLM to align semantic region descriptions with precise spatial coordinates, a capability enabled by our scene-aware prompt design without domain-specific fine-tuning. III. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+A. Physical Scenario and Ray-Tracing Data 
+
+We consider a urban area of size Lx × Ly operating at carrier frequency fc. A total of S receivers, referred to as Sites, are deployed at known fixed locations within the area. Each Site is indexed by s ∈ { 1, . . . , S } with coordinates 
+
+(xs, y s). The transmitter is a single BS to be placed at one of 
+
+M candidate grid points. Each candidate location is indexed by m ∈ { 1, . . . , M } with coordinates (xm, y m). Both the transmitter and the receivers are equipped with N -element uniform linear arrays (ULAs) with half-wavelength spacing 
+
+d = λ/ 2.Site-specific propagation data are obtained from ray-tracing simulations. For each Site s, the simulator provides multipath information to all M candidate grid points. Each path l is characterized by its field strength El in dB μV/m, phase φl in radians, departure angles (ϕd 
+
+> l
+
+, θ d 
+
+> l
+
+), and arrival angles (ϕa 
+
+> l
+
+, θ a 
+
+> l
+
+).Here ϕ denotes the azimuth angle and θ denotes the elevation angle. The number of resolvable paths per grid point varies depending on the local scattering environment. 
+
+B. Ray-Tracing-Based MIMO Channel Model 
+
+Based on the multipath data, we construct the MIMO channel matrix for each transmitter-receiver pair through coherent superposition. For a given candidate location m and Site s,let Lm,s denote the number of paths. The channel matrix 
+
+Hm,s ∈ CN ×N is given by 
+
+Hm,s =
+
+> Lm,s
+
+X
+
+> l=1
+
+αl arx (ϕa 
+
+> l
+
+, θ a 
+
+> l
+
+) atx (ϕd 
+
+> l
+
+, θ d 
+
+> l
+
+)H , (1) where αl is the complex path gain and arx , atx ∈ CN are the receive and transmit steering vectors, respectively. The complex path gain encodes both the amplitude attenua-tion and the phase rotation of each path: 
+
+αl = 10 El/20 · ejφ l . (2) For an N -element ULA oriented along the reference direction 
+
+θorient , the n-th element of the steering vector is 
+
+[a(ϕ, θ )] n = exp 
+
+
+
+j 2π n dλ u(ϕ, θ )
+
+
+
+, n = 0 , . . . , N −1,
+
+(3) where the spatial frequency is defined as u(ϕ, θ ) = sin θ ·
+
+cos( ϕ − θorient ).In the ray-tracing simulation, each Site acts as the simulated transmitter and the grid points serve as simulated receivers. In our system, however, the grid points are candidate BS locations and the Sites are actual receivers. By electromagnetic reciprocity, the physical channel is obtained as 
+
+Hphy  
+
+> m,s
+
+= HTm,s . (4) All subsequent derivations use HTm,s as the effective channel. To enable gradient-based optimization, we decompose each channel matrix into its real and imaginary parts, i.e., H =
+
+Hr + j Hi. All matrix operations are then expressed in real-valued arithmetic compatible with automatic differentiation frameworks. 
+
+C. From User Intent to Optimization Constraints 
+
+Conventional beamforming formulations assume that the optimization constraints are specified by domain experts in advance. In particular, which Sites should receive enhanced signals, which should be suppressed, and where the BS may be placed are treated as given inputs. In practice, however, such requirements often originate from non-expert users and are expressed in unstructured natural language. For example, a network planner may state “enhance signals at northern receivers and suppress those in the south, with the BS placed in the center.” To make the optimization system accessible to such users, a front-end mapping is required to convert natural language descriptions into structured optimization parameters. We formalize this mapping as 
+
+fparse : T → C = ( B, D, Rtx ) , (5) where T denotes the space of natural language inputs. The output constraint set C consists of three components: B ⊆ {1, . . . , S } is the set of bright Sites whose received power should be maximized, D ⊆ { 1, . . . , S } is the set of dark Sites whose received power should be minimized, and Rtx ⊆{1, . . . , M } is the set of candidate locations where the BS is allowed to be placed. This mapping involves two types of reasoning. The first is spatial grounding, which aligns semantic region descriptions such as “northern” or “center” with physical coordinate ranges. The second is intent classification, which interprets qualitative objectives such as “enhance” or “suppress” into formal maximize or minimize targets. Both tasks require an understanding of the physical deployment scenario and the ability to perform spatial inference. The existence of this front-end parsing problem provides the fundamental motivation for introducing an LLM into the beamforming optimization pipeline. 
+
+D. Joint Optimization Problem Formulation 
+
+Given the constraint set C = ( B, D, Rtx ) obtained from the intent parsing stage, we formulate the joint BS site selection and precoding design problem. The optimization involves two coupled variables: the discrete BS location m∗ ∈ R tx and the continuous precoding vector W ∈ CN ×1.For a given BS location m and Site s, the received power is 
+
+Ps(m, W) = HTm,s W 2 
+
+> F
+
+. (6) 5
+
+TABLE I: Comparison of BeamAgent with representative existing methods. 
+
+Method LLM Role Optimization Layer NL Interface Fine-Tuning Solver 
+
+ComAgent [14] Code generator Task-dependent No No LLM-generated code WirelessAgent [15] Decision engine Network (slicing) Partial No LLM reasoning loop PE-RTFV [17] Black-box solver Physical (constellation) No No LLM output NetLLM [19] End-to-end model Network (scheduling) No Yes Fine-tuned LLM TelecomGPT [24] Domain-adapted LLM Telecom tasks No Yes Fine-tuned LLM TelePlanNet [37] Intent parser + RL Site planning Yes Yes (RL) RL policy Qiu et al. [38] Combinatorial optimizer Site placement No No LLM search 
+
+BeamAgent Semantic translator Physical (beamforming + site) Yes No Dedicated gradient optimizer scenario 
+
+> description
+> mapping
+> rules
+> reasoning
+> examples
+> validation
+> rules
+> output
+> schema
+> reasoning
+> examples
+
+scene-aware prompt Semantic Domain (LLM)  
+
+> Numerical Domain (Optimizer) deterministic
+> post-processing
+
+User  System 
+
+> confirm/ modify
+> constraint summary
+
+Multi-Round Interaction Constraint Parsing 
+
+> maximize
+> minimize
+> Tx feasible region
+> unconstrained
+> maximize / minimize / Tx regions, Site locations
+> Up to K rounds
+
+LLM classifier 
+
+Keyword fallback 
+
+> graceful
+> degradation
+
+Dual-layer intent classification scheme  
+
+> Structured constraint
+> interface 𝓒𝓒
+
+Alternating Optimization 
+
+> Decoupled from LLM- runs independently
+
+Phase A 
+
+Phase B 
+
+𝓡𝓡 𝒕𝒕𝒕𝒕 candidates evaluated in parallel 
+
+> Vectorized TX search
+> R rounds
+
+Adam + cosine 
+
+annealing   
+
+> Iteration
+> loss  𝑾𝑾 normalized to unit sphere
+> Penalty loss
+> penalty loss
+> 𝑷𝑷 𝒔𝒔 ,𝒅𝒅𝒅𝒅
+> degrees of freedom released
+
+Enhance signals at northern receivers, 
+
+suppress the south, BS in the center 
+
+> General-purpose LLM, no fine-tuning
+
+𝓒𝓒 =( 𝓑𝓑 ,𝓓𝓓 ,𝓡𝓡 𝒕𝒕𝒕𝒕 ) 
+
+> bright Site
+> dark Site
+> minimize
+> optimal Tx
+
+S Site locations 
+
+output JSON 
+
+constraint set 
+
+(𝓑𝓑 ,𝓓𝓓 ,𝓡𝓡 𝒕𝒕𝒕𝒕 )
+
+Fig. 1: Overview of the BeamAgent framework. The system consists of three functional stages separated into two domains by the structured constraint interface C = ( B, D, Rtx ). In the semantic domain (left), an LLM parses natural language input into spatial constraints via a scene-aware prompt, followed by multi-round interaction with dual-layer intent classification for constraint verification. In the numerical domain (right), an alternating optimization algorithm jointly solves BS site selection (Phase A) and precoding design (Phase B), with a threshold-based penalty that releases optimization degrees of freedom once the dark-zone constraint is satisfied. The design objective is to maximize the average received power at bright Sites while keeping the power at all dark Sites below a prescribed threshold T . The joint optimization problem is formulated as 
+
+max  
+
+> m, W
+
+1
+
+|B| 
+
+X
+
+> s∈B
+
+Ps(m, W) (7a) 
+
+s.t. Ps, dB (m, W) ≤ T, ∀ s ∈ D , (7b) 
+
+∥W∥ = 1 , (7c) 
+
+m ∈ R tx , (7d) where Ps, dB = 10 log 10 Ps is the received power in dB scale. Constraint (7b) limits the interference at each dark Site. Constraint (7c) enforces unit transmit power. Constraint (7d) restricts the BS placement to the feasible region specified by the user intent. Problem (7) is a mixed-integer nonconvex optimization. The discrete nature of m precludes gradient-based methods over the site selection variable. The unit-norm constraint on W renders the continuous subproblem nonconvex even for a fixed BS location. Moreover, the two variables are coupled through the channel matrix HTm,s , which depends on the selected location. In Section IV, we present an alternating optimization framework that addresses these challenges. The dark-zone constraint (7b) is handled through a penalty-based reformulation that converts the constrained problem into an unconstrained surrogate suitable for gradient descent. IV. P ROPOSED BEAM AGENT FRAMEWORK 
+
+A. Overall Architecture 
+
+BeamAgent adopts a deterministic pipeline architecture that processes the user’s natural language input and produces the optimized BS location and precoding vector. As illustrated in Fig. 1, the framework consists of four functional stages: constraint parsing, multi-round interaction, alternating optimiza-tion, and result analysis. The first stage invokes the LLM to translate the user’s natural language description into a structured constraint set. The second stage allows the user to verify and refine the parsed constraints through visual previews and iterative feedback. The third stage solves the joint optimization problem (7) using an alternating framework that handles the discrete and continuous variables separately. The fourth stage generates visualizations and computes theoretical performance bounds for benchmarking. A central design principle of BeamAgent is the strict separation between the LLM and the optimization engine. The LLM is invoked only in the first two stages for semantic understanding tasks. Its output is a structured JSON object 6
+
+that passes through a deterministic post-processing chain before entering the optimizer. The optimization engine in the third stage operates entirely independently of the LLM. This decoupled design ensures that solution quality depends solely on the optimization algorithm, not on LLM inference variability. 
+
+B. LLM-Based Constraint Parsing 
+
+The constraint parsing stage implements the mapping fparse 
+
+defined in (5) . We employ a general-purpose LLM without domain-specific fine-tuning. To enable grounded spatial rea-soning, we design a scene-aware system prompt that encodes the complete physical environment into the LLM context. The system prompt consists of five components. The first is a physical scenario description that specifies the map dimensions, the coordinate system definition, and the precise location of each Site. The second is a set of semantic-to-spatial mapping rules that associate natural language region descriptors with coordinate ranges. For instance, “northwest” is mapped to the bounding box covering the upper-left quadrant of the map. A total of ten standard region mappings are predefined to serve as reliable spatial anchors. The third component provides constraint reasoning examples that demonstrate how spatial descriptions are converted into formal constraints. The fourth specifies the output format as a strict JSON schema containing all required fields. The fifth defines validation rules including coordinate range limits and default value handling. Given the user’s natural language input, the LLM generates a JSON object containing three types of constraints. The receiver region constraint specifies a spatial region by its bounding box coordinates and an optimization objective of either maximize or minimize. The transmitter constraint defines the feasible region for BS placement. The receiver antenna constraint optionally specifies the antenna orientation of selected Sites. The LLM output is not used directly. Instead, it passes through a deterministic post-processing chain that performs the following operations in sequence: stripping Markdown formatting, parsing the JSON structure, clipping bounding box coordinates to the map boundary, normalizing objective keywords to canonical forms, filling default values for missing fields, and constructing a type-safe constraint object. This chain corrects minor formatting errors and coordinate deviations in the LLM output before it reaches the optimizer. The predefined mapping rules do not restrict the LLM to a fixed set of regions. When the user’s description does not match any predefined region, the LLM can freely reason about custom bounding box coordinates based on the scenario description. This hybrid design combines the reliability of rule-anchored parsing with the flexibility of free-form spatial reasoning. 
+
+C. Multi-Round Interaction and Intent Classification 
+
+Natural language is inherently ambiguous. A single parsing pass may not fully capture the user’s intent. To address this, we design a multi-round interaction mechanism that allows the user to verify and refine the parsed constraints before optimization begins. After the initial parsing, the system presents a constraint summary together with an ASCII grid preview. The preview renders the constraint set as a character grid where different symbols represent maximize regions, minimize regions, Site locations, and the BS feasible area. The vertical axis is flipped to match the geographic coordinate convention. This visualization enables the user to verify the spatial correctness of the parsed constraints without inspecting the underlying JSON structure. The user then provides feedback in natural language. The system classifies the feedback into one of two intents: confirm or modify. We employ a dual-layer intent classification strategy for robustness. The first layer invokes the LLM to perform semantic classification. The second layer serves as a keyword-rule fallback that activates when the LLM call fails. The fallback matches the user’s input against a set of confirmation keywords and negation markers. A response is classified as confirm only if it matches a confirmation keyword and contains no negation marker. This graceful degradation ensures that the interaction loop remains functional even when the LLM service is temporarily unavailable. If the intent is classified as modify, the system invokes the LLM to perform an incremental constraint update. Rather than re-parsing the entire input from scratch, the current constraint JSON and the user’s modification request are jointly provided to the LLM. The prompt explicitly instructs the LLM to preserve unmodified constraints and change only the parts requested by the user. This delta-update mechanism maintains consistency across interaction rounds and avoids error accumulation from repeated full parsing. The interaction loop continues for up to 
+
+K rounds until the user confirms the constraints. 
+
+D. Penalty-Based Problem Reformulation 
+
+To solve problem (7) using gradient-based methods, we reformulate the constrained optimization into an unconstrained surrogate. The dark-zone constraint (7b) is incorporated into the objective through a penalty term. The unit-norm constraint (7c) is handled by normalizing W at each iteration. The resulting loss function is 
+
+L = − 1
+
+|B| 
+
+X
+
+> s∈B
+
+ln Ps + λ
+
+|D| 
+
+X
+
+> s∈D
+
+[max(0 , P s, dB − T )] 2 , (8) where Ps, dB = 10 log 10 Ps, T is the dark-zone power threshold from (7b) , and λ is the penalty coefficient. The first term max-imizes the average log-power at bright Sites. The logarithmic transformation converts the multiplicative power scale into an additive one, improving numerical stability across the wide dynamic range of received powers. The second term penalizes dark Sites only when their power exceeds T . Once all dark-zone powers satisfy the constraint, the penalty vanishes and the optimizer allocates all spatial degrees of freedom to bright-zone gain maximization. The quadratic form [max(0 , ·)] 2 provides smooth gradients near the threshold boundary. 
+
+E. Alternating Optimization Algorithm 
+
+Problem (7) involves the coupled optimization of a discrete variable m and a continuous variable W. We adopt an alternating optimization strategy that iteratively solves two subproblems. 7
+
+1) Phase A: Vectorized BS Site Search: Given a fixed precoding vector W, the BS site selection reduces to evaluating the loss (8) at each candidate location and selecting the one with the minimum value: 
+
+m∗ = arg min 
+
+> m∈R tx
+
+L(m, W). (9) To avoid iterating over candidates sequentially, we pre-stack the channel matrices of all candidates into a four-dimensional tensor of size |R tx |×|B|× N ×N for bright Sites, and similarly for dark Sites. The tensor is reshaped to merge the candidate and Site dimensions, and the received powers for all candidates are computed through a single batched matrix multiplication. This vectorized evaluation reduces the computational cost from 
+
+O(|R tx |) sequential operations to a single tensor operation. 
+
+2) Phase B: Gradient-Based Precoding Optimization: 
+
+Given a fixed BS location m∗, the precoding optimization becomes a continuous problem over W. We parameterize W
+
+as an unconstrained complex vector with real and imaginary components Wr , Wi ∈ RN ×1 stored as learnable parameters. At each forward pass, W is normalized to unit norm. The received power is computed using real-valued arithmetic: 
+
+(HW )r = Hr Wr − HiWi,
+
+(HW )i = Hr Wi + HiWr , (10) 
+
+Ps = ∥(HW )r ∥2 + ∥(HW )i∥2.
+
+The loss (8) is then minimized using the Adam optimizer with cosine annealing learning rate scheduling. Gradient clipping with a maximum norm of gmax is applied to prevent gradient explosion caused by the logarithmic term at small power values. 
+
+3) Alternating Procedure: The overall algorithm alternates between Phase A and Phase B for R outer rounds with a total of Tstep gradient steps. In each round, Phase A selects the best BS location under the current W, and Phase B refines 
+
+W for Tstep /R gradient steps at the selected location. The Adam optimizer is shared across all rounds without resetting its momentum estimates, which promotes smoother convergence. After the final round of Phase B, a concluding Phase A scan is performed with the converged W to confirm that the BS location is consistent with the final precoding vector. The complete procedure is summarized in Algorithm 1. V. E NPERIMENT RESULTS 
+
+A. Experimental Setup 
+
+We evaluate BeamAgent on an urban scenario with map dimensions Lx = 224 m and Ly = 222 m at carrier frequency 
+
+fc = 2 GHz. The system deploys S = 4 fixed receiver Sites and considers M = 33 ,089 candidate grid points for BS placement. Both the transmitter and receivers are equipped with N = 4 -element ULAs with half-wavelength spacing. Site-specific multipath propagation data are obtained from WinProp ray-tracing simulations. Each Site generates a binary file of 9– 23 MB containing 4–30 paths per grid point. Channel matrices are constructed via the coherent superposition model in (1) and cached in compressed NumPy format. The first computation takes approximately 9 s; subsequent loads from cache complete in 0.3 s. The default optimization hyperparameters are: R = 5 
+
+Algorithm 1 Alternating Optimization for Joint BS Site Selection and Precoding Design 
+
+Require: Channel tensors {Hm,s }, constraint set C =(B, D, Rtx ), outer rounds R, total gradient steps Tstep ,learning rate η, penalty coefficient λ, threshold T , clipping norm gmax 
+
+Ensure: Optimal BS location m∗, precoding vector W∗ 
+
+> 1:
+
+Initialize Wr , Wi ∼ N (0 , 1/N ); normalize W 
+
+> 2:
+
+Create Adam optimizer with learning rate η 
+
+> 3:
+
+Create cosine annealing scheduler with Tmax = Tstep  
+
+> 4:
+
+for r = 1 to R do  
+
+> 5:
+
+Phase A: Compute L(m, W) for all m ∈ R tx via batched tensor operations  
+
+> 6:
+
+m∗ ← arg min m L(m, W) 
+
+> 7:
+
+Extract Hm∗,s for all s ∈ B ∪ D  
+
+> 8:
+
+for t = 1 to Tstep /R do  
+
+> 9:
+
+Phase B: Normalize W ← W/∥W∥ 
+
+> 10:
+
+Compute Ps for all s ∈ B ∪ D via (10)  
+
+> 11:
+
+Compute L via (8)  
+
+> 12:
+
+Backpropagate; clip gradients by gmax  
+
+> 13:
+
+Adam update; scheduler step  
+
+> 14:
+
+end for  
+
+> 15:
+
+end for  
+
+> 16:
+
+Final scan: m∗ ← arg min m L(m, W) 
+
+> 17:
+
+return m∗, W/∥W∥
+
+alternating rounds, Tstep = 400 total gradient steps, learning rate η = 0 .05 , penalty coefficient λ = 0 .1, dark-zone threshold 
+
+T = 30 dB, and gradient clipping norm gmax = 5 .0. The LLM used for constraint parsing and intent classification is Claude Sonnet 4.6, accessed through the OpenAI-compatible API with max tokens of 1024 for parsing and 64 for classification. All optimization experiments are conducted on an Apple M2 MacBook. We compare BeamAgent against five baselines. Random precoding samples a unit-norm vector from CN (0 , I). Exhaus-tive MRT (Exh+MRT) selects the BS location that maximizes bright-zone power using the dominant right singular vector. Exhaustive MMSE (Exh+MMSE) applies minimum mean squared error precoding at each candidate location. Exhaustive ZF (Exh+ZF) projects the MRT solution onto the null space of the dark-zone channel. Signal-to-leakage-plus-noise ratio (SLNR) maximizes the ratio of bright-zone power to dark-zone leakage. To ensure fair comparison, all baselines are post-processed by scaling ∥W∥ so that max s∈D Ps, dB ≤ T .For each Site s, the SVD of Hs yields the per-site achievable range [σ2min ,s , σ 2max ,s ], and the theoretical contrast upper bound is CUB = min s∈B σ2max ,s − max s∈D σ2min ,s . The default test constraint assigns Sites 7 and 8 as bright, Sites 6 and 12 as dark, with the BS restricted to the center region. 
+
+B. Optimization Performance 
+
+Table II compares all methods under the constraint 
+
+T = 30 dB. BeamAgent achieves a mean bright-zone power of 84.0 dB, which is 5.4 dB higher than the second-best Exh+MMSE (78.6 dB) and 7.1 dB higher than Exh+ZF 8
+
+TABLE II: Comparison of constraint-aware precoding methods in a 4-Site scenario with dark-zone threshold T = 30 dB. Methods marked with † are post-processed by scaling ∥W∥ to enforce max s∈D Ps, dB ≤ T . The Scale column indicates the dB reduction applied during post-processing. Method ¯PB (dB) max PD (dB) Scale (dB) Contrast (dB) Random 75.9 30.0 † 19.9 43.2 Exh+MRT 77.8 30.0 † 20.3 48.8 Exh+MMSE 78.6 30.0 † 1.0 57.7 Exh+ZF 76.9 14.5 — 70.1 SLNR 76.4 14.3 — 80.9      
+
+> BeamAgent 84.0 30.0 †0.9 54.2
+
+(76.9 dB). The scale column reveals that the original BeamA-gent output requires only 0.9 dB of post-processing reduction, meaning the optimizer has nearly satisfied the dark-zone constraint on its own. In contrast, Random and Exh+MRT require 19.9 and 20.3 dB of scaling, indicating that these methods do not account for dark-zone suppression. Exh+ZF and SLNR suppress the dark zone to 14.5 and 14.3 dB, far below the threshold, thereby wasting spatial degrees of freedom that could have been used to increase bright-zone gain. Fig. 2 visualizes this tradeoff in a two-dimensional space with ¯PB on the horizontal axis and max PD on the vertical axis. The horizontal dashed line at T = 30 dB separates the feasible region (below) from the infeasible region (above). BeamAgent occupies the rightmost position in the feasible region, confirming that it achieves the highest bright-zone power among all methods that satisfy the dark-zone constraint. Exh+ZF and SLNR lie deep in the feasible region with low dark-zone power but also lower bright-zone power. This illustrates the key advantage of the threshold-based penalty: it drives the optimizer to the constraint boundary rather than over-suppressing the dark zone. Fig. 3 shows the per-site received power at the optimized BS location alongside the SVD theoretical bounds. The bright Sites (7 and 8) achieve 87.4 and 81.8 dB, both close to their respective 
+
+σ2max values. The dark Sites (6 and 12) are suppressed to 30.4 and 31.0 dB, tightly tracking the threshold T = 30 dB. The large gap between σ2max and σ2min at dark Sites indicates that the channel provides sufficient dynamic range for selective suppression. Fig. 4 presents the spatial power distribution after optimiza-tion. The beam pattern concentrates energy toward the bright Sites in the northern region while maintaining low power toward the dark Sites in the south and center. The optimized BS location is marked by a star symbol in the upper-left area. 
+
+C. End-to-End System Evaluation 
+
+To assess the impact of LLM parsing on overall system performance, we compare four integration modes in Table III. Expert+Optimizer uses manually specified constraints with our alternating optimization algorithm, serving as the performance upper bound. BeamAgent replaces the expert with LLM parsing. LLM Direct W asks the LLM to output the precoding vector directly without channel information. LLM Gen Code asks 40 50 60 70 80 90 100 110 
+
+Mean Bright Power ¯PB (dB)    
+
+> -40
+> -20
+> 0
+> 20
+> 40
+> 60
+> 80
+> Max Dark Power  max PD (dB)
+> Infeasible
+> Feasible
+> Threshold T= 30 dB
+> BeamAgent (84.0, 30.0)
+> Exh+MRT (77.8, 30.0)
+> Exh+ZF (76.9, 14.5)
+> Exh+MMSE (78.6, 30.0)
+> SLNR (76.4, 14.3)
+> Random (75.9, 30.0)
+
+Fig. 2: Bright-zone power ¯PB versus maximum dark-zone power max PD for all methods after post-processing. The dashed line marks the dark-zone threshold T = 30 dB. Points below this line are feasible. BeamAgent achieves the highest 
+
+¯PB in the feasible region while operating near the constraint boundary. Site 7    
+
+> (B)
+> Site 8
+> (B)
+> Site 6
+> (D)
+> Site 12
+> (D)
+> -100
+> -50
+> 0
+> 50
+> 100
+> Power (dB)
+> 87.4 81.8
+> 30.4 31.0 T=30dB
+> σ2max
+> σ2min
+
+Fig. 3: Per-site received power (bars) and SVD bounds (triangles) at the optimized BS location. Black triangles ( ▼)denote σ2max and gray triangles ( △) denote σ2min . The dashed line marks T = 30 dB. Bright Sites approach their upper bounds; dark Sites are suppressed to the threshold. the LLM to generate optimization code, which produces an SLNR-based solver. BeamAgent achieves 52.0 dB, within 3.3 dB of the expert upper bound (55.3 dB). The gap is caused by LLM parsing errors in identifying the correct bright/dark Site assignments. Over 10 independent runs, BeamAgent produces a mean contrast of 53.6 dB with a standard deviation of 2.75 dB, indicating reasonable reproducibility. The variance originates from the stochastic nature of LLM inference rather than the optimization algorithm. 90 50 100 150 200 
+
+x (m) 
+
+> 0
+> 25
+> 50
+> 75
+> 100
+> 125
+> 150
+> 175
+> 200
+> y (m)
+> Rx6
+> Rx7
+> Rx8
+> Rx12
+> 40
+> 50
+> 60
+> 70
+> 80
+> 90
+> 100
+> 110
+> Received Power (dB)
+
+Fig. 4: Spatial distribution of received power (dB) in the 224 m 
+
+× 222 m urban scenario after joint optimization. Green circles indicate bright Sites (7, 8); red squares indicate dark Sites (6, 12); the star marks the optimized BS location. The beam pattern steers energy toward the north while suppressing the south and center. TABLE III: Comparison of four LLM integration modes using Claude Sonnet 4.6. Expert+Optimizer serves as the upper bound with manually specified constraints. BeamAgent uses LLM-parsed constraints with the same optimizer. LLM Direct W and LLM Gen Code represent alternative paradigms where the LLM directly participates in numerical computation. Method Contrast (dB) Std (dB) Note Expert+Optimizer 55.3 0.0 Expert constraints                
+
+> BeamAgent 52.0 3.6 LLM parsing + optimizer LLM Direct W 49.4 0.0 LLM outputs Wdirectly LLM Gen Code 80.9 ‡0.0 LLM generates SLNR solver
+> ‡¯PB= 76 .4dB, lower than BeamAgent (84.0 dB); no site selection.
+
+LLM Direct W (49.4 dB) performs worst among the three LLM-involved modes. Without access to channel matrices, the LLM cannot determine meaningful precoding coefficients. This confirms that LLMs are not suitable for direct numerical decision-making in physical-layer optimization. LLM Gen Code produces an SLNR solver that achieves 80.9 dB contrast. How-ever, this high contrast comes at the cost of over-suppressing the dark zone to −4.5 dB, far below the threshold, and achieving a bright-zone power of only 76.4 dB. It also does not perform joint site selection. These results validate the decoupled design of BeamAgent: the LLM handles intent parsing where it excels, and the dedicated optimizer handles numerical solving where precision matters. 
+
+D. LLM Constraint Parsing Evaluation 
+
+We evaluate the constraint parsing accuracy of Claude Sonnet 4.6 on 25 test prompts spanning three difficulty levels: easy (10 prompts with standard region descriptions), medium (8 prompts with compound spatial references), and hard (7 prompts with implicit constraints and ambiguous language). Accuracy is Expert 
+
+> +Optimizer
+> BeamAgent
+> (Ours)
+> LLM
+> Direct W
+> LLM
+> Gen Code
+> 0
+> 10
+> 20
+> 30
+> 40
+> 50
+> 60
+> 70
+> 80
+> Contrast (dB)  55.3
+> 52.0
+> ±3.6
+> 49.4
+> 80.9
+> ±0.0
+> B=86
+> D=31
+
+Fig. 5: Bright-dark contrast (dB) under four LLM integration modes using Claude Sonnet 4.6. BeamAgent (decoupled parsing + dedicated optimizer) achieves within 3.3 dB of the expert upper bound. LLM Direct W, which outputs the precoding vector without channel information, yields the lowest contrast among LLM-involved modes. measured by Bright IoU and Dark IoU between the parsed and ground-truth Site sets, and by end-to-end (E2E) success rate defined as both IoU values exceeding 0.5. The overall E2E success rate is 64%, with Bright IoU of 0.76 and Dark IoU of 0.71. Performance degrades with difficulty: easy prompts achieve 70% E2E, medium 62%, and hard 57%. The most common failure mode is incorrect spatial grounding, where the LLM maps a region description to a bounding box that excludes the intended Site. We conduct a prompt ablation study to assess the contribution of each prompt component. Removing the scene description reduces E2E from 60% to 40%, making it the most critical component. Removing reasoning examples reduces E2E to 50%. The minimal prompt, which retains only the basic instruction, achieves an E2E of 60% but with IoU values of 0.48 and 0.47, meaning the parsed constraints are spatially inaccurate even when the Site assignment is correct. These results show that single-pass parsing is insufficient for reliable operation. The multi-round interaction mechanism described in Section IV-C addresses this limitation. Approxi-mately 36% of inputs require user correction through the ASCII grid preview. The dual-layer intent classifier ensures that the interaction loop remains functional even when the LLM service is temporarily unavailable. 
+
+E. Parameter Sensitivity 
+
+Fig. 6 shows the effect of the dark-zone threshold T on optimization performance. As T increases from 20 to 40 dB, the actual dark-zone power closely tracks the threshold line, confirming that the penalty term effectively enforces the constraint. Simultaneously, the bright-zone power increases from 81 to 93 dB. This behavior validates the core design principle of the threshold-based loss: relaxing the dark-zone constraint releases spatial degrees of freedom that the optimizer redirects toward bright-zone gain maximization. 10 20 25 30 35 40 
+
+Dark-Zone Threshold T (dB) 
+
+20 
+
+40 
+
+60 
+
+80   
+
+> Power (dB)
+> ¯PB(Bright)
+> Dark (actual)
+> T(threshold)
+
+Fig. 6: Effect of dark-zone threshold T on bright-zone power 
+
+¯PB (green squares) and actual dark-zone power max PD (red triangles). The dashed line shows the threshold value. As T
+
+increases, the dark-zone power tracks the threshold and bright-zone power rises accordingly, confirming that relaxing the constraint releases optimization degrees of freedom. The penalty coefficient λ controls the tradeoff between bright-zone maximization and dark-zone constraint enforcement. Over the range λ ∈ [0 .01 , 1.0] , bright-zone power varies by less than 6 dB. For λ ≥ 0.1, the dark-zone power converges to the threshold. A small λ = 0 .01 yields a dark-zone power of approximately 39 dB, violating the constraint. The default value λ = 0 .1 achieves a favorable balance. The number of alternating rounds R has minimal impact on performance for R ≥ 1. Over the range R ∈ { 1, 2, 3, 5, 10 },bright-zone power remains stable at approximately 86 dB and dark-zone power stays near the threshold. The insensitivity to R
+
+suggests that a single round of Tx– W alternation is sufficient for this problem scale, though R = 5 provides an additional consistency check. 
+
+F. Ablation Study and Computational Efficiency 
+
+Table IV reports the ablation results. Removing the alternat-ing optimization ( R = 1 ) causes the largest performance drop: bright-zone power decreases from 85.8 to 77.6 dB ( −8.2 dB) and contrast drops from 55.1 to 46.7 dB ( −8.4 dB). This confirms that joint optimization of BS location and precoding is essential. In contrast, removing cosine annealing or gradient clipping produces changes below 0.2 dB, indicating that the Adam optimizer is sufficiently robust for this problem scale. The tradeoff loss variant (no threshold penalty) achieves a slightly higher bright-zone power (86.0 dB) but suppresses the dark zone to 25.2 dB, which is 4.8 dB below the threshold. This over-suppression wastes degrees of freedom compared to the threshold mode, which precisely targets the constraint boundary. Table V reports the wall-clock time on an Apple M2 MacBook. The full optimization completes in 1.67 s, of which constraint preparation (channel tensor stacking) accounts for 1.35 s and gradient-based precoding optimization accounts for TABLE IV: Ablation study on optimization components in the 4-Site scenario ( T = 30 dB). Each row removes one component from the full configuration. Disabling alternating optimization (R = 1 ) causes the only significant performance degradation (−8.2 dB in ¯PB). Configuration ¯PB (dB) max PD (dB) Contrast (dB) Full (Ours) 85.8 30.6 55.1 No Cosine Annealing 85.9 30.7 55.2 No Gradient Clipping 85.8 30.6 55.2 No Cosine + No Clip 85.9 30.7 55.3         
+
+> R= 1 (No Alternating) 77.6 30.9 46.7 Tradeoff (no penalty) 86.0 25.2 60.7
+
+TABLE V: Wall-clock time for each optimization stage measured on an Apple M2 MacBook. LLM API latency is excluded. The full pipeline completes in under 2 s, with vectorized Tx scanning taking 6 ms per round. Stage Time (s) Constraint preparation (tensor stacking) 1.350 Phase A: Tx scan (per round) 0.006 Phase B: 400 gradient steps 0.308 Full optimization (5 rounds) 1.668 Exhaustive MRT baseline (all Tx) 0.124 0.31 s. Each Phase A Tx scan takes only 6 ms, confirming the efficiency of the vectorized evaluation. For reference, exhaustive MRT over all candidate locations requires 0.12 s. LLM API call latency is excluded as it depends on the external service and is not part of the local optimization pipeline. VI. C ONCLUSION 
+
+In this paper, we have proposed BeamAgent, an LLM-aided MIMO beamforming framework that decouples semantic intent parsing from numerical optimization. We have demonstrated that a general-purpose LLM, guided by a scene-aware prompt and multi-round interaction, can translate natural language into structured spatial constraints that drive a gradient-based alternating optimizer for joint BS site selection and precoding design. This decoupled architecture enables non-expert users to access physical-layer beamforming optimization through natural language, lowering the expertise barrier for wireless network planning and deployment. Future work will extend BeamAgent to multi-stream precoding, multi-BS coordination, dynamic channel scenarios, and on-device lightweight LLMs for reduced API dependency. REFERENCES [1] E. G. Larsson, O. Edfors, F. Tufvesson, and T. L. Marzetta, “Massive mimo for next generation wireless systems,” IEEE communications magazine , vol. 52, no. 2, pp. 186–195, 2014. [2] A. Goldsmith, Wireless communications . Cambridge university press, 2005. [3] Y. Zeng, J. Chen, J. Xu, D. Wu, X. Xu, S. Jin, X. Gao, D. Gesbert, S. Cui, and R. Zhang, “A tutorial on environment-aware communications via channel knowledge map for 6G,” IEEE Commun. Surveys Tuts. , vol. 26, no. 3, pp. 1478–1519, 2024. 11 
+
+[4] Y. Zeng and X. Xu, “Toward environment-aware 6G communications via channel knowledge map,” Ieee Wireless Commun. , vol. 28, no. 3, pp. 84–91, 2021. [5] M. Vasudevan and M. Yuksel, “Machine learning for radio propagation modeling: A comprehensive survey,” Ieee Open J. Commun. Society ,vol. 5, pp. 5123–5153, 2024. [6] J. Hoydis, F. A ¨ıt Aoudia, S. Cammerer, M. Nimier-David, N. Binder, G. Marcus, and A. Keller, “Sionna rt: Differentiable ray tracing for radio propagation modeling,” in 2023 IEEE Globecom Workshops (GC Wkshps) . IEEE, 2023, pp. 317–321. [7] S. Dang, O. Amin, B. Shihada, and M.-S. Alouini, “What should 6G be?” Nature Electronics , vol. 3, no. 1, pp. 20–29, 2020. [8] X. Shen, J. Gao, M. Li, C. Zhou, S. Hu, M. He, and W. Zhuang, “Toward immersive communications in 6G,” Frontiers Comput. Science , vol. 4, p. 1068478, 2023. [9] N. Cheng, F. Chen, W. Chen, Z. Cheng, Q. Yang, C. Li, and X. Shen, “6G omni-scenario on-demand services provisioning: vision, technology and prospect(in chinese),” Sci Sin Inform , vol. 54, pp. 1025–1054,, 2024. [10] W. X. Zhao, K. Zhou, J. Li, T. Tang, X. Wang, Y. Hou, Y. Min, B. Zhang, J. Zhang, Z. Dong et al. , “A survey of large language models,” arXiv preprint arXiv:2303.18223 , vol. 1, no. 2, pp. 1–124, 2023. [11] M. Xu, D. Niyato, J. Kang, Z. Xiong, S. Mao, Z. Han, D. I. Kim, and K. B. Letaief, “When large language model agents meet 6G networks: Perception, grounding, and alignment,” Ieee Wirel. Commun. , pp. 1–9, 2024. [12] J. Hong, N. V. Tu, and J. W.-K. Hong, “A comprehensive survey on llm-based network management and operations,” International Journal of Network Management , vol. 35, no. 6, p. e70029, 2025. [13] H. Zhou, C. Hu, Y. Yuan, Y. Cui, Y. Jin, C. Chen, H. Wu, D. Yuan, L. Jiang, D. Wu et al. , “Large language model (llm) for telecommu-nications: A comprehensive survey on principles, key techniques, and opportunities,” IEEE Communications Surveys & Tutorials , vol. 27, no. 3, pp. 1955–2005, 2024. [14] H. Li, M. Xiao, K. Wang, R. Schober, D. I. Kim, and Y. L. Guan, “Comagent: Multi-llm based agentic ai empowered intelligent wireless networks,” arXiv preprint arXiv:2601.19607 , 2026. [15] J. Tong, W. Guo, J. Shao, Q. Wu, Z. Li, Z. Lin, and J. Zhang, “Wirelessagent: Large language model agents for intelligent wireless networks,” arXiv preprint arXiv:2505.01074 , 2025. [16] J. Tong, Z. Li, F. Liu, W. Guo, and J. Zhang, “Wirelessagent++: Automated agentic workflow design and benchmarking for wireless networks,” arXiv preprint arXiv:2603.00501 , 2026. [17] A. Mehmood, N. U. Hassan, and G. M. Kraidy, “Bridging 6g iot and ai: Llm-based efficient approach for physical layer’s optimization tasks,” 
+
+arXiv preprint arXiv:2602.06819 , 2026. [18] F. Jiang, Y. Peng, L. Dong, K. Wang, K. Yang, C. Pan, D. Niyato, and O. A. Dobre, “Large language model enhanced multi-agent systems for 6g communications,” IEEE Wireless Communications , vol. 31, no. 6, pp. 48–55, 2024. [19] D. Wu, X. Wang, Y. Qiao, Z. Wang, J. Jiang, S. Cui, and F. Wang, “Netllm: Adapting large language models for networking,” in Proceedings of the ACM SIGCOMM 2024 Conference , 2024, pp. 661–678. [20] H. Zhou, C. Hu, D. Yuan, Y. Yuan, D. Wu, X. Liu, and C. Zhang, “Large language model (llm)-enabled in-context learning for wireless network optimization: A case study of power control,” arXiv preprint arXiv:2408.00214 , 2024. [21] H. Noh, B. Shim, and H. J. Yang, “Adaptive resource allocation opti-mization using large language models in dynamic wireless environments,” 
+
+IEEE Transactions on Vehicular Technology , 2025. [22] X. Wu, J. Farooq, Y. Wang, and J. Chen, Llm-xapp: A large language model empowered radio resource management xapp for 5g o-ran .Internet Society, 2025. [23] J. Wang, Y. Sheng, L. Liang, H. Ye, and S. Jin, “Wireless power control based on large language models,” arXiv preprint arXiv:2603.00474 , 2026. [24] H. Zou, Q. Zhao, Y. Tian, L. Bariah, F. Bader, T. Lestable, and M. Debbah, “Telecomgpt: A framework to build telecom-specific large language models,” IEEE Transactions on Machine Learning in Communications and Networking , 2025. [25] T. Yang, P. Zhang, M. Zheng, Y. Shi, L. Jing, J. Huang, and N. Li, “Wirelessgpt: A generative pre-trained multi-task learning framework for wireless communication,” IEEE Network , 2025. [26] X. Feng, J. Xiong, X. Liu, X. Zhang, H. Zhao, and J. Wei, “Physics-guided language model via low-rank adaptation for path loss prediction,” 
+
+IEEE Trans. Cogn. Commun. Netw. , 2025. [27] Z. Huang, S. Lu, L. Bai, X. Cai, and X. Cheng, “Llm4mg: Adapting large language model for multipath generation via synesthesia of machines,” 
+
+Arxiv Preprint Arxiv:2509.14711 , 2025. [28] X. Wang, K. Tao, N. Cheng, Z. Yin, Z. Li, Y. Zhang, and X. Shen, “Radiodiff: An effective generative diffusion model for sampling-free dynamic radio map construction,” IEEE Trans. Cogn. Commun. Netw. ,vol. 11, no. 2, pp. 738–750, 2025. [29] X. Wang, Q. Zhang, N. Cheng, R. Sun, Z. Li, S. Cui, and X. Shen, “Radiodiff-k2: Helmholtz equation informed generative diffusion model for multi-path aware radio map construction,” IEEE J. Sel. Areas Commun. , vol. 44, pp. 2318–2333, 2026. [30] X. Wang, Q. Zhang, N. Cheng, J. Chen, Z. Zhang, Z. Li, S. Cui, and X. Shen, “Radiodiff-3d: A 3d× 3d radio map dataset and generative diffusion based benchmark for 6g environment-aware communication,” 
+
+IEEE Trans. Netw. Sci. Eng. , vol. 13, pp. 3773–3789, 2026. [31] E. Amaldi, A. Capone, and F. Malucelli, “Planning umts base station location: Optimization models with power control and algorithms,” IEEE Transactions on wireless Communications , vol. 2, no. 5, pp. 939–952, 2003. [32] Q. Wu and R. Zhang, “Intelligent reflecting surface enhanced wireless network via joint active and passive beamforming,” IEEE transactions on wireless communications , vol. 18, no. 11, pp. 5394–5409, 2019. [33] S. Peng, C. Zhang, Y. Xu, Q. Wu, L. Zhu, X. Ou, and D. He, “Joint antenna position and beamforming optimization with self-interference mitigation in ma-isac system,” arXiv preprint arXiv:2408.00413 , 2024. [34] R. Levie, C¸ . Yapar, G. Kutyniok, and G. Caire, “RadioUNet: Fast radio map estimation with convolutional neural networks,” IEEE Trans. Wireless Commun. , vol. 20, no. 6, pp. 4001–4015, 2021. [35] B. Feng, M. Zheng, W. Liang, and L. Zhang, “A recent survey on radio map estimation methods for wireless networks,” Electronics , vol. 14, no. 8, p. 1564, 2025. [36] M. Mallik and G. Villemaud, “Base station deployment under emf con-strain by deep reinforcement learning,” arXiv preprint arXiv:2601.02385 ,2025. [37] Z. Deng, Y. Cai, Q. Liu, S. Mu, B. Lyu, and Z. Yang, “Teleplannet: An ai-driven framework for efficient telecom network planning,” in 2025 IEEE/CIC International Conference on Communications in China (ICCC) .IEEE, 2025, pp. 1–6. [38] K. Qiu, S. Bakirtzis, I. Wassell, H. Song, J. Zhang, and K. Wang, “Large language model-based wireless network design,” IEEE Wireless Communications Letters , vol. 13, no. 12, pp. 3340–3344, 2024. [39] A. Mekrache, A. Ksentini, and C. Verikoukis, “Intent-based management of next-generation networks: An llm-centric approach,” Ieee Network ,vol. 38, no. 5, pp. 29–36, 2024. [40] Z. Wang, S. Lin, G. Yan, S. Ghorbani, M. Yu, J. Zhou, N. Hu, L. Baruah, S. Peters, S. Kamath et al. , “Intent-driven network management with multi-agent llms: The confucius framework,” in Proceedings of the ACM SIGCOMM 2025 Conference , 2025, pp. 347–362. [41] C. Wang, M. Scazzariello, A. Farshin, S. Ferlin, D. Kosti ´c, and M. Chiesa, “Netconfeval: Can llms facilitate network configuration?” Proceedings of the ACM on Networking , vol. 2, no. CoNEXT2, pp. 1–25, 2024.

@@ -1,0 +1,831 @@
+Title: Channel Prediction-Based Physical Layer Authentication under Consecutive Spoofing Attacks
+
+URL Source: https://arxiv.org/pdf/2603.19962v1
+
+Published Time: Mon, 23 Mar 2026 00:56:26 GMT
+
+Number of Pages: 6
+
+Markdown Content:
+# Channel Prediction-Based Physical Layer Authentication under Consecutive Spoofing Attacks 
+
+Yijia Guo ∗† , Junqing Zhang ∗, and Y.-W. Peter Hong †∗ School of Computer Science and Informatics, University of Liverpool, Liverpool, L69 3DR, United Kingdom 
+
+† Institute of Communications Engineering, National Tsing Hua University, Hsinchu, Taiwan 300044 Emails: Yijia.Guo@liverpool.ac.uk, Junqing.Zhang@liverpool.ac.uk, ywhong@ee.nthu.edu.tw 
+
+Abstract —Wireless networks are highly vulnerable to spoofing attacks, especially when attackers transmit consecutive spoof-ing packets. Conventional physical layer authentication (PLA) methods have mostly focused on single-packet spoofing attack. However, under consecutive spoofing attacks, they become inef-fective due to channel evolution caused by device mobility and channel fading. To address this challenge, we propose a channel prediction-based PLA framework. Specifically, a Transformer-based channel prediction module is employed to predict le-gitimate CSI measurements during spoofing interval, and the input of channel prediction module is adaptively updated with predicted or observed CSI measurements based on the authenti-cation decision to ensure robustness against sustained spoofing. Simulation results under Rayleigh fading channels demonstrate that the proposed approach achieves low prediction error and significantly higher authentication accuracy than conventional benchmark, maintaining robustness even under extended spoof-ing attacks. 
+
+Index Terms —Internet of Things, physical layer authentica-tion, channel state information, channel prediction, Transformer, consecutive spoofing attack. 
+
+I. I NTRODUCTION 
+
+With the rapid development of wireless technologies, device authentication is critical since the broadcast nature of wireless channels makes them susceptible to spoofing attacks [1]. To mitigate such threats, physical layer authentication (PLA) has attracted considerable attention as it leverages the unique chan-nel state information (CSI) that is hard to forge or replicate. Early studies of PLA predominantly employed statistical modelling, with particular emphasis on hypothesis testing frameworks. Notable methods include Neyman–Pearson de-tection [2], difference-based detection [3]–[7], and Pearson correlation-based detection [8]. Although theoretically well-grounded, hypothesis testing methods inherently rely on pre-cise channel statistics, which is often difficult to obtain in real-world scenarios, thereby limiting their practical applicability. With the advancement of data-driven technologies, a wide range of learning-based approaches have been explored. Initial research employed channel prediction–based authentication with recurrent neural networks, where long short-term memory (LSTM) and gated recurrent units (GRU) were applied to 
+
+The work of J. Zhang was supported in part by the UK Engineering and Physical Sciences Research Council (EPSRC) under grant ID EP/Y037197/1 and in part by Royal Society Research Grants under grant ID RGS/R1/231435. 
+
+forecast future CSI and enable mean square error (MSE)-based detection [9]. Similarly, [10] proposed a prediction framework that integrates historical CSI with the transmit-ter’s geographical information. In parallel, similarity learning methods were also explored. A Siamese network based on fully connected networks (FCN) was introduced in [11]. In our previous work [12], a convolutional neural network (CNN)-based Siamese architecture was proposed to improve robustness. Despite these advances, the existing studies have predominantly focused on scenarios involving a single spoof-ing packet, leaving the more challenging case of consecutive attack packets largely unexplored. In practice, attackers may transmit consecutive spoofing packets, which pose two critical challenges. First, the au-thentication system must reliably detect sustained spoofing during consecutive malicious transmissions. Second, once the legitimate user resumes transmission, the system must avoid false alarms caused by channel decorrelation accumulated in the spoofing interval. Addressing these challenges requires models that can effectively capture channel evolution patterns over prolonged time intervals, so as to distinguish persistent spoofing from natural channel variations. Recently, Transformer-based channel prediction has gained considerable attention in wireless communications because of its ability to capture long-range temporal correlation. A Transformer-based parallel channel prediction framework was proposed in [13] to effectively overcome the error propagation issue. The Transformer architecture is further leveraged in [14] for CSI feedback enhancement in AI-native air interfaces, showing superior prediction accuracy on real high-speed rail-way measurement data. To address vehicular communication challenges, a Transformer-based predictor within a Rate-Splitting Multiple Access (RSMA) enabled V2X framework was introduced in [15] to achieve robust interference manage-ment and improved throughput. Motivated by the strong capability of Transformers in mod-elling channel evolution, we design a channel prediction-based PLA framework that integrates Transformer-based channel prediction with Pearson correlation-based authentication. In contrast to conventional approaches, our method explicitly pre-dicts the evolution of legitimate CSI during spoofing intervals, thereby facilitating accurate authentication once legitimate transmissions resume. The key contributions of this paper are  
+
+> arXiv:2603.19962v1 [cs.CR] 20 Mar 2026 Alice
+> Obstacle
+> Obstacle Mallory
+> 𝑑 bm
+> Bob
+> Malicious CSI
+> Legitimate CSI
+> …Channel
+> Prediction -
+> based PLA
+
+Fig. 1: The system model under consecutive spoofing attacks. outlined below.  
+
+> •
+
+A Transformer-based channel prediction framework is employed to forecast the evolution of legitimate CSI, where the predicted CSI is utilized to authenticate the observed CSI. Based on the authentication results, the Transformer input is adaptively updated with predicted or the observed CSI measurements, which ensures ro-bustness against sustained spoofing.  
+
+> •
+
+Extensive simulations under Rayleigh fading channel validate the proposed scheme, showing significant per-formance gains over conventional Pearson correlation benchmark in terms of authentication accuracy. II. S YSTEM MODEL AND PROBLEM STATEMENT 
+
+A. System Model 
+
+As shown in Fig. 1, Bob and Alice communicate over a time-varying multipath channel based on IEEE 802.11n OFDM standard, operating on a 20MHz bandwidth with M =64 subcarriers. Meanwhile, an attacker, Mallory, attempts to impersonate Bob by sending consecutive spoofed packets. For each incoming packet, Alice performs channel estimation using the preamble, where M ′ = 52 subcarriers are active, to extract the CSI, which is then fed into a channel prediction-based PLA scheme to verify its authenticity. Suppose the k-th packet received by Alice is transmitted by Bob. The corresponding channel between Bob and Alice can be represented by 
+
+h[k]ba ≜ h[k]ba [0] , . . . , h [k]ba [l], . . . , h [k]ba [L − 1] , (1) where L is the total number of channel taps. Building on the channel model in our previous work [12], the CSI can be expressed as 
+
+cH[k]ba = H[k]ba + bZ, (2) where H[k]ba ∈ CM ′×1 is the channel frequency response (CFR) and bZ is the estimation noise. 
+
+Threat Model: This paper considers a scenario in which the attacker, Mallory, located at a distance dbm from Bob, suc-cessfully spoofs Bob’s MAC address and transmits malicious packets to Alice. Equipped with knowledge of the wireless protocol employed by Alice and Bob, e.g., channel bandwidth, carrier frequency, modulation format, and OFDM frame struc-ture, Mallory can maintain the impersonation across multiple transmissions. By persistently injecting consecutive spoofed packets to Alice, Mallory poses a sustained and severe threat to the physical layer security of the system. 
+
+B. Problem Statement 
+
+Earlier studies have mostly focused on single-packet spoof-ing attack. However, in practical wireless environments, at-tackers can send consecutive spoofed packets to maintain a persistent impersonation. In such cases, Alice typically authenticates the (k + n)-th received packet by comparing its observed CSI cH[k+n] with the reference CSI measurement 
+
+cH[k]ba obtained from Bob’s most recent legitimate transmission. This method works only when the channel between Bob and Alice changes slowly or the spoofing duration is short, so that the reference CSI measurement cH[k]ba can still represent the actual channel conditions. When Mallory conducts long spoofing attacks, the legit-imate channel gradually changes due to user mobility and channel fading, making cH[k]ba outdated as n increases. The difference between the reference CSI and the current CSI then grows, causing Alice to incorrectly reject Bob’s subsequent legitimate packets. Therefore, extended spoofing significantly reduces authentication accuracy and reveals a key limitation of traditional schemes. III. P ROPOSED METHOD 
+
+We propose a channel prediction-based framework that leverages Transformer-based channel prediction for robust authentication. This section introduces the overall framework, followed by the details of the training stage and test stage. 
+
+A. Overall Framework 
+
+As illustrated in Fig. 2, the proposed channel prediction-based PLA system operates in a training stage and a test stage. In the training stage, a channel prediction module, which is composed of a Transformer and a position selection module, is trained to predict Nf future CSI measurements based on 
+
+Np input CSI measurements, thereby learning to capture the temporal evolution of the wireless channel. The details of the training stage will be introduced in Section III-B. During the test stage, the channel prediction-based PLA system operates in an iterative manner. In each iteration, the trained chan-nel prediction module obtains Nf future CSI measurements, which are utilised by correlation-based authentication module to conduct authentication of the incoming packets. Subse-quently, the input sequence of the channel prediction module is updated based on the authentication decision. Further details of the test stage are provided in Section III-C. Each CSI measurement, complex values collected over M ′
+
+subcarriers, are preprocessed into a real-valued representation by concatenating its real and imaginary parts, defined as 
+
+bH[k]
+
+≜ ℜ{ cH[k]}T , ℑ{ cH[k]}T T ∈ R2M ′
+
+. (3) 
+
+B. Training Stage 1) Transformer: As shown in Fig. 3, the Transformer framework comprises an encoder that extracts temporal fea-tures from historical CSI and a decoder that predicts upcoming CSI. In this paper, both the encoder and the decoder are composed of two identical layers. For illustrative purposes, we Channel Prediction -based PLA 
+
+> Channel
+> Prediction
+> Correlation -
+> based Authen.
+> Input Seq.
+> Update
+> …
+> 𝑁 𝑝
+> DAlice
+> Mallory
+> Bob
+
+Test Stage 
+
+Training Stage 
+
+> Channel Prediction
+> Training
+> dataset
+> Position
+> Selection
+> Transformer …
+> 𝑁 𝑝
+> …
+> 𝑁 𝑝
+> …
+> 𝑁 𝑓
+> …
+> 𝑁 𝑓
+
+Fig. 2: The channel prediction-based PLA system. Transformer  Decoder 
+
+Encoder 
+
+> Output
+> Embedding
+> Input
+> Embedding
+> Positional
+> Encoding
+> Positional
+> Encoding
+
+𝓢 (𝑒 ) 𝓢 (𝑑 )
+
+Enc . Layer 
+
+Dec. Layer 
+
+> Masked multi -
+> head attention
+> Add & Norm
+> Enc. -Dec.
+> attention
+> Add & Norm
+> Feed Forward
+> Add & Norm
+> Multi -head
+> attention
+> Add & Norm
+> Feed Forward
+> Add & Norm
+
+2 ×
+
+2 ×
+
+𝓗 in 
+
+𝓗 (𝑒 ) 𝓗 (𝑑 )
+
+𝓞 (𝑒 )
+
+𝓞 (𝑑 )
+
+……
+
+> 𝑁 𝑝
+> 𝑁 𝑓
+
+…… ……
+
+……
+
+> 𝑁 𝑝
+
+Fig. 3: The structure of encoder-decoder Transformer. describe the structure of a single encoder layer and a single decoder layer. The raw input sequence to the Transformer consists of Np
+
+CSI measurements, given as 
+
+Hin ≜  bH[1] 
+
+, . . . , bH[Np] ∈ R2M ′×Np , (4) which is used to build the input for encoder and decoder. 
+
+Encoder: The encoder input sequence, denoted as 
+
+H(e) ≜ Hin =  bH[1] 
+
+, . . . , bH[Np] ∈ R2M ′×Np , (5) takes the same Np CSI measurements as input. After input embedding and positional encoding, the encoder layer input is denoted as S(e) ∈ RNp×dm , where dm represents the embedding dimension. In the encoder layer, the multi-head attention mechanism projects S(e) into queries, keys and values using Nhead groups of learnable matrices. Specifically, the i-th head computes 
+
+X(e) 
+
+> i
+
+= fsm 
+
+ S(e)W (e) 
+
+> Qi
+
+· (S(e)W (e) 
+
+> Ki
+
+)T
+
+√dk
+
+
+
+· S(e)W (e) 
+
+> Vi
+
+, (6) where W (e) 
+
+> Qi
+
+, W (e) 
+
+> Ki
+
+, W (e) 
+
+> Vi
+
+∈ Rdm×dk , with dk = dm/N head ,and fsm (·) denotes the softmax function. The outputs of all heads are then concatenated and linearly projected, given as 
+
+X(e) = concat  X(e)1 , . . . , X(e) 
+
+> i
+
+, . . . , X(e)
+
+> Nhead
+
+ · W (e) 
+
+> O
+
+, (7) with W (e) 
+
+> O
+
+∈ Rdm×dm is the output projection. The attention output is subsequently combined with the original input via a residual connection and then normalized by layer normaliza-tion, expressed as 
+
+Z(e) = fLN 
+
+ S(e) + X(e), (8) where fLN (·) denotes layer normalization. The normalized fea-tures are further refined by a feed-forward network, followed by an residual connection and layer normalization, given as 
+
+O(e) = fLN 
+
+ Z(e) + fFFN (Z(e)), (9) where fFFN (·) denotes the feed-forward network. The output 
+
+O(e) represents the encoded historical CSI features. 
+
+Decoder: The decoder input sequence, denoted as 
+
+H(d) ≜  bH[Nf +1] 
+
+, . . . , bH[Np]
+
+, 02M ′×Nf
+
+ ∈ R2M ′×Np , (10) is initialized with the latest (Np − Nf ) samples in Hin and zero-padded for the remaining Nf positions, where Nf < N p.After output embedding and positional encoding, the decoder layer input is denoted as S(d) ∈ RNp×dm .In the decoder layer, the masked multi-head attention mech-anism projects S(d) into queries, keys and values through 
+
+Nhead groups of learnable matrices. Specifically, the i-th head computes 
+
+X(d) 
+
+> i
+
+= fsm 
+
+ S(d)W (d) 
+
+> Qi
+
+· (S(d)W (d) 
+
+> Ki
+
+)T
+
+√dk
+
++ M (d)
+
+· S(d)W (d) 
+
+> Vi
+
+,
+
+(11) where W (d) 
+
+> Qi
+
+, W (d) 
+
+> Ki
+
+, W (d) 
+
+> Vi
+
+∈ Rdm×dk , and M (d) ∈ RNp×Np
+
+is a casual mask applied to prevent access to future positions, defined as 
+
+M (d)[i, j ] = 
+
+(
+
+0, j ≤ i;
+
+−∞ , j > i, i, j ∈ { 1, 2, . . . , N p}. (12) The outputs of all heads are then concatenated and linearly projected, given as 
+
+X(d) = concat  X(d)1 , . . . , X(d) 
+
+> i
+
+, . . . , X(d)
+
+> Nhead
+
+ · W (d) 
+
+> O
+
+, (13) with W (d) 
+
+> O
+
+∈ Rdm×dm is the output projection. The attention output is then processed via a residual connection and layer normalization, given as 
+
+Z(d) = fLN 
+
+ S(d) + X(d). (14) Next, the encoder–decoder attention is further performed using 
+
+Z(d) as queries, and O(e) as keys and values, expressed as 
+
+X(c) 
+
+> i
+
+= fsm 
+
+ Z(d)W (c) 
+
+> Qi
+
+· (O(e)W (c) 
+
+> Ki
+
+)T
+
+√dk
+
+
+
+· O(e)W (c) 
+
+> Vi
+
+. (15) Then the outputs of all heads are concatenated and linearly projected, given as 
+
+X(c) = concat  X(c)1 , . . . , X(c) 
+
+> i
+
+, . . . , X(c)
+
+> Nhead
+
+ · W (c) 
+
+> O
+
+, (16) where W (c) 
+
+> O
+
+∈ Rdm×dm is an output projection. The attention output is then passed to a residual connection and layer normalisation, given as 
+
+Z(c) = fLN 
+
+ Z(d) + X(c). (17) Finally, the predicted CSI is obtained after feed-forward net-work, followed by an additional residual connection and layer normalisation, expressed as 
+
+O(d) = fLN 
+
+ Z(c) + fFFN (Z(c)). (18) 
+
+2) Position Selection: The decoder output can be explicitly expressed as 
+
+O(d) =  eH[Nf +1] 
+
+, . . . , eH[Np]
+
+, eH[Np+1] 
+
+, . . . , eH[Np+Nf ]T ,
+
+(19) where only the last Nf rows correspond to the predicted CSI for the next Nf packets. Therefore, the predicted CSI sequence is given as 
+
+Hpred = fsel (O(d)) ≜  eH[Np+1] 
+
+, . . . , eH[Np+Nf ]. (20) The transformer is then trained by minimizing the normal-ized mean squared error (NMSE) between the predicted CSI and the corresponding ground truth, defined as 
+
+L = E
+
+PNf 
+
+> n=1
+
+eH[Np+n]
+
+− bH[Np+n] 2
+
+PNf 
+
+> n=1
+
+bH[Np+n] 2
+
+ . (21) 
+
+C. Test Stage 
+
+In the test stage, the channel prediction-based PLA system operates in an iterative manner. Firstly, we assume that the historical Np received packets are from legitimate user Bob. The corresponding CSI sequence is denoted as 
+
+Hhist = [ bH[k−Np+1] ba , . . . , bH[k]ba ]. (22) which is used as the initial input to the channel prediction module to obtain an initial and reliable channel prediction. Furthermore, there exists an observed CSI sequence requiring authentication, represented as 
+
+H′ 
+
+> rx
+
+= [ bH[k+1] 
+
+, bH[k+2] 
+
+, . . . ]. (23) Let Hi 
+
+> in
+
+denote the input sequence fed into channel pre-diction module at the i-th iteration, with H1 
+
+> in
+
+= Hhist , and let 
+
+N i 
+
+> auth
+
+denote the number of packets authenticated before the i-th iteration, with N 1 
+
+> auth
+
+= 0 . The proposed channel prediction-based PLA scheme is summarized in Algorithm 1. 
+
+Algorithm 1 Channel Prediction-based Authentication 
+
+Input: Input length Np, prediction length Nf , trained Trans-former model M(·), historical legitimate CSI sequence 
+
+Hhist , observed CSI sequence to be authenticated H′
+
+> rx
+
+;
+
+Output: D; 
+
+> 1:
+
+Initialization: H1 
+
+> in
+
+← Hhist , N 1 
+
+> auth
+
+← 0, i ← 1; 
+
+> 2:
+
+while true do 
+
+% i-th iteration  
+
+> 3:
+
+Generate Hi 
+
+> pred
+
+and Hi 
+
+> rx
+
+based on (24);  
+
+> 4:
+
+for j = 1 to Nf do  
+
+> 5:
+
+Calculate ri,j based on (25);  
+
+> 6:
+
+if ri,j ≥ ϵ then  
+
+> 7:
+
+Hi
+
+> upd
+
+[j] = Hi
+
+> rx
+
+[j]; 
+
+> 8:
+
+D[N i 
+
+> auth
+
++ j] = 1 ; 
+
+> 9:
+
+break;  
+
+> 10:
+
+else  
+
+> 11:
+
+Hi
+
+> upd
+
+[j] = Hi
+
+> pred
+
+[j]; 
+
+> 12:
+
+D[N i 
+
+> auth
+
++ j] = 0 ; 
+
+> 13:
+
+end if  
+
+> 14:
+
+end for  
+
+> 15:
+
+N i+1  
+
+> auth
+
+← N i 
+
+> auth
+
++ j; 
+
+> 16:
+
+Generate Hi+1  
+
+> in
+
+using Hi 
+
+> in
+
+and Hi 
+
+> upd
+
+based on (28);  
+
+> 17:
+
+i ← i + 1 ; 
+
+> 18:
+
+end while 
+
+1) Channel Prediction: In i-th iteration, the channel pre-diction sequence Hi 
+
+> pred
+
+and the incoming sequence that needs to be authenticated are extracted as 
+
+Hi 
+
+> pred
+
+= fsel 
+
+ MT(Hi
+
+> in
+
+); (24a) 
+
+Hi 
+
+> rx
+
+= H′
+
+> rx
+
+[Nauth + 1 : Nauth + Nf ], (24b) where (24b) represents extracting the (Nauth +1) -th to (Nauth +
+
+Nf )-th columns of H′
+
+> rx
+
+.
+
+2) Correlation-based Authentication: Authentication is conducted progressively on each prediction step j =1, . . . , N f . In i-th iteration, for each j-th prediction step, the Pearson correlation between predicted CSI Hi
+
+> pred
+
+[j] and the incoming CSI Hi
+
+> rx
+
+[j] is calculated, given as 
+
+ri,j = fcorr (Hi
+
+> pred
+
+[j], Hi
+
+> rx
+
+[j]) , (25) where fcorr (·, ·) is defined as the Pearson correlation function. After obtaining the correlation ri,j , the authentication decision can be made based on 
+
+D[N i 
+
+> auth
+
++ j] = 
+
+(
+
+1, if ri,j ≥ ϵ;0, if ri,j < ϵ, (26) where D[N i
+
+> auth
+
++j] = 1 indicates a legitimate packet, D[N i
+
+> auth
+
++
+
+j] = 0 denotes a malicious packet, and the threshold ϵ is obtained empirically through experiments. 3) Input Sequence Update: The update sequence Hi 
+
+> upd
+
+is constructed adaptively based on the authentication decision, 
+
+Hi
+
+> upd
+
+[j] = 
+
+(
+
+Hi
+
+> rx
+
+[j], if D[N i 
+
+> auth
+
++ j] = 1; 
+
+Hi
+
+> pred
+
+[j], if D[N i 
+
+> auth
+
++ j] = 0 . (27) For legitimate packets (i.e., D[N i 
+
+> auth
+
++ j] = 1 ), the observed CSI is included to enhance prediction fidelity, whereas for malicious packets (i.e., D[N i 
+
+> auth
+
++ j] = 0 ), the predicted CSI is incorporated to mitigate the impact of adversarial mea-surements. By adaptively choosing between the predicted and observed CSI according to the decision, this update strategy ensures that the Transformer is always guided by reliable CSI inputs, thereby maintaining stable and resilient prediction performance under both normal and attack conditions. Once either a legitimate packet has been detected (line 9) or all the Nf predicted CSI in i-th iteration have been consumed (line 14), N i 
+
+> auth
+
+is updated by accumulating the number of CSI measurements authenticated during the i-th iteration and the input sequence of the channel prediction module is updated according to 
+
+Hi+1  
+
+> in
+
+= concat (Hi
+
+> in
+
+[j + 1 : Np], Hi
+
+> upd
+
+). (28) The iteration index i is incremented by 1. Then a new pre-diction iteration is triggered with the updated input sequence 
+
+Hi+1  
+
+> in
+
+. The design of triggering a new iteration upon the detection of a legitimate packet ensures that the Transformer always exploits the maximum number of the most recent observed legitimate CSI measurements at each prediction step, thereby improving accuracy. IV. P ERFORMANCE METRICS AND BENCHMARK 
+
+In this section, we first introduce the performance metrics adopted to evaluate both the channel prediction quality and the authentication reliability of the proposed scheme. Subse-quently, we describe the benchmark authentication method. 
+
+A. Performance Metrics 
+
+To evaluate the effectiveness of the proposed channel prediction-based authentication scheme, we adopt two perfor-mance metrics. 
+
+1) CSI Prediction Error: The quality of channel prediction is assessed by NMSE between the predicted and ground truth CSI measurements. In contrast to the training stage, where the loss is defined as the averaged NMSE across Nf prediction steps, the evaluation is conducted on a step-wise basis to capture the prediction quality at each prediction step. 
+
+2) Authentication Accuracy: The authentication perfor-mance is measured by the sequence-level accuracy across multiple test sequences with varying spoofing attack lengths. Suppose a collection of test sequences is constructed, each containing a mix of legitimate and malicious packets with dif-ferent attack lengths. Let Nacc denote the number of sequences in which all packets are authenticated correctly (i.e., all legitimate packets accepted and all malicious packets rejected), and Ns be the total number of sequences. The authentication accuracy is then defined as Accuracy = Nacc 
+
+Ns
+
+. (29) This metric captures the overall reliability of the authentication scheme under practical attack scenarios. 
+
+B. Benchmark 
+
+For comparison, we implement a benchmark authentication scheme following the conventional Pearson correlation–based method without channel prediction. In this approach, the receiver uses Pearson correlation to compare each newly observed CSI with the most recent trusted legitimate CSI, which serves as the reference. If the correlation falls below a predefined threshold ϵ, the packet is marked as suspicious; otherwise, it is accepted as legitimate and the newly observed CSI is used to update the reference. Although computationally efficient, this benchmark is susceptible to channel decorrela-tion during prolonged spoofing attack. V. S IMULATION EVALUATION 
+
+This section evaluates the channel prediction-based authen-tication framework under simulated wireless channels. We first describe the simulation setup, then elaborate channel predic-tion performance, followed by authentication performance. 
+
+A. Simulation Setup 1) Training Dataset: The Transformer training dataset is constructed as Dtrain = {(ui, vi)}Ntrain  
+
+> i=1
+
+, with 
+
+ui ≜ [ bH[k−Np+1] ba , . . . , bH[k]ba ]; (30a) 
+
+vi ≜ [ bH[k+1] ba , . . . , bH[k+Nf ]ba ], (30b) where Ntrain denotes the training dataset size. The simulation parameter configuration is given as  
+
+> •
+
+Channel model: an exponential power delay profile (PDP) with root-mean-square (RMS) delay Trms ∈{20 , 40 , 80 , 160 , 220 } ns.  
+
+> •
+
+SNR ∈ { 5, 8, 10 , 12 , 13 , 14 , 15 , 16 , 17 , 18 , 19 , 20 , 50 } dB.  
+
+> •
+
+Terminal speed: v0 ∼ U (0 .5, 2) m/s.  
+
+> •
+
+Transmission interval: ∆t = 3 ms. The training dataset is generated by iterating over different parameter combinations. 
+
+2) Test Dataset: The test sequences H′ 
+
+> rx
+
+are generated based on 
+
+H′ 
+
+> rx
+
+=  bH[k+1] ma , . . . , bH[k+Na]ma , bH[k+Na+1] ba , . . . , (31) where the first Na CSI samples are malicious, and the re-maining samples originate from legitimate packets, with Na
+
+denoting the attack length. 5 10 15 20 25 30 Future packet index -20 -15 -10 -5 05NMSE (dB) Nf=1 Nf=3 Nf=5 Nf=7 Nf=9 Fig. 4: The NMSE of Transformer-based channel prediction module with Nhead = 4 and Np = 20 evaluated on the simulation test dataset under Trms = 50 ns, SNR = 20 dB, 
+
+v0 = 0 .5 m/s, and ∆t = 3 ms. 
+
+B. Simulation Results 
+
+In Fig. 4, the prediction error is evaluated under a worst-case assumption where, in Algorithm 1, Hi 
+
+> upd
+
+is always appended with the predicted CSI Hi
+
+> pred
+
+[j] instead of the observed CSI measurement Hi
+
+> rx
+
+[j]. This setting emphasizes the effect of accumulative prediction errors across multiple prediction iterations. Error accumulation occurs only when a new iteration is triggered, which corresponds to the turning points shown in Fig. 4. It can be observed that the prediction errors accumulate most rapidly when Nf = 1 . In contrast, for larger prediction lengths (i.e., Nf = 3 , 5, 7, 9), the errors grow more gradually. This is because in each new iteration, 
+
+Nf predicted CSI samples from the previous iteration, which already contain prediction errors in themselves, are appended to the input sequence of the channel prediction module, lead-ing to error accumulation. Considering the trade-off between the performance in each iteration and the error accumulation, 
+
+Nf = 5 offers a favourable balance. Fig. 5 illustrates the authentication accuracy under varying attack lengths Na, where the decision threshold is chosen individually for each authentication scheme so as to maximize its accuracy. The benchmark algorithm performs well for short attack lengths (i.e., Na = 1 , 2, 3), but degrades rapidly as 
+
+Na increases, because the reference CSI becomes outdated and decorrelates from Bob’s channel at the next legitimate transmission. In contrast, the channel prediction-based scheme sustains markedly better performance at larger Na, since the predicted CSI tracks the anticipated legitimate channel evolution across the entire attack interval. VI. C ONCLUSION 
+
+In this paper, we studied consecutive spoofing attack in mobile Wi-Fi and proposed a channel prediction-based authen-tication scheme. By leveraging a Transformer-based channel prediction module to predict the evolution of legitimate CSI during the spoofing interval, the proposed method effectively mitigates the channel decorrelation problem during consecu-tive spoofing attacks. Simulation results under Rayleigh chan-nel models showed that the proposed approach outperforms the 1 2 3 4 5 6 7 8 9 10 Na
+
+> 0.6 0.7 0.8 0.9 1Accuracy Proposed Benchmark
+
+Fig. 5: The authentication accuracy versus Na on the simula-tion test dataset with Trms = 50 ns, SNR = 20 dB, v0 = 1 
+
+m/s, ∆t = 3 ms, and dbm = 24 cm. benchmark scheme that does not employ channel prediction, providing robust authentication even under extended attacks. REFERENCES [1] N. Xie, Z. Li, and H. Tan, “A survey of physical-layer authentication in wireless communications,” IEEE Commun. Surv. Tut. , vol. 23, no. 1, pp. 282–310, 2021. [2] L. Xiao, L. J. Greenstein, N. B. Mandayam, and W. Trappe, “Channel-based spoofing detection in frequency-selective rayleigh channels,” IEEE Trans. Wireless Commun. , vol. 8, no. 12, pp. 5948–5956, 2009. [3] ——, “Using the physical layer for wireless authentication in time-variant channels,” IEEE Trans. Wireless Commun. , vol. 7, no. 7, pp. 2571–2579, 2008. [4] F. J. Liu, X. Wang, and S. L. Primak, “A two dimensional quantization algorithm for CIR-based physical layer authentication,” in Proc. IEEE Int. Conf. Commun. (ICC) , Budapest, Hungary, 2013, pp. 4724–4728. [5] J. Liu and X. Wang, “Physical layer authentication enhancement using two-dimensional channel quantization,” IEEE Trans. Wireless Commun. ,vol. 15, no. 6, pp. 4171–4182, 2016. [6] N. Xie, J. Chen, and L. Huang, “Physical-layer authentication using multiple channel-based features,” IEEE Trans. Inf. Forensics Secur. ,vol. 16, pp. 2356–2366, 2021. [7] P. Zhang, J. Liu, Y. Shen, and X. Jiang, “Exploiting channel gain and phase noise for PHY-layer authentication in massive MIMO systems,” 
+
+IEEE Trans. Inf. Forensics Secur. , vol. 16, pp. 4265–4279, 2021. [8] H. Liu, Y. Wang, J. Liu, J. Yang, Y. Chen, and H. V. Poor, “Authen-ticating users through fine-grained channel information,” IEEE Trans. Mobile Comput. , vol. 17, no. 2, pp. 251–264, 2018. [9] K. S. Germain and F. Kragh, “Channel prediction and transmitter au-thentication with adversarially-trained recurrent neural networks,” IEEE Open J. Commun. Soc. , vol. 2, pp. 964–974, 2021. [10] H.-M. Wang and Q.-Y. Fu, “Channel-prediction-based one-class mobile IoT device authentication,” IEEE Internet Things J. , vol. 9, no. 10, pp. 7731–7745, 2021. [11] Y. Zhang, Y. Huang, H. He, Y. Guo, L. Chen, and Y. Chen, “Enhancing physical layer authentication in mobile WiFi environments using sliding window and deep learning,” IEEE Trans. Wireless Commun. , vol. 24, no. 1, pp. 585–597, 2025. [12] Y. Guo, J. Zhang, and Y.-W. P. Hong, “Practical physical layer authen-tication for mobile scenarios using a synthetic dataset enhanced deep learning approach,” IEEE Trans. Inf. Forensics Secur. , vol. 20, pp. 9305– 9317, 2025. [13] H. Jiang, M. Cui, D. W. K. Ng, and L. Dai, “Accurate channel prediction based on transformer: Making mobility negligible,” IEEE J. Sel. Areas Commun. , vol. 40, no. 9, pp. 2717–2732, 2022. [14] T. Zhou, X. Liu, Z. Xiang, H. Zhang, B. Ai, L. Liu, and X. Jing, “Trans-former network based channel prediction for CSI feedback enhancement in AI-native air interface,” IEEE Trans. Wireless Commun. , vol. 23, no. 9, pp. 11 154–11 167, 2024. [15] S. Zhang, S. Zhang, Y. Mao, L. K. Yeung, B. Clerckx, and T. Q. S. Quek, “Transformer-based channel prediction for rate-splitting multiple access-enabled vehicle-to-everything communication,” IEEE Trans. Wireless Commun. , vol. 23, no. 10, pp. 12 717–12 730, 2024.

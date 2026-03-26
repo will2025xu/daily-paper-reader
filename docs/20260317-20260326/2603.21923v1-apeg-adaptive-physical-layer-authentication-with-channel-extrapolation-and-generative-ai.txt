@@ -1,0 +1,1360 @@
+Title: APEG: Adaptive Physical Layer Authentication with Channel Extrapolation and Generative AI
+
+URL Source: https://arxiv.org/pdf/2603.21923v1
+
+Published Time: Tue, 24 Mar 2026 02:17:32 GMT
+
+Number of Pages: 17
+
+Markdown Content:
+> 1
+
+# APEG: Adaptive Physical Layer Authentication with Channel Extrapolation and Generative AI 
+
+Xiqi Cheng, Rui Meng, Member, IEEE, Xiaodong Xu, Senior Member, IEEE, Haixiao Gao, Ping Zhang, Fellow, IEEE and Dusit Niyato, Fellow, IEEE 
+
+Abstract—With the rapid advancement of 6G, identity authentication has become increasingly critical for ensuring wireless security. The lightweight and keyless Physical Layer Authentication (PLA) is regarded as an instrumental secu-rity measure in addition to traditional cryptography-based authentication methods. However, existing PLA schemes often struggle to adapt to dynamic radio environments. To overcome this limitation, we propose the Adaptive PLA with Channel Extrapolation and Generative AI (APEG), designed to enhance authentication robustness in dynamic scenarios. Leveraging Generative AI (GAI), the framework adaptively generates Channel State Information (CSI) fingerprints, thereby im-proving the precision of identity verification. To refine CSI fingerprint generation, we propose the Collaborator-Cleaned Masked Denoising Diffusion Probabilistic Model (CCMDM), which incorporates collaborator-provided fingerprints as con-ditional inputs for channel extrapolation. Additionally, we develop the Cross-Attention Denoising Diffusion Probabilis-tic Model (CADM), employing a cross-attention mechanism to align multi-scale channel fingerprint features, further en-hancing generation accuracy. Simulation results demonstrate the superiority of the APEG framework over existing time-sequence-based PLA schemes in authentication performance. Notably, CCMDM exhibits a significant advantage in con-vergence speed, while CADM, compared with model-free, time-series, and VAE-based methods, achieves superior accu-racy in CSI fingerprint generation. The code is available at https://github.com/xiqicheng192-del/APEG Index Terms—Physical Layer Authentication (PLA), diffu-sion model, identity security, 6G. 
+
+I. Introduction With the rapid development of the 6th generation (6G) communication technology, it will enable the blueprint of connecting everything, full-dimensional coverage, technol-ogy cross-integration, and human-like intelligent auton-omy [1]. However, more open and heterogeneous wireless environments will introduce unprecedented new security 
+
+This work was supported in part by the National Key Research and Development Program of China under Grant 2020YFB1806905; in part by the National Natural Science Foundation of China under Grant 62501066 and U24B20131; and in part by the Beijing Natural Science Foundation under Grant L242012. (Corresponding author: Rui Meng.) Xiqi Cheng, Rui Meng, Xiaodong Xu, Haixiao Gao, and Ping Zhang are with the State Key Laboratory of Networking and Switch-ing Technology, Beijing University of Posts and Telecommunica-tions, Beijing 100876, China (email: chengzi@bupt.edu.cn; buptmen-grui@bupt.edu.cn; xuxiaodong@bupt.edu.cn; haixiao@bupt.edu.cn; pzhang@bupt.edu.cn). Dusit Niyato is with College of Computing and Data Sci-ence, Nanyang Technological University, Singapore (email: dniy-ato@ntu.edu.sg). 
+
+challenges [2]. Consequently, as an important line of de-fense for wireless security, identity authentication becomes especially critical in 6G. Traditional identity authentica-tion relies on cryptographic algorithms, such as 5G AKA [3]. However, it will face many limitations in future 6G, with the feature of high mobility, wide coverage, and low-power devices. Specifically, cryptography-based au-thentication schemes require key generation, distribution, updating, and revocation, making the whole process com-plex and computational intensive. Moreover, key lifetimes are short, and the updates are frequent, which raises the management burden and makes it difficult to meet strict latency targets. Furthermore, low-power devices lack the processing power for strong cryptographic operations [4], [5]. As significant complement for traditional cryptography-based authentication techniques, Physical Layer Authen-tication (PLA) achieves reliable identity recognition by leveraging physical layer features, such as Channel State Information (CSI) fingerprints [6]–[8] and Radio Fre-quency (RF) fingerprints [9], [10]. Since PLA avoids computationally-intensive encryption and frequent key updates, it is suitable for 6G scenarios filled with many low power devices. As crucial identity characteristics for PLA, CSI fingerprints are determined by the location and surrounding environment of the devices. Due to the inherent decorrelation features of CSI fingerprints, even a location change of half a wavelength can cause clear differences in received signal patterns [11]. This means devices at different physical positions will observe distinct CSI fingerprints, which are hard to fake or mimic. Moreover, CSI fingerprints are highly sensitive to both time and environments, making it difficult to reproduce the same pattern at different times or locations. This inherent variability provides strong resistance to replay attacks [12]. Therefore, as environment-perceptive char-acteristics, CSI fingerprints are suited to build location-aware authentication [13]–[15]. Early studies on CSI-based PLA mainly focused on static scenarios. One common approach was to combine statistical channel models with hypothesis testing to perform identity verification [16]–[18]. These methods typ-ically analyzed the statistical properties of CSI fingerprints and determined decision thresholds for PLA. With the rise of Machine Learning (ML), it was employed to improve threshold selection and adaptability [19]. Additionally, some researchers adopted a data-driven view and an-
+
+> arXiv:2603.21923v1 [eess.SP] 23 Mar 2026 2
+
+alyzed CSI features directly for classification. Support Vector Machines (SVM) [20], [21] and Gaussian Mixture Models (GMM) [22], [23] were employed as classification algorithms to distinguish devices by learning discrimina-tive patterns from their CSI fingerprints. Furthermore, Deep Learning (DL) was introduced to capture spatial and temporal features of CSI fingerprints [24], [25]. ML demonstrates strong generalization over diverse channel conditions and effective authentication performance with-out requiring explicit modeling of channel distributions [5], [26]. Although significant progress has been made in adapting PLA to dynamic wireless environments [27]–[30], achieving robust and continuous authentication under rapidly time-varying channel conditions remains a critical challenge. In such environments, fast channel dynamics make it difficult for hypothesis testing methods based on statistical models to maintain reliable performance with fixed detection thresholds, resulting in degraded authentication accuracy. Moreover, traditional ML methods based on classifiers assume a stable mapping between CSI fingerprints and spatial locations of devices. However, frequent device movement or rapid environmental changes can cause significant shifts in the distribution and temporal cor-relation of CSI fingerprints, making the learned decision boundaries difficult to generalize and ultimately degrading authentication performance [7], [31]. Although Pan et al. [27] attempted to model time-varying CSI features using ML and applied a binary classification approach to avoid threshold-setting issues in dynamic scenarios, this method remained unstable in practical use. It was also highly sensitive to the number and spatial distribution of train-ing fingerprint samples, which limited its generalization capability under dynamic conditions. Meanwhile, time-series DL methods have been proposed to address channel variations in dynamic environments [28]–[30]. However, CSI fingerprints are high-dimensional and structurally complex data, and they are highly susceptible to channel estimation errors, particularly under low SNR conditions. Consequently, existing time-series models still face difficul-ties in accurately tracking dynamic channels or achieving reliable authentication in dynamic environments. To address the challenges mentioned above, we propose a PLA framework that combines channel extrapolation and Generative AI (GAI). Channel extrapolation explores correlations of wireless channels across time, frequency, space, and user domains. It extends the limited CSI collected by pilot signals to other time points, frequency bands, antennas, or spatial locations. This technique allows high-resolution channel estimation without increas-ing pilot overhead, which supports real-time sensing of dynamic wireless conditions [32], [33]. Earlier studies on channel extrapolation mainly relied on geometric parametric models and sparse reconstruction algorithms [34], [35]. More recently, DL models have shown strong potential to capture complex intra- and cross-domain CSI mappings. These models provide higher prediction accuracy and stronger robustness against time-varying channel conditions [36], [37]. In this paper, we leverage spatial correlations among cooperative devices to design a prior inference mechanism based on channel extrapolation. With this mechanism, we can infer the expected CSI of the target device (Alice) using the known CSI of nearby collaborative device (Jack), which enables further authentication decisions. In addition, we apply GAI to more accurately capture the structure of complex wireless channels and to better model the relationships between neighboring channels. Compared with Discriminative AI (DAI), GAI, such as GANs, VAEs, and Denoising Dif-fusion Probabilistic Models (DMs), learns the underlying data distribution and builds a mapping between the latent space and the observation space [38]. It can, therefore, gen-erate diverse and high-quality samples, even when data is sparse or partially missing [39]. GAI has recently emerged as a promising technology for enhancing Physical Layer Security (PLS), specifically in authentication tasks. For instance, Generative Adversarial Networks (GANs) have been successfully employed to authenticate RF transmit-ters by utilizing a generator to produce synthetic signals and a discriminator to distinguish between real and fake signals, achieving a detection accuracy of 99%, which sig-nificantly outperforms traditional CNN-based approaches [40]. Similarly, Variational Autoencoders (VAEs) have been applied to extract robust latent features from high-dimensional channel impulse responses for device authen-tication in Industrial IoT scenarios, effectively addressing the lack of prior information about attackers [41]. Further-more, GAI has been utilized to augment training datasets with adversarial samples, thereby bolstering the classifier’s robustness against spoofing and jamming attacks [42]. Overall, the proposed approach can significantly improve identification performance in dynamic environments by combining channel extrapolation for spatial inference and GAI for structure-aware CSI generation. The main contributions are summarized as follows. 1) We propose an Adaptive PLA Scheme with Channel Extrapolation and GAI (APEG) to realize reliable identity authentication in dynamic environments. By leveraging CSI fingerprints of nearby collaborative devices as the condition of channel extrapolation, the GAI model can adaptively generate real-time CSI fingerprints of legitimate users to improve the accuracy of their identity characteristics. 2) Upon the proposed APEG approach, we trans-form CSI fingerprints into images and employ the Collaborator-Cleaned Masked Denoising Diffusion Probabilistic Model (CCMDM) for fingerprint gener-ation. This model injects Gaussian noises into Alice’s fingerprints as mask during the forward process, and reconstructs fingerprints in the reverse denois-ing process by leveraging collaborator’s fingerprints. This approach benefits from low training complexity, making it suitable for practical deployment. 3) We further propose the Cross-Attention Denoising Diffusion Probabilistic Model (CADM) to enhance 3
+
+TABLE I: Summary of Key Notations and Parameters                                  
+
+> Notation Definition Notation Definition
+> dFixed distance between Alice and Jack MNumber of antennas (Alice/Jack)
+> fCarrier frequency LNumber of multipath paths
+> KTotal number of OFDM subcarriers yA, y JSignal received by Bob from Alice and Jack
+> n(t)Channel noise vector hA, h JTrue CSI of Alice and Jack
+> ˆhA,ˆhJEstimated CSI fingerprints ˜hAGenerated CSI of Alice
+> D(·)Distance metric for authentication kAttack frequency ratio of Eve
+> νAlice , ν Eve Alice’s emission and Eve’s attack frequency TTotal number of diffusion steps
+> mBinary mask for diffusion αt, β tNoise schedule hyperparameters
+> ˜htNoisy concatenated CSI at step thtNoisy CSI of Alice at step t
+
+the generation accuracy of fingerprints. Compared with the proposed CCMDM-based fingerprint gen-eration scheme, the proposed CADM-based scheme employs cross-attention mechanism to fuse multi-scale features from Alice’s and Jack’s fingerprints, resulting in more accurate CSI fingerprint generation. 4) We conduct simulations on the publicly available DeepMIMO datasets [43]. The simulation results demonstrate the superiority of the proposed APEG method in authentication performance than Long Short-Term Memory (LSTM)-based and Gated Re-current Unit (GRU)-based schemes. Additionally, the proposed CADM-based fingerprint generation scheme outperforms the scheme using Collaborator’s finger-prints as Alice’s fingerprints (CA) and the Cross-Attention VAE (CAVAE)-based scheme. Although the proposed CMDM-based scheme yields slightly lower fingerprint generation accuracy, it significantly increases convergence speed compared to the CADM-based scheme in training stage. II. System Model and Problem Formulation A. Network Model As illustrated in Figure 1, we consider a dynamic scenario, which is composed of the nodes below.  
+
+> •
+
+Alice: Normal devices that need to be correctly iden-tified.  
+
+> •
+
+Jack: Collaborative devices which have been correctly identified and can be used to assist the identification of Alice nearby.  
+
+> •
+
+Bob: Nodes used to identify IoT devices, such as base stations (BSs).  
+
+> •
+
+Eve: In dynamic scenarios, an eavesdropper can im-personate Alice. In the dynamic scenario, we assume that both Alice and Jack are stationary while the surrounding environment varies rapidly. The distance between Alice and Jack is denoted as d, and remains fixed during the process. Jack is the collaborative device that has already been correctly identified, while Alice is the unknown device requiring identification. This fixed and close distance allows a stable relationship between their CSI fingerprints to be estab-lished through channel extrapolation in the user domain [44]. Bob is the receiver covering the communication range of both Alice and Jack. The distance between Bob and Alice is denoted as D, where d ≪ D. Eve is a spoofing attacker within Bob’s coverage area who may impersonate Alice. For clarity, the main symbols and parameters used in this paper are summarized in Table I. B. Channel Model We consider an uplink authentication process, where transmitters are equipped with M antennas in the form of uniform linear array (ULA), and Bob is equipped with N antennas in the same form. Let hm,n denote the channel from the transmitter’s mth antenna to Bob’s nth antenna at the frequency f. Then, the multipath channel model is expressed as 
+
+hm,n (f, τ ) = 
+
+> L
+
+∑
+
+> l=1
+
+ale−j2πf τ l+jφ l δ(τ − τl), (1) where L presents the number of different transmission paths. al is the path gain, which is based on the frequency f, the distance from Alice to Bob d and the antenna gain. The phase φl also depends on the material of the scatterer and the wave incident angle at the scatterer. τl
+
+is a frequency-independent time delay of the path l. In the wide-band channel, the coefficient of the nth subcarrier in an orthogonal frequency division multiplexing (OFDM) system is expressed as 
+
+Hm,n (f, k ) = 
+
+> L
+
+∑
+
+> l=1
+
+ale−j2πf τ l+jφ l e−j2πτ ln/K , (2) where fk is the frequency of the nth subcarrier relative to the center frequency f . K represents the total num-ber of the subcarriers. We define the M × K channel vector H(f ) = [ H1,n (f ), . . . , H M,n (f )] , where Hm,n (f ) = [Hm,n (f, 0) , . . . , H m,n (f, K − 1)] . Furthermore, the signal passed from Alice to Bob at time slot t is expressed as 
+
+yA(t) = hA(f, t ) · x(t) + nA(t), (3) where yA (t) is the signal that Bob received, and x(t) rep-resents the guide signal transmitted from the transmitter to Bob at time slot t. nA(t) ∼ CN (0 , σ 2
+
+> A
+
+I) is the channel noise, assumed to be a complex Gaussian random variable with zero mean and variance σ2
+
+> A
+
+. We employ the Least Squares (LS)-based channel estimation, and the channel 
+
+h at time slot t is expressed as 
+
+ˆhA(f, t ) = (x(t)H h(t))−1 x(t)H yA(t), (4) 4
+
+Fig. 1: The system model, where the collaborator’s (Jack’s) CSI fingerprints are used as the condition to gen-erate Alice’s real-time CSI fingerprints, and Eve transmits pilot signals to Bob to impersonate Alice via spoofing attacks. where x(t)H represents the Hermitian transpose of x (t).
+
+ˆhA(f, t ) denotes Alice’s CSI fingerprints. The signal Bob received from Jack is denoted as 
+
+yJ (t) = hJ (f, t ) · x(t) + nJ (t), (5) where x(t) represents the guide signal transmitted from Jack to Bob at time slot t. nJ (t) ∼ CN (0 , σ 2 
+
+> J
+
+I) is the channel noise, assumed to be a complex Gaussian random variable with zero mean and variance σ2 
+
+> j
+
+. Correspondingly, the channel estimation result ˆhJ (f, t ) is expressed as 
+
+ˆhJ (f, t ) = (x(t)H x(t))−1 x(t)H yJ (t). (6) According to channel extrapolation in user domain [32], [33], we know that neighboring users share similar transmission paths and surrounding environments. Thus, Alice experiences the same channel noise as that of the neighboring device Jack during time slot t, that is, 
+
+nA(t) = nJ (t) and σ2 
+
+> A
+
+= σ2 
+
+> J
+
+. The relationship between the channel of Alice hA (t) and that of Jack hJ (t) can be expressed as 
+
+hA(t) = φ(hJ (t)) , (7) where φ(·) is the mapping relationship from hA (t) to 
+
+hJ (t).C. Proposed Adaptive PLA Scheme With Channel Ex-trapolation and GAI (APEG) The complete procedure of the proposed APEG scheme is detailed in Algorithm 1, which includes training and authentication phases as follows. 1) Training Phase: Bob learns the features of the dynamic Alice’s estimated CSI fingerprints ˆhA and the known estimated CSI fingerprints of its neighboring Jack 
+
+ˆhJ . According to the principle of channel extrapolation in the user domain, there exists spatial correlation between 
+
+ˆhA and ˆhJ . We train a GAI model to capture the joint CSI fingerprint representation between ˆhA and ˆhJ . The training dataset can be constructed by collecting CSI fingerprints of Alice and Jack at different locations via Bob. Algorithm 1 The Steps of the Proposed APEG Scheme  
+
+> 1:
+
+Training Phase:  
+
+> 2:
+
+Collect CSI fingerprint samples of Alice ˆhA,t and those of Jack ˆhJ,t at different time slots t. 
+
+> 3:
+
+Convert the complex CSI fingerprint matrix ˆhA,t and 
+
+ˆhJ,t into 2-channel images.  
+
+> 4:
+
+Use Algorithm 2 or Algorithm 3 to train the GAI model, which can generate Alice’s CSI fingerprint ˜hA,t 
+
+using ˆhJ,t . 
+
+> 5:
+
+Authentication Phase:  
+
+> 6:
+
+for each time slot t = 1 , 2, . . . , T do  
+
+> 7:
+
+Alice and Eves send signals to Bob for authenti-cation.  
+
+> 8:
+
+Bob receives s CSI fingerprint samples from Alice and Eves.  
+
+> 9:
+
+Bob obtains Jack’s CSI fingerprint ˆhJ,t . 
+
+> 10:
+
+By using (7) with the trained GAI model, Bob obtains the predicted Alice’s CSI fingerprint ˜hA,t . 
+
+> 11:
+
+Bob obtains authentication results based on (8).  
+
+> 12:
+
+end for 2) Authentication Phase: We predict Alice’s CSI fin-gerprint ˜hA,t by using the trained GAI model with ˆhJ,t .Then, we define D(·) to represent the distance between 
+
+˜hA,t and ˆht across multiple evaluation metrics, such as Structural Similarity Index (SSIM), Peak Signal-to-Noise Ratio (PSNR), Cosine similarity, and Normalized Mean Squared Error (NMSE). We further have 
+
+D(A) < D(E), (8) where D(A) represents the distance between and ˜hA,t and 
+
+ˆhA,t , and D(E) represents the distance between and ˜hA,t 
+
+and ˆhE,t . In the authentication phase, there are s CSI fingerprint samples, including Alice’s CSI fingerprints and Eve’s cheating fingerprints. Sorting them according to a numerical value, we can obtain 
+
+D(π(1)) < D(π(2)) < · · · < D(π(s)) , (9) where π(1) , π (2) , . . . , π (s) represent the indices sorted in ascending order based on D(t). Then, based on (8), the set {π(1) , π (2) , . . . , π (ks )} corresponds to the ks top Alice devices with the smallest distance values, while the remaining set {π(ks + 1) , π (ks + 2) , . . . , π (s)} corresponds to the Eves. The ratio between Alice’s emission frequency and Eve’s attack frequency k (k ∈ [0 , 1] ) is expressed as 
+
+k = νAlice 
+
+νAlice + νEve 
+
+, (10) where νAlice and νEve represent Alice’s signal emission frequency and Eve’s attack frequency, respectively. To operationalize the proposed APEG scheme in dy-namic environments, such as Industrial IoT (IIoT) sce-narios, Algorithm 1 is mapped to a continuous workflow. Initially, the offline phase (Steps 2–4) establishes the base-line spatial correlation, utilizing the collaborator (Jack) as an “environmental anchor” to learn the mapping from 5
+
+Fig. 2: Visualization of the real parts of Alice’s and Jack’s CSI fingerprints generated from the DeepMIMO ’O1’ dataset [43], vertically concatenated and displayed as a heatmap. The lower half shows Alice’s fingerprints and the upper half shows Jack’s fingerprints. historical data. Subsequently, the online authentication phase (Steps 6–11) executes periodically: Bob receives uplink pilots and acquires real-time CSI. Using Jack’s CSI as the anchor, Bob extrapolates Alice’s theoretical fingerprint via the trained model and performs the final decision based on the similarity ranking logic as step 11. Finally, to counteract environmental drift, high-confidence samples from Step 11 are selectively utilized for online fine-tuning (via Step 4), ensuring the reliability of continuous authentication. III. Proposed DM-based CSI Fingerprint Generation Schemes A. CSI Fingerprints as Images We construct two images of identical dimensions from Alice’s CSI fingerprint and the corresponding Jack’s CSI fingerprint at the same time. Each image has a size of M × N , where N is the number of subcarriers and 
+
+M represents the number of antennas. To bridge the gap between the complex-valued channel H ∈ CM ×N
+
+and standard real-valued deep learning architectures, we designed two channels in each image: the first stores the real part, and the second stores the imaginary part. This mapping transforms the data into a real-valued tensor 
+
+X ∈ R2×M ×N . While similar image-based processing has been successfully applied in the angle-delay domain [45], we extend this paradigm to the frequency domain. This allows us to leverage 2D convolutions to capture struc-tural correlations across antennas and subcarriers while preserving the full-resolution phase information inherent in the raw channel. For example, the image of the first channel is illustrated in Figure 2. Remark 1. Justification for Domain Selection: It is worth noting that while the Angle-Delay Domain (ADD) offers sparse representations that physically align with multipath propagation, this paper primarily targets the frequency-domain CSI for the two reasons. First, the frequency domain represents the raw channel response, preserv-ing the full-resolution amplitude and phase information essential for distinguishing subtle identity fingerprints. Second, transforming to the ADD typically involves Dis-crete Fourier Transforms (DFT) or compressive sensing, which introduce spectral leakage and quantization errors due to off-grid multipath components. These artifacts can degrade the fine-grained features required for high-precision authentication. Thus, we adopt the frequency domain to maximize fingerprint fidelity. B. Proposed CCMDM-based Fingerprint Generation Scheme As a class of GAI techniques, DM aims at constructing a forward diffusion process that gradually adds noise to the original data, transforming it into an approximately isotropic Gaussian distribution [38]. Thus, we employ CCMDM to iteratively recover the original data distri-bution from the noise, thereby enabling the modeling of complex data generation. We assume that Alice’s CSI fingerprints h0 follows a prior distribution h0 ∼ q (h0), where h0 = ˆhA, and a reverse diffusion process pθ (h0: T ) is defined conditioned on Alice’s CSI fingerprints. Since CCMDM is employed, we concatenate Alice’s and Jack’s CSI fingerprints along the last dimension to form the input, denoted as ˜h0 =[
+
+h0
+
+∥∥∥ˆhJ
+
+]
+
+. Gaussian noises are added only to the region corresponding to Alice, while the region corresponding to Jack remains clean. Accordingly, the joint probability distribution of the reverse generation process can be expressed as pθ
+
+(˜h0: T
+
+)
+
+. Then, based on [46], the corre-sponding latent variable model is formulated as 
+
+pθ
+
+(˜h0
+
+)
+
+=
+
+∫
+
+pθ
+
+(˜h0, h 1: T
+
+)
+
+dh 1: T , (11) where h1, . . . , h T are latent variables with the same di-mensionality as h0, representing Alice’s CSI fingerprints corrupted by noises at time step t. Furthermore, pθ (h0: T )
+
+is defined as a Markov chain starting from the initial state 
+
+p (hT ) = N (hT ; 0 , I), where each transition is modeled by a learned Gaussian conditional distribution. The reverse process in DMs can thus be further formulated as 
+
+pθ (h0: T ) = p (hT )
+
+> T
+
+∏
+
+> t=1
+
+pθ (ht−1 |ht ), (12) where pθ (ht−1 |ht ) is the conditional probability distri-bution of generating the sample ht−1 at time step t − 1,given Alice’s noisy CSI fingerprints ht at time step t. It is defined as 
+
+pθ (ht−1 |ht ) = N
+
+(
+
+ht−1; μθ (ht, t ) , ∑ 
+
+> θ
+
+(ht, t )
+
+)
+
+. (13) The reverse process follows a Markov chain that pro-gressively denoises the Gaussian state to recover the probability distribution of Alice’s original CSI fingerprints 
+
+h0. However, the parameters of the conditional Gaussian noise used in this process must be learned progressively during the forward process. Therefore, the forward process is also modeled as a Markov chain as 6
+
+q (h1: T |h0 ) = 
+
+> T
+
+∏
+
+> t=1
+
+q (ht |ht−1 ), (14) where q (h1: T |h0 ) represents the approximate posterior of the complete diffusion process. Since noise is added only to the region corresponding to Alice at each diffusion step, the Markov forward process is constructed as (15), where βt is the noise added at time step t, mask m =[1 A, 0J ], ht = m · ˜ht, and ˆhJ = (1 − m) · ˜ht. Since the forward process allows sampling ht at any time step t in a closed-form expression, we introduced simplified notation by defining αt = 1 − βt and ¯αt = ∏ti=1 αi. The closed-form expression of the forward process at arbitrary time step t is given in (16). The posterior mean of the forward process is parameterized as 
+
+˜ht (h0, ς ) = (1 − (1 − √¯αt
+
+) m) · ˜h0 + m · √1 − ¯αtς, (17) where ς ∼ N (0 , I). With the forward and reverse processes formally established in (12)–(16), the objective of the model is to learn the reverse denoising process to recon-struct Alice’s fingerprint ˆh0. Therefore, we aim to maxi-mize the log-likelihood of the original data max  
+
+> θ
+
+log pθ (h0),which leads to the construction of a variational lower bound (ELBO) as 
+
+L = Eq
+
+− log p (hT ) − ∑
+
+> t≥1
+
+log pθ (ht−1 |ht )
+
+q (h1: T |h0 )
+
+ . (18) By decomposing (18), we observe that the ultimate ob-jective is to minimize the distance between q (ht−1 |ht, h 0 )
+
+and pθ (ht−1 |ht ), which encourages the learned reverse process to approximate the true reverse trajectory as closely as possible. This objective is represented us-ing the Kullback–Leibler (KL) divergence, denoted as 
+
+KL (q (ht−1 |ht, h 0 ) ∥pθ (ht−1 |ht ) ) . Moreover, since the sequence h0 → h1 → . . . → ht−1 → ht forms a linear Gaussian chain, the closed-form solution can be directly derived according to 
+
+q (ht−1 |ht, h 0 ) = N
+
+(
+
+ht−1; ˜ μt (ht, h 0) , ˜βtI
+
+)
+
+, (19) where 
+
+˜μt (ht, h 0) = 
+
+√¯αt−1βt
+
+1 − ¯αt
+
+h0 +
+
+√αt (1 − ¯αt−1)1 − ¯αt
+
+ht (20) and 
+
+˜βt = 1 − ¯αt−1
+
+1 − ¯αt
+
+βt. (21) Algorithm 2 The Steps of the Proposed CCMDM-based Fingerprint Generation Scheme  
+
+> 1:
+
+Training Phase  
+
+> 2:
+
+Take Alice’s fingerprint h0 and Jack’s fingerprint ˆhJ
+
+as a 2-channel image ˜h0 =
+
+[
+
+h0
+
+∥∥∥ˆhJ
+
+] 
+
+> 3:
+
+repeat  
+
+> 4:
+
+Sample Alice’s CSI fingerprint: h0 ∼ q(h0) 
+
+> 5:
+
+Sample diffusion step: t ∼ Uniform (1 , . . . , T ) 
+
+> 6:
+
+Sample noise: ς ∼ N (0 , I) 
+
+> 7:
+
+Perform gradient descent computation at each step 
+
+∇θ
+
+∥∥∥ς − ςθ
+
+(
+
+(1 − (1 − √¯αt) m) · ˜h0 + m · √1 − ¯αtς, t 
+
+)∥ ∥∥2 
+
+> 8:
+
+until (26) converges  
+
+> 9:
+
+Fingerprint Generating Phase  
+
+> 10:
+
+Input: ˜hT =
+
+[
+
+hT
+
+∥∥∥ˆhJ
+
+]
+
+, where hT ∼ N (0 , I) 
+
+> 11:
+
+for t = T, . . . , 1 do  
+
+> 12:
+
+Sample perturbation noise zt ∼ N (0 , I) (only if 
+
+t > 1) 
+
+> 13:
+
+Then, perform a step-by-step denoising process on 
+
+˜hT depending on the noise predicted by (27)  
+
+> 14:
+
+end for  
+
+> 15:
+
+return 
+
+[˜hA
+
+∥∥∥ˆhJ
+
+]
+
+, where ˜hA is the generated channel of Alice. Then, to minimize KL (q (ht−1 |ht, h 0 ) ∥pθ (ht−1 |ht ) ) ,we reparameter the loss function by pθ (ht−1 |ht ) =
+
+N (ht−1; μθ (ht, t ) , ∑ 
+
+> θ
+
+(ht, t )) as 
+
+L = Eq
+
+[ 12σ2 ∥˜μt (ht, h 0) − μθ (ht, t )∥2
+
+]
+
++ C, (22) where ∑ 
+
+> θ
+
+(ht, t ) = σ2I and C is a constant value. By substituting (17), L can be further expressed as (23). To ensure the loss converges downward, we represent μθ (ht, t )
+
+as 
+
+μθ (ht, t ) = 1
+
+√αt
+
+(
+
+ht − βt
+
+√1 − ¯αt
+
+ςθ (ht, t )
+
+)
+
+, (24) where ςθ is the predicted noise by the neural network, which is used to recover ς from ht, ensuring that μθ
+
+closely approximates ˜μt. Accordingly, the network serves as a denoising model. It takes the noisy input ht and time step t as inputs to predict the corresponding noise 
+
+ςt. Consequently, the loss function at each time step is formulated as 
+
+LDM (θ) = Et,ς t
+
+[
+
+∥ςt − ςθ (ht, t )∥22
+
+]
+
+, (25) where the noisy input is constructed under the full masked diffusion paradigm ˜ht, and the corresponding formulation 
+
+q
+
+(˜ht
+
+∣∣∣˜ht−1
+
+)
+
+= N
+
+(˜ht; (1 − m) · ˜ht + m · √1 − βt˜ht−1, m · βtI
+
+)
+
+(15) 
+
+q
+
+(˜ht
+
+∣∣∣˜h0
+
+)
+
+= N
+
+(˜ht; (1 − m) · ˜h0 + m · √¯αt˜h0, m · (1 − ¯αt) I
+
+)
+
+(16) 7
+
+becomes (26). After training, the denoising process can be performed iteratively using (27) to progressively remove noises, thus reconstructing the complete Alice–Jack paired fingerprints, where zt ∼ N (0 , I). The detailed steps of the CCMDM-based scheme are presented in Algorithm 2. C. Proposed CADM-based Fingerprint Generation Scheme Remark 2. Although the previous CCMDM incorporates Jack’s fingerprints ˆhJ as concatenated inputs, it does not explicitly model the statistical dependency between Alice’s fingerprints h0 and Jack’s fingerprints ˆhJ . As a result, CCMDM may not fully exploit the mapping information provided by ˆhJ , leading to limited sensitivity to the conditioning input and reduced accuracy in structural alignment and feature reconstruction of h0. CCMDM essentially learns the form of conditional posterior as 
+
+p(h0 | hT ) = p(h0, h T )/p (hT ). Therefore, even if the joint distribution p (h0, h T ) or marginal distribution p (hT ) is known during the sampling process, the conditional dis-tribution remains uncertain. Moreover, since pθ (ht−1 |ht )
+
+is a probability distribution with variance in the reverse process, and each denoising step involves sampling a ran-dom variable ht−1 from this distribution as the input for the next step. Specifically, (27) reveals that the generated state ht−1 at each step consists of two components: a deter-ministic function f (ht, ς θ (ht, t )) predicted by the network and a stochastic perturbation term ˜βtzt. The accumulation of these stochastic perturbations over the reverse process leads to a significant discrepancy between the generated Alice’s fingerprint ˜hA and the real fingerprint h0. As a result, we develop CADM, which can fully use the mapping relationship between Alice’s and Jack’s CSI fingerprints to reduce the randomness during denoising. To enable accurate generation of Alice’s fingerprints 
+
+˜hA, in CADM, we incorporate Jack’s fingerprints ˆhJ
+
+as conditioning input, serving as characteristic-aligned conditional information rather than merely concatenated contextual input. This prior serves to guide the gen-eration process toward realistic and structure-consistent CSI fingerprint outputs for Alice. Specifically, according to channel extrapolation [44], there exists an underlying functional mapping φ : ˆhJ → h0 between the Alice’s fingerprints and Jack’s fingerprints. Thus, for each specific 
+
+ˆhJ , the distribution of Alice’s fingerprint h0 is expected to concentrate around φ
+
+(ˆhJ
+
+)
+
+.Algorithm 3 The Steps of the Proposed CADM-based Fingerprint Generation Scheme  
+
+> 1:
+
+Training Phase  
+
+> 2:
+
+Construct 2-channel images for Alice h0 and Jack ˆhJ ,forming a paired input.  
+
+> 3:
+
+repeat  
+
+> 4:
+
+Sample Alice’s CSI fingerprints: h0 ∼ q(h0) 
+
+> 5:
+
+Sample diffusion step: t ∼ Uniform (1 , . . . , T ) 
+
+> 6:
+
+Sample noise: ς ∼ N (0 , I) 
+
+> 7:
+
+Construct noisy sample: ht = √¯αth0 + √1 − ¯αtς 
+
+> 8:
+
+Extract multi-scale features from Jack’s CSI fin-gerprint: {Kl, V l} = Encoder (ˆhJ ) 
+
+> 9:
+
+ςθ (ht, t, ˆhJ ) = CrossAttn-UNet (ht, t, {Kl, V l}) 
+
+> 10:
+
+Compute MSE loss: L =
+
+∥∥∥ς − ςθ (ht, t, ˆhJ )
+
+∥∥∥2 
+
+> 11:
+
+until convergence of Lcross-att  
+
+> 12:
+
+Fingerprint Generation Phase  
+
+> 13:
+
+Input: hT ∼ N (0 , I), and conditioning Jack’s CSI fingerprint ˆhJ 
+
+> 14:
+
+for t = T, . . . , 1 do  
+
+> 15:
+
+Sample perturbation noise zt ∼ N (0 , I ) (only if 
+
+t > 1) 
+
+> 16:
+
+Extract {Kl, V l} from Jack’s CSI fingerprint: 
+
+{Kl, V l} = Encoder (ˆhJ ) 
+
+> 17:
+
+Denoise via (31)  
+
+> 18:
+
+end for  
+
+> 19:
+
+Return ˜hA as the generated CSI fingerprint of Alice, conditioned on ˆhJ
+
+In the characteristic-aligned conditional denoising dif-fusion model, the predicted denoising mean at each step is more biased toward matching the distribution indicated by the condition φ
+
+(ˆhJ
+
+)
+
+, compared to the mean predicted 
+
+μθ
+
+(
+
+ht∥ˆhJ , t 
+
+)
+
+by the standard masked diffusion approach. Accordingly, based on [47], the mean in each step of the Gaussian reverse process can be reformulated as 
+
+μθ
+
+(
+
+ht, t, ˆhJ
+
+)
+
+= 1
+
+√αt
+
+(
+
+ht − βt
+
+√1 − ¯αt
+
+ςθ
+
+(
+
+ht, t, ˆhJ
+
+))
+
+,
+
+(28) where ςθ
+
+(
+
+ht, t, ˆhJ
+
+)
+
+denotes the predicted noise residual. When the prior condition ˆhJ is provided, the model tends to eliminate the noise components that cause the sample to deviate from the target distribution φ
+
+(ˆhJ
+
+)
+
+during both the training and generation stages. As a result, the 
+
+L = Eq
+
+[
+
+12σ2
+
+∥∥∥∥˜μt
+
+(
+
+ht (h0, ς ) , 1
+
+√¯αt
+
+(ht (h0, ς ) − √1 − ¯αtς))
+
+− μθ (ht, t )
+
+∥∥∥∥
+
+> 2
+
+]
+
++ C (23) 
+
+LDM (θ) = Eh0,t,ς t
+
+[∥∥∥m ·
+
+(
+
+ςt − ςθ
+
+((1 − (1 − √¯αt
+
+) m) · ˜h0 + m · √1 − ¯αtςt, t 
+
+))∥ ∥∥22
+
+]
+
+(26) 
+
+˜ht−1 = (1 − m) · ˜ht + m ·
+
+[ 1
+
+√αt
+
+(
+
+˜ht − βt
+
+√1 − ¯αt
+
+ςθ
+
+(
+
+m · ˜ht, t 
+
+))
+
++ ˜βtzt
+
+]
+
+(27) 8
+
+remaining signal is encouraged to align with the target 
+
+˜hA, as inferred from φ : ˆhJ → h0 [44]. To further enable effective prior fusion, we introduce the cross-attention mechanism, originally proposed in the Transformer architecture [48], into CADM to capture the dependencies between the collaborator’s and the user’s fea-tures. To balance model expressiveness and computational efficiency, each cross-attention layer employs 4 attention heads, which are empirically determined to provide suffi-cient representation capacity without incurring excessive computational cost. The detailed procedure is outlined in Algorithm 3. After converting the CSI fingerprint data into image-like representations, a conditional U-Net [49], which is characterized by a symmetric encoder-decoder architecture with skip connections for capturing multi-scale spatial features, within the diffusion model is employed to guide the noisy CSI fingerprint of Al-ice and the fingerprint of Jack for structurally aligned feature mapping. The network consists of a dual-branch encoder-decoder architecture. Each branch contains an encoder with 17 two-dimensional convolutional layers and 3 downsampling operations, enabling both the noisy Alice channel ht and the Jack channel ˆhJ to be encoded with the same structure for dimensionality reduction and feature extraction. Specifically, the current noisy diffusion state feature of Alice ht, is used as the Query, while the conditional fingerprint ˆhJ provided by Jack, serves as both the Key and Value. In the encoder, ˆhJ is processed into multi-scale contextual features {Kl, V l} that are feature-wise and dimensionally aligned with Alice’s intermediate feature representations Ql at various layers. In this way, the cross-attention module adaptively focuses on different structural and value components of ht based on ˆhJ ,thus embedding Jack’s channel information into the noise prediction process ςθ
+
+(
+
+ht, t, ˆhJ
+
+)
+
+. The attention mechanism is incorporated according to the following formulation 
+
+Attention (Q, K, V ) = softmax 
+
+( QK T
+
+√dk
+
+)
+
+V. (29) This method can actively query the structural fea-tures of the Jack region when denoising each spatial position, thereby learning an implicit mapping function 
+
+h0 = φ
+
+(ˆhJ
+
+)
+
+[44] between the two channels. Accordingly, the loss function of the cross-attention-based conditional generation is reformulated as 
+
+Lcross −att = Eh0,h J ,ς t,t 
+
+[∥∥∥ςt − ςθ
+
+(
+
+ht, t, ˆhJ
+
+)∥ ∥∥22
+
+]
+
+. (30) Then, the same as the masked diffusion process, we can represent the denoising process one step by step as 
+
+ht−1 = 1
+
+√αt
+
+(
+
+ht − βt
+
+√1 − ¯αt
+
+ςθ (ht, t, ˆhJ )
+
+)
+
++ ˜βtzt. (31) D. Complexity Analysis of the Proposed Schemes 1) Complexity Analysis of CCMDM: Let the chan-nel multiplication sequence be denoted by P =
+
+{p1, p 2, . . . , p L}, where L is the number of layers. Denote 
+
+B, γ, and Cb as the batch size, time channel expansion factor, and base channel size, respectively. The input is formed by concatenating two CSI fingerprints along the last dimension, resulting in an input tensor of size 
+
+(C, H, 2W ). Then, the complexity of the time-embedding layer is O (B (γC b2 + γ2Cb2)) . Since the convolution op-eration adopts a kernel of 3 × 3, the complexity of the first convolution layer can be expressed as O (9 BC bCS ),where C denotes the number of input channels, and 
+
+S = H × 2W is the spatial resolution. The encoder part includes L layers. As a result, the complexity of the encoder process can be expressed in (32), where nr is the number of ResNetBlocks in each layer, Cl = Cb · pl
+
+is the input channel number of the lth layer, C0 = C,and Sl is the spatial resolution at the lth layer. δl = 1 
+
+represents that self-attention is employed at the lth 
+
+layer. Similarly, the complexity of the decoder process is expressed in (33). The complexity of the bottleneck is O (2B C 2 
+
+> L
+
+SL + 2 B γ C b CL + B S 2 
+
+> L
+
+CL
+
+). To further pro-vide an intuitive understanding of the computational scale, we aggregate the complexitiy of all modules and retain only the dominant terms. Since the convolutional and 
+
+O
+
+( L∑
+
+> l=1
+
+nr
+
+[BC lSl(Cl−1 + Cl) + δlBS 2 
+
+> l
+
+Cl
+
+] +
+
+> L−1
+
+∑
+
+> l=1
+
+9BC 2 
+
+> l
+
+Sl+1 
+
+)
+
+(32) 
+
+O
+
+( L∑
+
+> l=1
+
+(nr + 1) (B C L−l SL−l(CL−l+1 + CL−l) + δlBS 2
+
+> L−l
+
+CL−l
+
+) +
+
+> L
+
+∑
+
+> l=2
+
+9BC 2
+
+> L−l
+
+SL−l
+
+)
+
+(33) 
+
+O
+
+( L∑
+
+> l=1
+
+nr
+
+[
+
+2BC l ˜Sl(Cl−1 + Cl) + 2 δlB ˜S2 
+
+> l
+
+Cl + 2 ζlB ˜S2 
+
+> l
+
+Cl
+
+]
+
++
+
+> L−1
+
+∑
+
+> l=1
+
+2 · 9BC 2 
+
+> l
+
+˜Sl+1 
+
+)
+
+(35) 
+
+O
+
+( L∑
+
+> l=1
+
+2( nr + 1) 
+
+[
+
+BC L−l ˜SL−l(CL−l+1 + CL−l) + δlB ˜S2
+
+> L−l
+
+CL−l + ζlB ˜S2
+
+> L−l
+
+CL−l
+
+]
+
++
+
+> L
+
+∑
+
+> l=2
+
+2 · 9BC 2 
+
+> L−l
+
+˜SL−l
+
+)
+
+(36) 9
+
+attention operations are main contributors to the overall computational cost, the total complexity of CCMDM is approximated as 
+
+OCCMDM = O (T BLn r
+
+(C2max Smax + S2max Cmax 
+
+)) , (34) where Cmax and Smax = H × 2W denote the maximum number of channels and the maximum spatial resolution across all layers, respectively. T is the total number of diffusion steps. 2) Complexity Analysis of CADM: In CADM, the input consists of two separate CSI fingerprints, hA,t and hJ ,each of size (C, H, W ), which are processed in parallel by dual encoder-decoder branches. At every ResNet block in both the encoder and decoder, a cross-attention module is added between the two branches, while self-attention is retained as in CCMDM. Thus, the complexity at each block includes both self-attention and cross-attention terms, and all operations are performed on feature maps of size H × W for each branch. The complexity of the time-embedding and first convolutional layers doubles due to the dual-branch design: O (2B(γC b2 + γ2Cb2))
+
+and O
+
+(
+
+2 · 9BCC b ˜S
+
+)
+
+, where ˜S = H × W . The encoder complexity is given in (35), where, for each block, the self-attention term δl and cross-attention term ζl (typ-ically ζl = 1 for all blocks) are both included. The bottleneck contains two ResNetBlocks per branch and a cross-attention operation, leading to the complexity 
+
+O
+
+(
+
+4B C 2 
+
+> L
+
+˜SL + 4 B γ C b CL + 2 B ˜S2 
+
+> L
+
+CL
+
+)
+
+. Similarly, the decoder complexity is expressed in (36). Aggregating all components and retaining only the dominant terms, the total computational complexity of CADM is given by 
+
+OCADM = O
+
+(
+
+T BLn r
+
+(
+
+2C2max ˜Smax + 4 ˜S2max Cmax 
+
+)) 
+
+,
+
+(37) where Cmax and ˜Smax = H × W denote the maximum channel number and spatial resolution in each branch, respectively. The factor 2 reflects the dual-branch design, while the factor 4 in the attention term arises from the addition of cross-attention alongside self-attention in every block. 3) Latency and Power Consumption Analysis of CADM: To assess the feasibility of the proposed scheme in practical systems, we evaluated the inference latency and energy consumption on a high-performance workstation configured with an NVIDIA RTX A6000 GPU and an Intel Xeon w7-2495X CPU. (a) Inference Latency: The measured average inference latency is approximately 9.03 ms per time step f denoising. While standard diffusion requires one thousand steps, by adopting the Denoising Diffusion Implicit Models (DDIM) accelerator with 20 sampling steps, the total E2E inference time is reduced to approximately 180.6 ms. This falls well within the sub-second authentication latency requirements for many 6G applications. TABLE II: DeepMIMO ‘O1’ Scenario Parameters [43]                      
+
+> Parameter Value Receiver antenna array size 1×2×4
+> Transmitter antenna array size 1×2×4
+> Antenna element spacing 0.5λ
+> Receiver antenna angle (x, y, z) (5 ◦, 10 ◦, 20 ◦)Transmitter antenna angle (x, y, z) (0 ◦, 30 ◦, 0 ◦)Radiation pattern Isotropic Bandwidth 50 MHz Frequency 28 GHz Number of OFDM subcarriers 32 Number of paths 5OFDM sampling factor 1OFDM subcarrier limit 32 Different Poisitions at Different Time Slots
+> X(m)
+> Y(m)
+> Z(m)
+> Alice Jack
+> Eves
+> Time Slot 0
+> Time Slot t
+> Time Slot T
+> Bob
+
+Fig. 3: The positions of nodes involved, where Alice, Bob, and Jack are posited at (23.5 m, 266.93 m, 0), (0, 0, 4 m), and (23.5 m, 266.73 m, 0), respectively. Eves are randomly distributed within a circle centered at Alice with radius 
+
+r.(b) Energy Consumption: Power Consumption Estima-tion: Based on the hardware specifications, the Ther-mal Design Power is 300 W for the NVIDIA RTX A6000 and 225 W for the Intel Xeon w7-2495X, re-sulting in a total peak system power of approximately 525 W. Consequently, the estimated energy con-sumption for a single authentication instance (180.6 ms) is approximately 94.8 J, which is a conservative upper-bound estimate based on a general-purpose workstation. In actual 6G deployment, utilizing ded-icated edge AI chips (e.g., FPGA or ASIC) would significantly further reduce both latency and power consumption. IV. Simulation Results and Analysis A. Simulation Settings To emulate practical dynamic communication scenarios, we adopt dynamic outdoor channel parameters from the ’O1’ scenario of the DeepMIMO dataset [43] to gener-ate time-varying channel responses of Alice and Jack. Specifically, to construct the dataset, we extracted atotal of 12000 CSI samples based on the continuous movement trajectories of Alice and Jack within the dataset grid. The data samples were then partitioned into atraining set and a testing set with a ratio of 9:1. In addition, to emulate environmental variations in dynamic scenarios, Alice and Jack are placed at different locations at each time step and move at constant velocities to 10 Input h J                                  
+
+> (2,16,32)
+> Conv 3x3
+> Input h A
+> (2,16,32)
+> ResNetBlock
+> (128,16,32) ×2
+> Bottleneck Layer
+> Down Sampling
+> (256,8,16)
+> ResNetBlock
+> (512,8,16) ×2
+> Down Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,4,8) ×2
+> Self Attention
+> Cross Attention
+> Self Attention
+> Down Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,2,4) ×2
+> Final Conv
+> (2,16,32)
+> Pred Noise
+> (2,16,32)
+> ResNetBlock
+> (128,16,32) ×3
+> Up Sampling
+> (256,8,16)
+> ResNetBlock
+> (512,8,16) ×3
+> Up Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,4,8) ×3
+> Self Attention
+> Cross Attention
+> Cross Attention
+> Self Attention
+> Up Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,2,4) ×3
+> ResNetBlock
+> (1024,2,4) ×2
+> Conv 3x3
+> Down Sampling
+> (256,8,16)
+> ResNetBlock
+> (512,8,16) ×2
+> Down Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,4,8) ×2
+> Self Attention
+> Self Attention
+> Down Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,2,4) ×2
+> ResNetBlock
+> (1024,2,4) ×2
+> ResNetBlock
+> (1024,2,4) ×3
+> ResNetBlock
+> (128,16,32) ×3
+> Up Sampling
+> (256,8,16)
+> ResNetBlock
+> (512,8,16) ×3
+> Up Sampling
+> (512,4,8)
+> ResNetBlock
+> (1024,4,8) ×3
+> Self Attention
+> Self Attention
+> Up Sampling
+> (512,4,8)
+
+Fig. 4: Illustration of the proposed CADM scheme, where the U-Net framework consists of an encoder and a decoder, each comprising three downsampling and three upsam-pling modules. The network integrates cross-attention and self-attention modules to fuse features across multiple scales for enhanced CSI fingerprint generation. ensure channel continuity. The key scenario parameters of DeepMIMO are summarized in Table II. The positions of involved nodes are illustrated in Figure 3, where Alice and Jack move at a constant speed in the same direction while maintaining a fixed relative distance. An adversary, Eve, is randomly placed within a circular area centered on Alice with radius r. To evaluate the authentication performance against frequent spoofing, we initialized 5 candidate Eves randomly distributed in this area. During the evaluation, the attack frequency ratio k (as defined in (10)) was set to 0.5, where the number of attack samples equals the number of legitimate samples. At each attack instance, one Eve is randomly selected from the candidates to transmit spoofing signals, thereby simulating a diverse and high-intensity attack environment. Figure 4 illustrates the overall architecture of the pro-posed CADM, and Table III details its hyperparameters. The network is built upon a U-Net framework and consists of three main components: an encoder, a bottleneck, and a decoder. Multiple ResNet modules and attention mechanisms are embedded within both the encoding and decoding paths to enhance feature extraction and reconstruction capabilities. The network takes the noisy input channel ht and the collaborator’s channel ˆhJ as inputs and outputs the predicted noise component ˆnAt ,which is subsequently removed to obtain the denoised TABLE III: Model Hyperparameter Settings 
+
+Parameter Value Diffusion timesteps 1000 Input shape (2 , 16 , 32) 
+
+Training epochs 1600 Batch size 128 Learning rate 1 × 10 −4
+
+Base channel size 64 Channel multiplier (1, 2, 4, 4) Self-Attention (True, False, False, True) Num_heads of Cross-Attention 4Dropout rate 0.1 Time embedding multiplier 4
+
+channel. In essence, this architecture in Figure 4 is specif-ically tailored to realize the physical concept of spatial-domain channel extrapolation through three integrated design strategies. First, a dual-branch encoder structure is employed to explicitly model the collaborator’s channel ˆhJ
+
+as a conditional input, structurally enforcing the learning of the spatial mapping from Jack to Alice. Second, the Cross-Attention mechanism serves as the core algorithmic innovation; it uses Alice’s noisy features as queries to adap-tively align with the collaborator’s features, effectively overcoming signal misalignment between these spatially correlated channels. Finally, by embedding these mech-anisms across multiple resolution levels, the model fuses auxiliary information at both semantic and fine-grained textural scales, ensuring high fidelity in reconstructing the complex multipath details essential for authentication. B. Comparative Schemes  
+
+> •
+
+GRU-based PLA [30]: GRU introduces update and reset gates to capture critical temporal sequence information.  
+
+> •
+
+LSTM-based PLA [29]: Compared to GRU, LSTM is better at modeling long-term dependencies.  
+
+> •
+
+The Scheme Using Collaborator’s Fingerprints as Alice’s Fingerprints (CA): This scheme does not lever-age GAI to predicted Alice’s fingerprints, but directly uses Jack’s CSI fingerprints as Alice’s fingerprints.  
+
+> •
+
+CAVAE-based Fingerprint Generation: This scheme integrates VAE with a cross-attention mechanism. C. Performance Metrics 1) Performance Metrics for CSI Fingerprint Generation:  
+
+> •
+
+SSIM: SSIM measures the perceptual similarity be-tween the generated channel image and the real chan-nel image. It takes into account luminance, contrast, and structural information.  
+
+> •
+
+PSNR: PSNR is used to measure the pixel-level am-plitude difference between the generated image and the reference image. A higher PSNR value indicates smaller error and better image fidelity.  
+
+> •
+
+Cosine Similarity: Cosine similarity measures the directional similarity between two vectors while ignor-ing differences in magnitude. It is suitable for com-11 Real Part Channel Imaginary Part Channel                     
+
+> True CSI Fingerprint t=0 t=333 t=666 t=960 Generated CSI Fingerprint
+> (b)
+> Real Part Channel Imaginary Part Channel
+> True CSI Fingerprint t=0 t=333 t=666 t=960 Generated CSI Fingerprint
+> (a)
+> Real Part Channel Imaginary Part Channel
+> True CSI Fingerprint t=0 t=333 t=666 t=960 Generated CSI Fingerprint
+> (a)
+> Real Part Channel Imaginary Part Channel
+> True CSI Fingerprint t=0 t=333 t=666 t=960 Generated CSI Fingerprint
+> (c)
+
+Fig. 5: The visualization of the denoising process during CSI fingerprint generation. The upper layer of (a) (b) (c) is the real part channel of the generated fingerprint, and the layer below is the imaginary part. t is the denoising time step. (a) is the DeepMIMO O1 outdoor frequency domain CSI fingerprint, (b) is the DeepMIMO O1 outdoor angle delay domain CSI fingerprint, (c) is the DeepMIMO I3 indoor frequency domain CSI fingerprint. paring the structural distribution of CSI fingerprint images.  
+
+> •
+
+NMSE: NMSE measures the ratio of the amplitude er-ror between the generated CSI fingerprint and the real CSI fingerprint to the energy of the real. A smaller value indicates higher prediction accuracy. NMSE is more sensitive to absolute value differences and better reflects the accuracy of amplitude reconstruction. 2) Performance Metrics for PLA:  
+
+> •
+
+F1 Score: Motivated by [7] and [50], F1 score is used to comprehensively evaluate the authentication performance. It is defined as 
+
+F1 = 2 · Precision · Recall Precision + Recall , (38) where Precision = TP TP+FP and Recall = TP TP+FN .TP (True Positive) refers to the number of samples correctly identified as Alice. FP (False Positive) refers to non-Alice samples incorrectly identified as Alice. FN (False Negative) refers to real Alice samples that were not correctly identified.  
+
+> •
+
+Authentication Error Rate RE : Re ∈ [0 , 1] [51] is the ratio of fingerprint samples with incorrect authenti-cation to all fingerprint samples. D. Simulation Results of Fingerprint Prediction 1) Visualization of CSI Fingerprint Generation: Figure 5 illustrates the reverse generation of Alice’s CSI finger-prints using the CADM model at 20 dB SNR. As observed in the outdoor scenario frequency domain CSI fingerprints 12 0 00 00 00 00 000 00           
+
+> #"%
+> 00
+> 0
+> 0
+> 0
+> 0
+> 0
+> "$!  &  "%%
+>       
+> 
+> 
+> 
+> 
+> 
+>   $"#"%
+>   $"#"%
+> 
+> 
+> 
+
+Fig. 6: Comparison of the normalized loss convergence of different models. The average loss line is obtained using a moving average with a window size of 20. of Fig. 5 (a) and the indoor scenario frequency domain CSI fingerprints of Fig. 5 (c), the generated frequency-domain CSI fingerprints align closely with the ground truth in both structural distribution and amplitude range, confirming accurate reconstruction. In contrast, the angle-delay domain generated CSI fingerprints in Fig. 5 (b) exhibit slight background noise. This stems from the inherent sparsity of the domain where signal energy concentrates in few components with significant mag-nitude gaps compared to the background. Nevertheless, the accurate recovery of key signal positions validates the model’s effectiveness, while future log-domain pre-processing can effectively mitigate these background mag-nitude mismatches. 2) Loss Convergence Analysis of Proposed and Compar-ative Schemes: Figure 6 illustrates the loss convergence trends of the proposed CCMDM and CADM schemes alongside the comparative schemes (CAVAE, LSTM, and GRU) during training. Since these models employ distinct loss functions, such as noise prediction error for diffusion schemes and reconstruction error for LSTM, GRU, and CAVAE, their absolute loss values differ. Therefore, we normalized the loss curves of all models to the range of 
+
+[0 , 1] to facilitate a fair comparison of convergence speed and stability. It can be observed that the time-series models, LSTM and GRU, exhibit the most rapid convergence, which is attributed to their relatively simple architectures and direct optimization objectives. Among the generative mod-els, the proposed CCMDM demonstrates a significant advantage in convergence speed, passing the rapid descent phase and stabilizing around 200 epochs. In contrast, CADM requires a longer warm-up period, and finally converges after approximately 1200 epochs. This disparity arises because, unlike the simple channel concatenation in CCMDM, the cross-attention mechanism in CADM necessitates optimizing additional projection matrices to learn soft feature alignment, which imposes a higher learn-ing burden. However, as demonstrated in the subsequent generation quality analysis, this additional training cost 5  5  5  5       
+
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>  5
+>  
+>  5
+>  
+
+Fig. 7: Fingerprint generation performance of the proposed CADM-based scheme in PSNR at SNR = 5 dB, 10 dB, 15 dB, and 20 dB. − − − − − −        
+
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+>  
+>  
+>  
+>  
+
+Fig. 8: Fingerprint generation performance of the proposed CADM-based scheme in NMSE at SNR = 5 dB, 10 dB, 15 dB, and 20 dB. of CADM translates into superior fingerprint generation quality. Furthermore, while CAVAE converges quickly in the initial stage, it exhibits noticeable fluctuations in the later stages, suggesting that its training stability is inferior to that of the diffusion-based CCMDM and CADM. 3) Noise Robustness of the Proposed CADM-based Fingerprint Generation Scheme: Figure 7 and Figure 8 compare the CDF curves of PSNR and NMSE for the channel matrices generated by CADM under different SNR conditions. As shown in Figure 7, the PSNR curves exhibit minimal variation with increasing SNR, and the distributions largely overlap across all SNR levels. This indicates that the proposed model consistently produces CSI fingerprint images with high structural fidelity across varying noise levels. Since PSNR primarily reflects overall amplitude consistency, it is less sensitive to small or localized distortions. As a result, PSNR may not ade-quately capture subtle degradations in generation quality under varying noise intensities. In contrast, NMSE, as a relative error metric, is more sensitive to amplitude-level deviations. Therefore, Figure 8 shows more pronounced differences in the NMSE curves. As SNR increases, the 13 −               
+
+> 
+> 
+> 
+> 
+> 
+> 
+>      
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+
+Fig. 9: Fingerprint generation performance of the pro-posed CADM-based scheme at different cross-attention multiheads. C  CC C     C        
+
+> 
+> 
+> 
+> 
+> 
+> 
+> %!  $
+>               
+> 
+> C" !#&
+
+Fig. 10: Fingerprint generation performance of the CCMDM-based and CADM-based schemes compared with comparative schemes in SSIM and Cosine Similarity when SNR = 20 dB. CDF curves shift to the left, indicating a clear reduction in reconstruction error. In particular, under high SNR conditions such as 20 dB, NMSE values concentrate in lower negative ranges, demonstrating improved precision in channel modeling. This is because NMSE is expressed in dB scale, where more negative values correspond to smaller normalized reconstruction errors and thus better modeling accuracy. Moreover, although the NMSE distribution under 5 dB SNR is not as favorable as that under 20 dB, the difference remains relatively small. For example, at NMSE = −15dB , the gap between the two distributions is only about 0.1. This demonstrates that the proposed method maintains strong reconstruction capability even under low SNR conditions. 4) Impact of Cross-Attention Heads on Generation Performance: Figure 9 illustrates the impact of different cross-attention head configurations ( H = 2 , 4, 8) on the fingerprint generation quality (represented by the CDF of SSIM) at an SNR of 20 dB. A distinct performance stratification can be observed: increasing the number of heads from 2 to 4 results in a substantial performance leap. The orange curve ( H = 4 ) is significantly shifted to the right compared to the blue curve ( H = 2 ), indicating a marked improvement in the structural similarity between C CC C    C        
+
+>  
+>  
+> 
+> 
+> 
+> 
+> $"  #
+> 
+>            
+> !
+> !
+> 
+> 
+
+Fig. 11: Fingerprint generation performance of the CCMDM-based and CADM-based schemes compared with comparative schemes in PSNR and NMSE when SNR = 20 dB. the generated and ground-truth fingerprints. This suggests that a low number of heads limits the model’s capacity to capture complex spatial correlations. However, as the number of heads is further increased from 4 to 8 (green curve), the performance gain becomes marginal, with the two curves nearly overlapping. This indicates that 4 attention heads provide sufficient feature extraction capacity to characterize the spatial mapping between Alice and Jack. Further increasing the heads yields diminishing returns while introducing additional computational over-head. Consequently, to balance performance gains with computational complexity, 4 attention heads are selected as the optimal configuration for this study. 5) Fingerprint Generation Performance Compared with Comparative schemes: Figures 10 and 11 compare the average performance under a 20 dB SNR condition, providing a comprehensive evaluation of the quality of generated fingerprints. Figure 10 presents the average SSIM and cosine similar-ity for each method under a 20 dB SNR condition. CADM achieves the best performance on both metrics, with an SSIM of 0.960 and a cosine similarity of 0.996, indicating excellent preservation of spatial structure and directional consistency in the generated CSI fingerprint. Specifically, compared with time-series-based methods such as GRU and LSTM, which do not utilize channel extrapolation, CADM demonstrates significantly stronger generation capability. GRU and LSTM show moderate structural recovery (SSIM: 0.519 and 0.681, respectively), but their lack of spatial context modeling limits their performance in generating fine-grained channel features. In addition, CADM also outperforms other channel extrapolation-based GAI models. CAVAE achieves the SSIM of only 0.377, as the KL regularization in VAEs tends to over-smooth the latent representation and leads to the loss of fine-grained details. In contrast, the iterative refinement of CADM better captures these complex channel struc-tures. CCMDM incorporates context but lacks feature alignment, resulting in a lower SSIM of 0.260. While CA serves as an ablation experiment without model-driven generation, it still achieves a relatively high cosine 14 5  5    
+
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>  
+> 
+> 
+> 
+> 
+> 
+
+Fig. 12: Identity authentication performance of the pro-posed and comparative schemes at different SNR levels, where Cosine Similarity is used to distinguish between Alice and Eve. similarity of 0.682, thanks to its direct spatial proximity. However, its SSIM drops sharply to 0.099, revealing poor structural matching. This contrast highlights the effectiveness of GAI modeling in learning accurate spatial mappings beyond mere signal-level similarity. Figure 11 further evaluates the fingerprint generation performance in terms of PSNR and NMSE in dB. CADM again achieves the best results, with an average PSNR exceeding 31 dB and NMSE lower than -20 dB, demon-strating strong advantages in both signal fidelity and error suppression. Compared with GRU and LSTM, which rely on temporal modeling without spatial extrapolation, CADM obtains better error control and reconstruction quality. Although GRU and LSTM show moderate PSNR (around 13-16 dB), their NMSE values remain relatively high, reflecting limitations in capturing fine spatial struc-ture. In addition, while CAVAE serves as a generative comparative scheme, it yields inferior performance on both metrics. Compared to CADM, its PSNR and NMSE drop by approximately 20 dB and 18 dB, respectively, a significant deficit primarily stemming from the inherent optimization conflict in VAEs, where the necessity to balance reconstruction against KL divergence hinders the minimization of element-wise errors unlike the diffusion model’s focused noise prediction objective. CCMDM, de-rived from CADM by disabling cross-attention, retains contextual conditioning but fails to capture fine-grained feature dependencies, resulting in a PSNR and NMSE degradation of about 20 dB and 22 dB relative to CADM. Finally, CA operates as a non-parametric baseline without any model training. Although it leverages direct spatial proximity, its absence of learned inference leads to the most significant performance gap, with PSNR decreasing by nearly 26 dB and NMSE increasing by over 25 dB compared to CADM, highlighting the crucial role of spatial reasoning in GAI-based modeling. 6) PLA Performance Compared with Comparative Schemes: Figure 12 shows the authentication performance 5  5    
+
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>  
+> 
+> 
+> 
+> 
+> 
+
+Fig. 13: Identity authentication performance of the pro-posed and comparative schemes at different SNR levels, where PSNR is used to distinguish between Alice and Eve. 5  5    
+
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+>  
+> 
+> 
+> 
+> 
+> 
+
+Fig. 14: Identity authentication performance of the pro-posed and comparative schemes at different SNR levels, where SSIM is used to distinguish between Alice and Eve. of different schemes evaluated by cosine similarity across various SNR levels. CADM maintains an F1 score of 1.0 consistently, demonstrating strong robustness and effective preservation of directional channel features. Com-pared to time-series models like GRU and LSTM, which lack channel extrapolation, CADM achieves significantly better performance. Although GRU and LSTM improve slightly with higher SNR, their overall F1 scores remain lower, indicating the limitations of temporal modeling in capturing spatial structures critical for authentication. For other models that apply channel extrapolation, such as CAVAE and CCMDM, the performance gap is still clear. These models fail to fully exploit spatial correlations, resulting in reduced accuracy. CA performs the worst, reinforcing the importance of combining extrapolation with GAI modeling to achieve robust authentication under varying noise conditions. Figure 13 illustrates the authentication performance of different schemes based on PSNR under varying SNR conditions. CADM consistently maintains an F1 score of 1.0, showing excellent resilience against noise and strong capability in preserving the fidelity of CSI finger-15 5  5    
+
+>   
+> 
+> 
+> 
+> 
+> 
+> 
+> R
+> 
+> 
+> 
+> 
+> 
+> 
+
+Fig. 15: Identity authentication performance of the pro-posed and comparative schemes at different SNR levels with Re, where Euclidean Distance is used to distinguish between Alice and Eve. prints. Compared with GRU and LSTM, which do not incorporate channel extrapolation, CADM demonstrates a substantial performance advantage. While GRU and LSTM show some improvements at higher SNRs, their F1 scores remain limited, revealing the insufficiency of purely temporal modeling in complex fingerprint inference. In contrast, CAVAE and CCMDM exhibit noticeable perfor-mance gaps. Despite leveraging extrapolation, they fail to deliver consistent authentication accuracy due to weaker representation and feature integration. CA performs the worst across all SNR levels, highlighting the necessity of combining channel extrapolation with a robust GAI model for reliable authentication under diverse channel conditions. Figure 14 presents the F1 score performance of different schemes evaluated by SSIM across various SNR levels. CADM maintains an F1 score of 1.0 across all SNR con-ditions, demonstrating outstanding stability and effective preservation of structural similarity in the generated CSI fingerprints. Compared to GRU and LSTM, which lack spatial extrapolation, CADM delivers a clear performance advantage. Although LSTM and GRU improve gradually as SNR increases, their scores remain notably lower, suggesting that temporal modeling alone is insufficient for capturing the spatial structure required for reliable authentication. Among the extrapolation-based methods, CAVAE and CCMDM show limited improvements and fail to match the performance of CADM. Despite using extrapolation, these models exhibit lower F1 scores due to their weaker representation learning capabilities. CA achieves acceptable authentication performance at 5 dB, due to the identical environmental noise experienced by Alice and Jack which increases the local structural similar-ity and elevates SSIM. As the SNR increases, the inherent channel differences become more pronounced, lowering the structural similarity and weakening the authentication capability. These results further emphasize the necessity of combining channel extrapolation with powerful GAI models to enhance authentication robustness. Figure 15 shows the overall error rate ( Re) of each scheme versus SNR when Euclidean distance is used for authentication. The proposed CADM holds Re = 0 from 5 dB to 20 dB, showing that it preserves Alice’s CSI fingerprint so faithfully that neither false acceptance nor false rejection arises as noise increases. The time-series comparative schemes, GRU and LSTM, both start near 0.40 at 5 dB. As SNR improves, GRU declines to roughly 0.30, whereas LSTM climbs back to about 0.43 at 20 dB because, once channel noise is suppressed, Euclidean distance becomes dominated by absolute-amplitude mis-matches that LSTM cannot model, creating extra errors. The channel extrapolation-based comparative schemes, CAVAE and CCMDM, exhibit an overall downward trend but show noticeable performance fluctuations between 10 dB and 15 dB due to limited generative fidelity and imper-fect feature alignment. CA maintains an error rate close to 1.0 across the entire SNR range, confirming that channel-extrapolation relationships are highly implicit and cannot be easily captured without dedicated modeling. Taken together, these observations reveal that only CADM’s precise channel extrapolation coupled with a powerful GAI model drives Re to zero and ensures robust CSI fingerprint-based authentication. V. Conclusion and Future Work A. Conclusion We have proposed APEG to enable dynamic device identification in future 6G. In this scheme, a collabora-tor is deployed near Alice, maintaining a fixed relative position throughout Alice’s mobility to support channel extrapolation. Additionally, we have proposed CCMDM for CSI fingerprint generation. Furthermore, we have proposed CADM to align auxiliary features, facilitating accurate user-domain channel extrapolation from the col-laborator to Alice. Simulation results have demonstrated the proposed scheme’s superiority than existing schemes. Consequently, due to its ability to leverage collaborative sensing for robust authentication in time-varying chan-nels, the proposed framework shows great potential for deployment in dynamic 6G IIoT scenarios, such as smart factories where fixed sensors must operate in environments with moving scatterers like mobile robots and automated machinery. B. Future Work In future work, we will investigate higher-level prior knowledge by extracting environmental factors that in-fluence Alice’s channel characteristics to enhance authen-tication performance.While the current CADM general-izes well to new devices and environmental drifts via spatial rule learning and online fine-tuning, we aim to extend the framework to support concurrent multi-device authentication. Moreover, we plan to relax the strict fixed-position constraint by extending the framework to the Angle-Delay Domain. This extension will allow the 16 
+
+collaborator to support channel extrapolation by simply sharing local scattering environments without requiring precise geometric alignment, thereby broadening the appli-cability of APEG to NLoS and complex dynamic scenarios. Furthermore, we intend to further validate and optimize the proposed scheme in high-speed mobility scenarios, investigating mechanisms to mitigate the impact of severe Doppler shifts and rapid time-varying fading to ensure robust authentication. Finally, addressing the security implications of a potentially compromised collaborator is paramount. We will explore trust evaluation mechanisms and multi-collaborator consensus protocols to detect and mitigate malicious behaviors from the helper node, thereby fortifying the APEG framework against internal vulnera-bilities. References 
+
+[1] C.-X. Wang, X. You, X. Gao, X. Zhu, Z. Li, C. Zhang, H. Wang, Y. Huang, Y. Chen, H. Haas et al., “On the road to 6G: Visions, requirements, key technologies, and testbeds,” IEEE Communications Surveys & Tutorials, vol. 25, no. 2, pp. 905– 974, 2023. [2] V.-L. Nguyen, P.-C. Lin, B.-C. Cheng, R.-H. Hwang, and Y.-D. Lin, “Security and privacy for 6G: A survey on prospective technologies and challenges,” IEEE Communications Surveys & Tutorials, vol. 23, no. 4, pp. 2384–2428, 2021. [3] 3rd Generation Partnership Project (3GPP), “Technical Specification Group Services and System Aspects (SA3): TS 33.501: Security Architecture and Procedures for 5G System,” Version 0.7.0, December 2017, available: https://portal.3gpp.org/desktopmodules/Specifications/ SpecificationDetails.aspx?specificationId=3169. [4] T. N. Turnip, B. Andersen, and C. Vargas-Rosales, “Towards 6g authentication and key agreement protocol: A survey on hybrid post quantum cryptography,” IEEE Communications Surveys & Tutorials, 2025. [5] R. Meng, B. Xu, X. Xu, M. Sun, B. Wang, S. Han, S. Lv, and P. Zhang, “A survey of machine learning-based physical-layer authentication in wireless communications,” Journal of Network and Computer Applications, p. 104085, 2025. [6] J. Zhang, F. Ardizzon, M. Piana, G. Shen, and S. Tomasin, “Physical layer-based device fingerprinting for wireless security: From theory to practice,” IEEE Transactions on Information Forensics and Security, 2025. [7] R. Meng, X. Xu, B. Wang, H. Sun, S. Xia, S. Han, and P. Zhang, “Physical-layer authentication based on hierarchical variational autoencoder for Industrial Internet of Things,” IEEE Internet of Things Journal, vol. 10, no. 3, pp. 2528–2544, 2023. [8] Z. Duan, Z. Chang, N. Xie, W. Sun, and D. Niyato, “Adaptive strategies in enhancing physical layer security: A comprehensive survey,” ACM Computing Surveys, vol. 57, no. 7, pp. 1–36, 2025. [9] X. Li, K. Huang, S. Wang, and X. Xu, “A physical layer authen-tication mechanism for IoT devices,” China Communications, vol. 19, no. 5, pp. 129–140, 2021. [10] H. Parmaksız and C. Karakuzu, “A review of recent devel-opments on secure authentication using RF fingerprints tech-niques,” Sakarya University Journal of Computer and Informa-tion Sciences, 2022. [11] H.-M. Wang and Q.-Y. Fu, “Channel-prediction-based one-class mobile iot device authentication,” IEEE Internet of Things Journal, vol. 9, no. 10, pp. 7731–7745, 2021. [12] N. Basha, B. Hamdaoui, A. Erbad, and M. Guizani, “On the Detection of Replay Authentication Attacks Through Channel State Information Analysis,” in GLOBECOM 2024-2024 IEEE Global Communications Conference. IEEE, 2024, pp. 1719– 1724. [13] Q. Wang, Z. Pang, W. Liang, J. Zhang, K. Wang, and Y. Yang, “Spatiotemporal gradient-based physical-layer authentication enhanced by csi-to-image transformation for industrial mobile devices,” IEEE Transactions on Industrial Informatics, vol. 20, no. 3, pp. 4236–4245, 2023. [14] T. Jing, H. Huang, Q. Gao, Y. Wu, Y. Huo, and Y. Wang, “Multi-user physical layer authentication based on CSI using ResNet in mobile IIoT,” IEEE Transactions on Information Forensics and Security, vol. 19, pp. 1896–1907, 2023. [15] Q. Wang, W. Liang, J. Zhang, K. Wang, and X. Jiang, “Knowledge-Enhanced Physical Layer Authentication for Mo-bile Devices,” IEEE Transactions on Consumer Electronics, 2024. [16] L. Xiao, L. Greenstein, N. Mandayam, and W. Trappe, “Fin-gerprints in the ether: Using the physical layer for wireless authentication,” in 2007 IEEE International conference on communications. IEEE, 2007, pp. 4646–4651. [17] Y. Zhou, P. L. Yeoh, K. J. Kim, Z. Ma, Y. Li, and B. Vucetic, “Game theoretic physical layer authentication for spoofing detection in UAV communications,” IEEE Transactions on Vehicular Technology, vol. 71, no. 6, pp. 6750–6755, 2022. [18] Z. Ji and D. Li, “Physical layer authentication based on channel variance normalization and difference exponential amplifica-tion,” in 2025 IEEE 101st Vehicular Technology Conference (VTC2025-Spring). IEEE, 2025, pp. 1–7. [19] L. Xiao, Y. Li, G. Han, G. Liu, and W. Zhuang, “PHY-layer spoofing detection with reinforcement learning in wireless networks,” IEEE Transactions on Vehicular Technology, vol. 65, no. 12, pp. 10 037–10 047, 2016. [20] M. Abdrabou and T. A. Gulliver, “Adaptive physical-layer authentication for IoT in MIMO communication systems using support vector machine,” IEEE Internet of Things Journal, vol. 10, no. 22, pp. 19 861–19 873, 2023. [21] S. M. Islam, A. Rahman, N. Prasad, O. Boric-Lubecke, and V. M. Lubecke, “Identity authentication system using a support vector machine (SVM) on radar respiration measurements,” in 2019 93rd ARFTG microwave measurement conference (ARFTG). IEEE, 2019, pp. 1–5. [22] X. Qiu, T. Jiang, S. Wu, and M. Hayes, “Physical layer authentication enhancement using a Gaussian mixture model,” IEEE Access, vol. 6, pp. 53 583–53 592, 2018. [23] A. Weinand, M. Karrenbauer, J. Lianghai, and H. D. Schotten, “Physical layer authentication for mission critical machine type communication using Gaussian mixture model based cluster-ing,” in 2017 IEEE 85th Vehicular Technology Conference (VTC Spring). IEEE, 2017, pp. 1–5. [24] S. Wang, K. Huang, X. Xu, Z. Zhong, and Y. Zhou, “CSI-based physical layer authentication via deep learning,” IEEE Wireless Communications Letters, vol. 11, no. 8, pp. 1748–1752, 2022. [25] R. Liao, H. Wen, F. Pan, H. Song, A. Xu, and Y. Jiang, “A novel physical layer authentication method with convolutional neural network,” in 2019 IEEE International Conference on Artificial Intelligence and Computer Applications (ICAICA). IEEE, 2019, pp. 231–235. [26] Z. Lai, Z. Chang, M. Sha, Q. Zhang, N. Xie, C. Chen, and D. Niyato, “A comprehensive survey on physical layer authen-tication techniques: Categorization and analysis of model-driven and data-driven approaches,” ACM Computing Surveys, vol. 57, no. 5, pp. 1–35, 2025. [27] F. Pan, Z. Pang, H. Wen, M. Luvisotto, M. Xiao, R.-F. Liao, and J. Chen, “Threshold-free physical layer authentication based on machine learning for industrial wireless CPS,” IEEE Transactions on Industrial Informatics, vol. 15, no. 12, pp. 6481– 6491, 2019. [28] J. Martins, M. Gomes, V. Silva, and R. Dinis, “Deep Learning-based Channel Prediction for Wireless Physical Layer Security,” in 2024 IEEE International Mediterranean Conference on Com-munications and Networking (MeditCom). IEEE, 2024, pp. 114–118. [29] X. Qiu, X. Sun, and M. Hayes, “Enhanced security authentica-tion based on convolutional-LSTM networks,” Sensors, vol. 21, no. 16, p. 5379, 2021. [30] K. S. Germain and F. Kragh, “Mobile physical-layer authentica-tion using channel state information and conditional recurrent neural networks,” in 2021 IEEE 93rd Vehicular Technology Conference (VTC2021-Spring). IEEE, 2021, pp. 1–6. [31] R. Meng, X. Xu, H. Sun, H. Zhao, B. Wang, S. Han, and P. Zhang, “Multiuser physical-layer authentication based on latent perturbed neural networks for industrial internet of things,” IEEE Internet of Things Journal, vol. 10, no. 1, pp. 637–652, 2023. 17 
+
+[32] S. Zhang, Y. Liu, F. Gao, C. Xing, J. An, and O. A. Dobre, “Deep learning based channel extrapolation for large-scale an-tenna systems: Opportunities, challenges and solutions,” IEEE Wireless Communications, vol. 28, no. 6, pp. 160–167, 2021. [33] Y. Wan and A. Liu, “A two-stage 2D channel extrapolation scheme for TDD 5G NR systems,” IEEE Transactions on Wireless Communications, vol. 23, no. 8, pp. 8497–8511, 2024. [34] M. B. Khalilsarai, S. Haghighatshoar, X. Yi, and G. Caire, “FDD massive MIMO via UL/DL channel covariance extrapo-lation and active channel sparsification,” IEEE Transactions on Wireless Communications, vol. 18, no. 1, pp. 121–135, 2018. [35] F. Rottenberg, T. Choi, P. Luo, C. J. Zhang, and A. F. Molisch, “Performance analysis of channel extrapolation in FDD massive MIMO systems,” IEEE Transactions on Wireless Communications, vol. 19, no. 4, pp. 2728–2741, 2020. [36] B. Lin, F. Gao, S. Zhang, T. Zhou, and A. Alkhateeb, “Deep learning-based antenna selection and CSI extrapolation in massive MIMO systems,” IEEE Transactions on Wireless Communications, vol. 20, no. 11, pp. 7669–7681, 2021. [37] Z. Zhang, J. Zhang, Y. Zhang, L. Yu, and G. Liu, “AI-based time-, frequency-, and space-domain channel extrapolation for 6G: Opportunities and challenges,” IEEE Vehicular Technology Magazine, vol. 18, no. 1, pp. 29–39, 2023. [38] H. Cao, C. Tan, Z. Gao, Y. Xu, G. Chen, P.-A. Heng, and S. Z. Li, “A survey on generative diffusion models,” IEEE Transactions on Knowledge and Data Engineering, 2024. [39] B. Zhang, J. Zhu, and H. Su, “Toward the third generation arti-ficial intelligence,” Science China Information Sciences, vol. 66, no. 2, p. 121101, 2023. [40] D. Roy, T. Mukherjee, M. Chatterjee, and E. Pasiliao, “De-tection of rogue rf transmitters using generative adversarial nets,” in 2019 IEEE wireless communications and networking conference (WCNC). IEEE, 2019, pp. 1–7. [41] R. Meng, X. Xu, B. Wang, H. Sun, S. Xia, S. Han, and P. Zhang, “Physical-layer authentication based on hierarchical variational autoencoder for industrial internet of things,” IEEE Internet of Things Journal, vol. 10, no. 3, pp. 2528–2544, 2022. [42] K. Merchant and B. Nousain, “Securing iot rf fingerprinting sys-tems with generative adversarial networks,” in MILCOM 2019-2019 IEEE Military Communications Conference (MILCOM). IEEE, 2019, pp. 584–589. [43] A. Alkhateeb, “DeepMIMO: A generic deep learning dataset for millimeter wave and massive MIMO applications,” in Proc. of Information Theory and Applications Workshop (ITA), San Diego, CA, Feb 2019, pp. 1–8. [44] Y. Han, S. Jin, X. Li, C.-K. Wen, and T. Q. Quek, “Multi-domain channel extrapolation for FDD massive MIMO sys-tems,” IEEE Transactions on Communications, vol. 69, no. 12, pp. 8534–8550, 2021. [45] C.-K. Wen, W.-T. Shih, and S. Jin, “Deep learning for massive mimo csi feedback,” IEEE Wireless Communications Letters, vol. 7, no. 5, pp. 748–751, 2018. [46] J. Ho, A. Jain, and P. Abbeel, “Denoising diffusion probabilistic models,” Advances in neural information processing systems, vol. 33, pp. 6840–6851, 2020. [47] X. Zhou, L. Liang, J. Zhang, P. Jiang, Y. Li, and S. Jin, “Generative diffusion models for high dimensional channel estimation,” IEEE Transactions on Wireless Communications, 2025. [48] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Advances in neural information processing systems, vol. 30, 2017. [49] O. Ronneberger, P. Fischer, and T. Brox, “U-net: Convolutional networks for biomedical image segmentation,” in International Conference on Medical image computing and computer-assisted intervention. Springer, 2015, pp. 234–241. [50] S. Xia, X. Tao, N. Li, S. Wang, T. Sui, H. Wu, J. Xu, and Z. Han, “Multiple correlated attributes based physical layer authentication in wireless networks,” IEEE Transactions on Vehicular Technology, vol. 70, no. 2, pp. 1673–1687, 2022. [51] R. Meng, F. Zhu, X. Cheng, X. Xu, B. Wang, C. Dong, B. Xu, X. Tao, and P. Zhang, “Efficient Gaussian process classification-based physical-layer authentication with configurable finger-prints for 6G-enabled IoT,” IEEE Transactions on Consumer Electronics, 2025.

@@ -1,0 +1,988 @@
+Title: Spatio-Temporal Attention Enhanced Multi-Agent DRL for UAV-Assisted Wireless Networks with Limited Communications
+
+URL Source: https://arxiv.org/pdf/2603.21594v1
+
+Published Time: Tue, 24 Mar 2026 02:13:19 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+# Spatio-Temporal Attention Enhanced Multi-Agent DRL for UAV-Assisted Wireless Networks with Limited Communications 
+
+Che Chen, Lanhua Li, Shimin Gong, Yu Zhao, Yuming Fang, Dusit Niyato 
+
+Abstract —In this paper, we employ multiple UAVs to acceler-ate data transmissions from ground users (GUs) to a remote base station (BS) via the UAVs’ relay communications. The UAVs’ intermittent information exchanges typically result in delays in acquiring the complete system state and hinder their effective collaboration. To maximize the overall throughput, we first pro-pose a delay-tolerant multi-agent deep reinforcement learning (MADRL) algorithm that integrates a delay-penalized reward to encourage information sharing among UAVs, while jointly optimizing the UAVs’ trajectory planning, network formation, and transmission control strategies. Additionally, considering information loss due to unreliable channel conditions, we further propose a spatio-temporal attention based prediction approach to recover the lost information and enhance each UAV’s aware-ness of the network state. These two designs are envisioned to enhance the network capacity in UAV-assisted wireless networks with limited communications. The simulation results reveal that our new approach achieves over 50% reduction in information delay and 75% throughput gain compared to the conventional MADRL. Interestingly, it is shown that improving the UAVs’ information sharing will not sacrifice the network capacity. Instead, it significantly improves the learning performance and throughput simultaneously. It is also effective in reducing the need for UAVs’ information exchange and thus fostering prac-tical deployment of MADRL in UAV-assisted wireless networks. 
+
+Index Terms —UAV-assisted wireless networks, limited com-munications, multi-agent DRL, spatio-temporal attention. 
+
+I. I NTRODUCTION 
+
+Recently, the applications of unmanned aerial vehicles (UAVs) have attracted extensive attention in various wireless networks, such as UAV-assisted sensing networks, mobile edge computing, and wireless-powered networks [1]–[3]. UAVs offer high mobility, adaptability, and controllability, which improve the efficiency of data transmission in these networks. Specifically, UAVs can dynamically relocate to en-hance channel conditions for data transmissions from ground users (GUs) to the base station (BS), improving both network coverage and capacity. The UAV can also serve as a mobile 
+
+Che Chen, Lanhua Li, and Shimin Gong are with the School of In-telligent Systems Engineering, Shenzhen Campus of Sun Yat-sen Univer-sity, Shenzhen 518000, China, and Southern Marine Science and Engi-neering Guangdong Laboratory (Zhuhai), Zhuhai 519082, China (e-mail: chench576@mail2.sysu.edu.cn, {lilh65, gongshm5 }@mail.sysu.edu.cn). Yu Zhao is with the Department of Equipment Management and Un-manned Aerial Vehicle Engineering, Air Force Engineering University, Xi’an (e-mail: zhaoyuair@163.com). Yuming Fang is with the School of Computing and Artificial Intelligence, Jiangxi University of Finance and Economics, Nanchang 330032, China (e-mail: fa0001ng@e.ntu.edu.sg). Dusit Niyato is with the College of Computing and Data Science, Nanyang Technological University, Singapore (e-mail: dniyato@ntu.edu.sg). 
+
+energy supplier for low-power GUs in large-scale wireless-powered networks to prolong the network lifespan [4]. How-ever, each UAV faces limitations in energy supply, com-putation capacity, and coverage area. These limitations can be practically alleviated by employing multiple UAVs to serve the GUs in large-scale wireless networks [5], [6], by designing efficient information sharing and collaborative control mechanisms for UAVs’ trajectory planning, multi-hop networking, and transmission control strategies. 
+
+A. Challenges and Motivations 
+
+The UAVs’ mobility control can be achieved by joint trajectory planning, allowing UAVs to simultaneously serve different GUs to improve the network coverage and trans-mission efficiency [7]. The UAVs need to adjust their paths to avoid inter-UAV collisions and adapt to environmental uncertainties like obstacles and channel dynamics. The UAVs’ trajectory planning is also related to the GUs’ data trans-mission requirements, balancing the trade-off among cover-age, energy efficiency, and communication performance. The UAVs’ collaboration in data transmissions can be facilitated through the UAV-to-UAV (U2U) connections and transmis-sion control. For example, the UAVs far away from the BS often suffer from poor channel conditions by using only the direct UAV-to-BS (U2B) channels, reducing the transmission efficiency and network capacity. Thus, it can be more efficient to exploit U2U links to relay data transmissions from the distant UAVs to the BS, forming a multi-hop relay network to support energy-efficient data sensing over a large-scale service area [8]. Additionally, the UAVs’ simultaneous data transmissions can lead to severe signal interference. The transmission control is further complicated by the UAVs’ mobility and channel dynamics. Potentially, a higher network throughput can be achieved by dynamically optimizing the UAVs’ collaborative transmission control and U2U relaying strategies along with the UAVs’ trajectory planning strategy. The spatio-temporal coupling among the UAVs’ transmis-sion control, U2U networking, and trajectory planning poses significant challenges for network performance maximization. It firstly relies on the availability of global network infor-mation and secondly calls for an efficient control algorithm, especially in large-scale UAV-assisted wireless networks. The absence of information exchange may lead to overlapped ser-vice areas among the UAVs, decreasing the network capacity and resource utilization [8]. However, real-time information exchange among all UAVs is normally impractical or unaf-fordable. For example, the U2U and U2B connections can 
+
+> arXiv:2603.21594v1 [cs.IT] 23 Mar 2026 2
+
+become unavailable due to severely attenuated channel con-ditions as two UAVs move far away along their trajectories. Such intermittent U2U and U2B connections thus introduce random information delay or loss [9]. Additionally, the UAVs are required to simultaneously optimize the trajectories, trans-mission control, and resource allocation strategies, which is computationally demanding especially with dynamic channel conditions and information uncertainties. These motivate us to design robust and adaptive control algorithms, capable of handling incomplete network information while ensuring reliable and efficient network performance. 
+
+B. New Designs and Contributions 
+
+In this paper, we first improve the UAVs’ information sharing to enable more efficient collaboration. Typically, the high dimensional multiple UAVs’ joint control can be formu-lated as a Markov decision process (MDP). It can be solved by a multi-agent deep reinforcement learning (MADRL) framework, which relies on full information sharing among all UAV agents. In particular, for each UAV, the decision-making agent should be aware of the complete and real-time network state and the other UAVs’ actions during the centralized training phase [10]. This implies that all UAVs should be fully connected to enable real-time information exchange. On the other hand, the UAVs’ real-time information exchange consumes significant channel resources, sacrificing the network capacity and resource efficiency. Therefore, it becomes a critical design problem to balance the UAVs’ information exchange for efficient learning and data communications. We address this trade-off by designing a delay-tolerant MADRL framework for the UAVs’ deci-sion making in communication-limited scenarios. Although efficient information exchange via U2U connections is not always feasible, each UAV can update and cache its sta-tus information, i.e., service location, traffic demands, and channel conditions, at the BS when it reports the sensing data to the BS via the U2B connection. Meanwhile, each UAV can retrieve the other UAVs’ status information from the BS’s ACK packets without direct U2U connections [9]. To reduce the information delay at the BS, we integrate a delay-penalized reward design into the MADRL framework, which encourages all UAVs to optimize their trajectories and maintain frequent information exchange with the BS, fostering awareness of the network state and more efficient UAVs’ collaboration. As the UAV-assisted wireless network scales up, each UAV increasingly relies on multi-hop U2U links to forward its data to the BS, which leads to larger information delays for decision-making. Such delayed information will misguide UAVs’ trajectory planning and transmission control. As such, we aim to mitigate the impact of delayed information re-sulting from limited communication by leveraging historical information cached at the BS. Specifically, we integrate a spatio-temporal attention module into the MADRL frame-work so that each UAV can predict other UAVs’ delayed information, and then adapt its trajectory and transmission control strategies accordingly. The prediction module exploits both the temporal correlations in the UAV’s historical in-formation and the spatial dependencies among neighboring UAVs. By estimating the delayed information, each UAV can better understand the complete network state and sup-port more efficient collaboration without real-time inter-UAV information exchange. We envision that the spatio-temporal attention enhanced MADRL (STA-MADRL) together with the delay-penalized reward design can provide a practical multi-agent decision-making framework for decentralized wireless networks. Dif-ferent from the existing studies, we focus on communication-limited scenarios and design an incentive mechanism to promote timely information updates. Moreover, leveraging historical interactions for prediction enables effective collab-oration even when the channels for information sharing are sporadic and error-prone. Specifically, our main contributions are summarized as follows:  
+
+> •
+
+UAVs’ joint control in communication-limited scenarios: Multiple UAVs are used to collect data from the GUs and forward the data to the remote BS. The UAVs’ trajectory planning is firstly required to enhance network coverage. The UAVs further adapt the multi-hop network formation along the UAVs’ trajectories. Besides, the UAVs optimize transmission control to better serve the GUs simultaneously. Different from the current litera-ture, we focus on network throughput maximization in a communication-limited scenario, in which the UAVs’ information sharing is unreliable and intermittent.  
+
+> •
+
+Delay-penalized reward improving UAVs’ information sharing: Information sharing is required to guide the UAVs’ efficient collaboration, while it also poses extra constraints on the UAVs’ trajectory planning and limits the transmission capability in the communication-limited scenario. As such, we devise a delay-penalized reward in the MADRL framework that guides the UAVs’ trajec-tory planning to maintain frequent information exchange without a significant loss in transmission capability.  
+
+> •
+
+Spatio-temporal attention predicting UAVs’ information loss: The information delay or loss becomes inevitable when the network scales up. Instead of relying on frequent information exchange, we further propose the STA-MADRL algorithm to exploit the UAVs’ historical observations by using a spatio-temporal attention based prediction approach, which enhances the UAVs’ aware-ness of the complete network state and facilitates more efficient collaboration in the joint control. The simulation results verify that STA-MADRL achieves over 50% reduction in information delay and 75% throughput gain comparing to the communication-limited MADRL. Some preliminary results of this work have been presented in a conference paper [9], which verifies the effectiveness of the delay-penalized reward to guide the UAVs’ trajectory planning. In this paper, we focus on compensating the UAVs’ excessive information delay as the UAV-assisted wireless network scales up, and integrate a spatio-temporal attention module into the MADRL framework to optimize the UAVs’ trajectories, network formation, and transmission control 3
+
+strategies efficiently. The remainder of this paper is organized as follows. The literature review is provided in Section II. We detail the system model in Section III and propose the delay-tolerant MADRL for throughput maximization in Section IV. Then, considering excessive information delay, we further propose the STA-MADRL framework in Section V. Finally, we present extensive results in Section VI and draw the conclusions in Section VII. II. R ELATED WORKS 
+
+A. Joint Trajectory Planning and Transmission Control 
+
+Efficient multi-UAV deployment enables concurrent service for multiple GUs, improving network coverage, capacity, and transmission efficiency. The UAVs’ fast and dynamic deployment also comes with the price for agile network adaptability that demands adaptive transmission control and networking strategies along with the UAVs’ trajectories. The authors in [11] explored the UAVs’ deployment and GUs’ scheduling strategies to maximize network throughput while maintaining fairness. The authors in [12] maximized the GUs’ minimum uplink throughput by jointly optimizing the UAVs’ trajectories and resource allocation strategies under en-ergy neutrality and mobility constraints in wireless-powered networks. The authors in [13] jointly optimized the UAV’s trajectory planning, task offloading, and computing resource assignment to minimize system energy consumption of a UAV-based air-ground integrated computing network under limited battery capacity. UAVs’ multi-hop relay network has also been considered in [14] to enhance data transmission, task offloading, and on-the-fly computation. The authors in [8] exploited the UAVs’ energy-efficient network formation strategy to dynamically adapt multi-hop relay connections along with their trajectories. The joint optimization of the UAVs’ trajectories and transmission control has also been proved indispensable for enhancing network performance in terms of fairness, energy efficiency, transmission delay, and energy consumption, e.g. [14]–[16]. 
+
+B. Optimization vs. Learning for UAV-assisted Networks 
+
+Network performance maximization in UAV-assisted wire-less networks is typically solved either by optimization or machine learning methods. The authors in [17] employed the conventional block coordinate descent (BCD) method to derive a closed-form solution for transmit power that maximizes the minimum throughput in a UAV-assisted hybrid NOMA system. The authors in [18] proposed a generalized Dinkelbach and successive convex approximation algorithm to jointly optimize the transmit beamforming, computation offloading, and the UAV’s trajectory in a joint sensing, communication, and computation framework. However, con-ventional optimization methods generally rely on real-time and global network information to perform heuristic de-composition, problem-specific simplification, and iterative approximation, leading to high computational complexity and even non-guaranteed performance. DRL can adapt to the changing network environment and learn optimal policies through continuously interactions with the network environ-ment, making it particularly effective for trajectory planning, network formation, and transmission control in UAV-assisted wireless networks. The authors in [19] proposed the dueling double deep Q-network (D3QN) algorithm for trajectory planning to maximize the collected data from multiple GUs under realistic constraints. The authors in [20] proposed the deep deterministic policy gradient (DDPG) algorithm for trajectory planning of both UAVs and unmanned ground vehicles (UGVs), which can supply energy to the UAVs. The authors in [21] employed a multi-agent DDPG (MADDPG) algorithm to jointly optimize the UAVs’ trajectories and the expected age of information (AoI). Considering the UAVs’ limited computation and energy capacities, the authors in [22] proposed the multi-agent twin-delayed DDPG (MATD3) al-gorithm to minimize the sum of execution delays and energy consumption in a task offloading system between multi-ple UAVs and edge nodes. A multi-agent advantage actor-critic (MAA2C) algorithm was used in [23] to optimize the UAVs’ trajectories and enhance GUs’ spectral efficiency for downlink transmissions. Though MADRL has been proven particularly effective in handling complex and dynamic sys-tems, it still faces significant challenges for practical and flexible deployment in UAV-assisted wireless networks. The requirement of complete network information for centralized training becomes difficult when multiple UAVs have limited information about each other, leading to instability and slow convergence in the training phase. The intermittent channels among UAVs also make it costly for real-time information sharing. These challenges call for more efficient MADRL approaches for large-scale UAV-assisted wireless networks with limited communications. 
+
+C. UAVs’ Collaboration with Limited Communications 
+
+With limited information sharing, the authors in [24] pro-posed the attentional communication model (ACM) to selec-tively share critical information among agents, thus reducing the communication overhead. The authors in [25] proposed a graph neural network (GNN) based framework to compress and share only essential graph-structured information among UAVs. Federated learning can also be employed to enable the collaborative model training without raw data sharing [26]. The authors in [27] formulated a multi-agent partially ob-servable MDP to minimize the total energy consumption of a UAV-assisted MEC network by optimizing the UAVs’ mobil-ity, user association, resource allocation, and task offloading decisions. A neural network based interaction mechanism is integrated into the MADRL framework to help UAVs generate autonomously task-oriented messages for energy minimization. Our previous work in [8] proposed a data-driven Bayesian optimization approach to guide MADDPG by estimating each UAV’s best action in every decision epoch. Such a data-driven action estimation only focuses on the reward in the next step, and thus it is short-sighted and may be contradictory with the MADDPG’s action. Instead of relying on information sharing, recent research has also explored prediction-based approaches to estimate 4
+
+the lost or delayed information for UAVs’ collaboration. The authors in [28] proposed a deep recurrent Q-network (DRQN) framework to optimize the UAV’s trajectory by predicting the partially observable system state, enabling spectral-efficient resource allocation and scheduling. The authors in [29] pro-posed a GNN framework for the UAVs to predict the other UAVs’ trajectories using historical information, suppressing the need for real-time information sharing. The authors in [30] proposed a graph-attention multi-agent trust region reinforce-ment learning framework for trajectory planning and resource assignment in a multi-UAV-assisted wireless network. The graph recurrent network is used to process the network topology and extract useful information and patterns from historical observations. Different from existing works, in this paper we exploit the spatio-temporal dependencies from both the UAVs’ trajectories and networking strategies to enhance UAVs’ collaboration. III. S YSTEM MODEL 
+
+Considering a large set of GUs randomly distributed over the service area, we employ multiple UAVs to assist GUs’ data transmissions to the remote BS by optimizing the UAVs’ trajectory planning, network formation, and transmission control strategies. As illustrated in Fig. 1, the multi-UAV-assisted wireless network consists of one remote BS, N
+
+UAVs, and M GUs, similar to those in [8] and [9]. The sets of UAVs and GUs are represented as N = {1, 2, . . . , N } and 
+
+M = {1, 2, . . . , M }, respectively. We assume that the GUs cannot be served directly by the BS due to the long distance or obstacles. The UAVs are equipped with F antennas while the GUs are single-antenna devices. The UAVs’ signal beamform-ing can be used to enhance the wireless data transmissions and the wireless energy transfer to sustain the low-power GUs. The whole system is operated in a time-slotted framework. Each time frame is divided into multiple time slots with a unit length. The set of time slots is denoted by T ≜ {1, 2, . . . , T }.The UAVs’ operations in each time slot can be further divided into three phases, i.e., wireless energy transfer te, uplink data collection ts, and data forward transmission tr . Each UAV firstly moves to a fixed location and beamforms energy to the GUs in the first phase te, and then collects the sensing data from the GUs for the second phase ts. After that, the UAVs forward the sensing data directly to the BS or relay it to the other UAVs via the U2U links in the third phase tr .
+
+A. UAV-assisted Wireless Channel and Energy Transfer 
+
+Let ℓ0 = ( x0, y 0, h 0) denote the BS’s location with the fixed height h0, which is viewed as the UAV-0. The set of all UAVs including the BS is defined as ˜N ≜ N ∪{ 0}. The UAV-
+
+n’s trajectory is defined as a collection of location points in different time slots, i.e., Ln = {ℓn(1) , . . . , ℓ n(t), . . . , ℓ n(T )},where ℓn(t) ≜ (xn(t), y n(t), H ) denotes the location with a fixed altitude H in the t-th time slot. To ensure safety, all UAVs need to satisfy the distance and speed constraints: 
+
+|| ℓn(t + 1) − ℓn(t)|| ≤ vmax te, ∀n ∈ N , (1a) 
+
+|| ℓn(t) − ℓn′ (t)|| ≥ dmin , ∀n, n ′ ∈ N , n ̸ = n′, (1b) GU‐1    
+
+> U2G
+> GU‐3
+> GU‐4
+> GU‐5
+> GU‐ 𝑛 GU‐2
+> Remote BS
+> UAV‐1 U2B
+> UAV‐4
+> UAV‐3 UAV‐ 𝑚
+> U2U
+> UAV‐2 U2U
+> …
+> Trajectory planning U2U network formation Transmission control
+> U2G
+> …
+> Fig. 1. Multiple UAVs assist GUs’ data tranmissions to the remote BS, by joint trajectory planning, network formation, and transmisison control.
+
+where vmax and dmin denote the maximum flying speed and the minimum safety distance between two UAVs, respectively. The GU-m’s location is indicated by qm = ( xm, y m, 0) .Let hn,m (t) ∈ CF ×1 denote the channel between the UAV-n
+
+and the GU-m at the t-th slot. The UAV-to-GU (U2G) channel can be modeled as follows: 
+
+hn,m (t) = ω1/20
+
+∥ℓn(t) − qm∥ ˜hn,m (t), (2) where ω0 is the channel gain at unit distance and the small-scale fading channel ˜hn,m (t) is a combination of the line-of-sight (LoS) and the non-LoS components. It is clear that the U2G channel hn,m (t) depends on the UAVs’ trajectory planning. Each GU has a battery with finite capacity Emax 
+
+and can harvest RF energy from UAVs’ signal beamforming during the power transfer period te. Let Em(t) denote the GU-m’s battery level at the beginning of the t-th time slot. Let wen(t) ∈ C1×F denote the UAV-n’s beamforming vector in the power transfer phase te. Hence, the energy harvested by GU-m can be evaluated as [31]: 
+
+ehm(t) = X
+
+> n∈N
+
+ηe
+
+Z te
+
+> 0
+
+|hn,m (t)wen(t)|2dt, (3) where ηe denotes the energy conversion efficiency and wen(t)
+
+is limited by the power constraint || wen(t)|| 2 ≤ pen. The GU-
+
+m’s energy consumption ecm(t) for uplink data transmission via the U2G channel is assumed to be a linear function of the transmission time, i.e., ecm(t) = psmts, where the transmit power psm depends on the GU-m’s transmission rate and the U2G channel condition. To ensure sustainable operations, the GU-m’s energy consumption is constrained as follows: 
+
+ecm(t) ≤ min {Em(t) + ehm(t), E max }. (4) Thus, the GU-m’s battery level evolves as follows: 
+
+Em(t + 1) = min Emax , E m(t) + ehm(t) − ecm(t) . (5) 
+
+B. GUs’ Scheduling and Uplink Data Transmissions 
+
+Each GU independently generates sensing data with the random size qm(t) per time slot, which remains in its data 5
+
+buffer until the GU is scheduled by UAVs for uplink data transmission during the second phase ts. Let the binary variables Ψ = {ψm,n (t)}m∈M ,n ∈N ,t ∈T denote the GUs’ association strategy, where ψm,n (t) = 1 indicates the as-sociation between GU-m and UAV-n in the t-th time slot, and ψm,n (t) = 0 otherwise. We assume that each GU can associate with at most one UAV per time slot [8], [9]: 
+
+X
+
+> n∈N
+
+ψm,n (t) ≤ 1, ∀m ∈ M and t ∈ T . (6) Let ˜M(t) ≜ {m| ∀ n, ψ m,n (t) = 1 } denote the set of all active GUs in the same time slot. These GUs may create interference to each other during their uplink data trans-missions. Given the UAV-n’s receive beamforming vector 
+
+wsn(t) ∈ C1×F , the GU-m’s signal to interference plus noise ratio (SINR) at the UAV-n is defined as: 
+
+γm,n = psm|hm,n wsn|2
+
+σ2 
+
+> n
+
++ P  
+
+> m′∈˜M\ m
+
+psm′ |hm′,n wsn|2 , (7) where σ2 
+
+> n
+
+denotes the noise power, and the second term in the denominator is the interference to the GU-m’s signal reception at the UAV-n. For simplicity, we omit the time index in (7). Thus, the uplink data rate from the GU-m to the UAV-n is given by: 
+
+dsm,n (t) = ψm,n (t)ts log 
+
+
+
+1 + γm,n (t)
+
+
+
+. (8) Let Qm(t) denote the GU-m’s data buffer size. Thus, the GU-m’s buffer dynamics can be described as follows: 
+
+Qm(t+1) = max 
+
+(
+
+Qm(t) − X
+
+> n∈N
+
+dsm,n (t), 0
+
+)
+
++qm(t). (9) 
+
+C. Network Formation via U2U Relay Communications 
+
+During the forward transmission phase tr , UAVs can either transmit data directly to the BS or forward it to the next UAVs via the U2U links. When the direct U2B channel is unavailable, e.g., the UAV is far away from the BS, the UAV will establish the U2U connection to a nearby UAV with more preferable channel condition, instead of carrying the sensing data and flying closer to the BS for direct transmissions. The adaptive formation and evolution of U2U connections along the UAVs’ trajectories can be viewed as the UAVs’ network formation. In particular, let binary matrix Φ = {ϕn,n ′ (t)}n,n ′∈ ˜N ,t ∈T denote the UAVs’ network formation strategy, similar to that in [8]. We have 
+
+ϕn,n ′ (t) = 1 if the UAV-n transmits data to the UAV-n′ via the U2U channel, and ϕn,n ′ (t) = 0 otherwise. To mitigate interference, we assume that each UAV can forward data in at most one U2U channel each time: 
+
+X   
+
+> n′∈˜N,n ′̸=n
+
+ϕn,n ′ (t) ≤ 1, ∀n ∈ N and t ∈ T . (10) Let pen denote the UAV-n’s transmit power and wrn(t) be the normalized transmit beamforming vector in the forward transmission phase. Then, the SINR at the receiving UAV-n′
+
+from the transmitting UAV-n is given by: 
+
+γrn,n ′ = pen|hn,n ′ wrn|2
+
+σ2 
+
+> n′
+
++ P 
+
+> k∈N \ n
+
+ϕk,n ′ pek|hk,n ′ wrk|2 , (11) where the second term in the denominator denotes the inter-ference from the other UAVs forwarding data simultaneously. We assume that the U2U channel hn,n ′ follows a similar model to that of the U2G channel. Thus, the size of data forwarded from the UAV-n to the UAV-n′ is given by: 
+
+drn,n ′ (t) = ϕn,n ′ (t)tr log 
+
+
+
+1 + γn,n ′ (t)
+
+
+
+, (12) and the total data received by the UAV-n is defined as: 
+
+dcn(t) = X
+
+> m∈M
+
+dsm,n (t) + X
+
+> n′∈N \ n
+
+drn′,n (t), (13) which includes the data collected from the GUs directly and that forwarded by the other UAVs. Via the U2U channels, the UAV-n can also forward a part of its data to the other UAVs, denoted as don(t) = P  
+
+> n′∈˜N \ n
+
+drn,n ′ (t). Similar to the GUs’ buffer dynamics in (9), the UAV-n’s data buffer status Dn(t)
+
+in each time slot dynamically evolves as follows: 
+
+Dn(t + 1) = max {Dn(t) − don(t), 0} + dcn(t). (14) Note that both GUs and UAVs may have limited data buffer size. Considering the low cost of buffer space, the buffer size can be practically very large comparing to the size of sensing data, and thus we omit the buffer limits in (9) and (14). IV. D ELAY -T OLERANT MADRL FOR UAV S’COLLABORATIVE CONTROL 
+
+We aim to maximize the network capacity by jointly optimizing the UAVs’ trajectory planning L ≜ {L n}n∈N ,network formation Φ, and transmission control strate-gies (W , Ψ), including the UAVs’ beamforming W ≜
+
+{wen(t), wsn(t), wrn(t)}n∈N ,t ∈T and the GUs’ scheduling strategy Ψ, which can be formulated as: 
+
+max   
+
+> L,Φ,W,Ψ
+
+E
+
+" X
+
+> n∈N
+
+drn, 0
+
+#
+
+s.t. (1) − (14) . (15) The expectation is over different time slots t ∈ T and drn, 0
+
+denotes the data forwarded to the remote BS by the UAV-
+
+n per time slot. Problem (15) is a mixed-integer nonlinear program and challenging to solve. The UAVs’ network for-mation Φ and GUs’ scheduling Ψ are discrete variables, both scaling exponentially with the size of the GUs and UAVs. Additionally, different UAVs’ trajectory planning and beamforming strategies are strongly coupled in time and space domains, which makes one-shot optimization computa-tionally extensive. In the sequel, we first propose the general MADRL framework to solve problem (15) with complete network information. Then, we reveal the practical limitations of MADRL in large-scale UAV-assisted wireless networks due to the unreliable channels for UAVs’ information exchanges. This motivates us to propose the delay-tolerant MADRL al-gorithm to guide the UAVs’ trajectory planning that improves both information sharing and network capacity. 6
+
+A. General Multi-agent DRL Framework 
+
+The effective application of DRL approaches depends on a proper reformulation of problem (15) into MDP, which of-fers a robust mathematical modeling for sequential decision-making problems. For a multi-UAV-assisted wireless net-work, the system state at each time slot consists of all UAVs’ observations o(t) ≜ ℓ(t), D(t) , including all UAVs’ locations ℓ(t) ≜ {ℓn(t)}n∈N and their buffered data D(t) ≜ {Dn(t)}n∈N . According to the optimization problem in (15), the UAV-n’s action in the t-th time slot 
+
+an(t) includes the next trajectory point ℓn(t + 1) , the U2U network formation {ϕn,n ′ (t)}n′∈ ˜N , the beamforming vectors 
+
+{wen(t), wsn(t), wrn(t)}, and the GUs’ association strategy 
+
+{ψm,n (t)}m∈M . The UAVs’ joint action is given by a(t) ≜
+
+{an(t)}n∈N . The reward depends on the complete network state and all UAVs’ actions. Considering the throughput maximization in (15), we assume that each UAV shares the same reward function R(t), defined as follows: 
+
+R(t) = 
+
+> N
+
+X
+
+> n=1
+
+μ1drn, 0(t) + μ2Zn(t), (16) where μ1 and μ2 are the weighting parameters for the overall throughput and a penalty term Zn(t), respectively. The trans-mission reward drn, 0(t) encourages each UAV-n to forward more information to the BS, while the penalty term Zn(t)
+
+will ensure the UAVs’ safety during trajectory planning: 
+
+Zn(t) = X 
+
+> n,n ′∈N
+
+
+
+I(ˆℓn(t) ≤ vmax ) + I (ℓn,n ′ (t) ≥ dmin )
+
+
+
+,
+
+where ˆℓn(t) is the UAV-n’s speed and ℓn,n ′ (t) is the distance between two UAVs. Here I(·) denotes the indicator function. Each agent in the MADRL framework has distributed decision-making capabilities, dynamically adjusting its next action based on its perception of the network state using a pair of deep neural networks (DNNs), namely, the actor and the critic networks. The actor network selects actions by approximating the policy function, while the critic network evaluates these actions by estimating the value function. These two networks enable each agent to adapt and evalu-ate actions during the training phase until all agents’ joint policies stabilize with the highest reward value. Let θt and 
+
+wt denote the DNN parameters of the actor- and critic-network, respectively. Given the global network information 
+
+o(t), the UAV-n’s actor-network Πθt 
+
+> n
+
+aims to generate the action an(t) = Π θt 
+
+> n
+
+(o(t)) to maximize the value function 
+
+Jn (θt), which is defined as the cumulative discounted re-ward Jn (θt) = Ea [P∞ 
+
+> t=0
+
+ρtr Rn(t)] , where ρr represents the discount factor for the rewards in different time slots. However, the true value function Jn (θt) is unattainable during online learning due to limited sample size. Thus, the critic-network Qwt 
+
+> n
+
+is further employed to approximate the true value function, namely Q-value, which is used to evaluate the quality of the state-action pair (o(t), a n(t)) . A large Q-value implies that the action an(t) can be more preferable when visiting the same state in the future time steps. To this end, we can update the policy Πθt 
+
+> n
+
+by using the deterministic policy gradient method [32]. The critic-network 
+
+Qwt 
+
+> n
+
+can be updated according to the temporal-difference (TD) error between the online critic-network Qwt 
+
+> n
+
+and its target yn(t) = Rn(t) + ρr ˆQ ˆwt 
+
+> n
+
+. Here, the DNN parameter ˆwt
+
+of the target critic-network ˆQ ˆwt 
+
+> n
+
+is a delayed copy from wt
+
+to prevent an excessive overestimation of the value function. To minimize the TD error, the gradient descent method can be used to update the critic-network Qwt 
+
+> n
+
+. More detailed derivations of the general MADRL framework can be referred to [8] and thus omitted here for conciseness. 
+
+B. Delay-Tolerant MADRL with Limited Communications 
+
+Each UAV-n’s actor network in the general MADRL framework relies on its local observation on(t) and the other UAVs’ observations o−n(t) as input to generate the action 
+
+an(t) = Π θt 
+
+> n
+
+(on(t), o−n(t)) . This requires that all UAVs can report their real-time local information to the BS and share the complete network state o(t) = ( on(t), o−n(t)) with all UAVs for efficient coordination. We denote it as the Ideal-MADRL algorithm in the following discussions. The Ideal-MADRL’s real-time environmental awareness allows different UAVs to plan their optimal trajectories and transmission control decisions to avoid signal interferences and inefficiency. However, when the UAVs’ real-time information exchange becomes unavailable in a practical system, the learning per-formance may degrade significantly due to the misaligned information input (on(t), ˜o−n(t)) to the UAV-n’s actor net-work, where ˜o−n(t) can be viewed as the delayed network information from the other UAVs. For example, some UAVs may be distant from the BS and thus the U2B links are not available. As such, they cannot send their local information to the BS via U2B links in every time slot. Two UAVs may also be disconnected as they fly away from each other, making it difficult for their information exchange via the U2U link. 
+
+1) Delay-penalized reward design: Considering the prac-tical challenges for real-time information exchange in UAV-assisted wireless networks, we are motivated to design a delay-tolerant MADRL algorithm that accounts for the dis-crepancy between ˜o−n(t) and o−n(t). To achieve this, we record the actual time delay between ˜o−n(t) and o−n(t) in each time slot, and propose a delay-penalized reward function for each UAV to guide its trajectory planning. In particular, let 
+
+ζn(t) denote the UAV-n’s information delay since its last U2B connection with the BS. When the time delay ζn(t) becomes large, the delayed information ˜o−n(t) will be very different from the real state o−n(t). Hence, we employ the time delay 
+
+ζn(t) as a penalty term that forces the UAV to fly closer to the BS and report its newest network information via the U2B link, avoiding a continuous increase in the information delay. As such, we can simply revise the reward in (16) as follows to account for the UAVs’ information delay: 
+
+eR(t) = 
+
+> N
+
+X
+
+> n=1
+
+μ1(ω1drn, 0(t) − ω2ζn(t)) + μ2Zn(t), (17) where ω1 and ω2 are the non-negative weighting coeffi-cients that balance network throughput and information delay, respectively. This new reward function encourages more frequent interactions between UAVs and the BS. When all UAVs’ information delays are small, the complete network 7
+
+information can be timely shared among all UAVs, leading to a fully coordinated UAV-assisted wireless network to serve the GUs with minimum conflicts and interferences. 
+
+2) Evaluating the information delay: We assume that the BS can cache the latest state information reported by the UAVs via the U2B links. For each UAV-n, when there exists the U2B link, it can forward the sensing information to the BS and report its local state information on(t) as well, which will replace the obsolete information cached by the BS. The UAV-n can also retrieve all state information o−n(t) of the other UAVs via the U2B link. When the UAV-n is far from the BS and there is no U2B link, the BS will maintain the same state information on(t) for the next time slots. The UAV-n
+
+cannot retrieve the latest information from the BS and have to rely on delayed information to make decisions. In the t-th time slot, let cn(t) denote the most recent time slot when the UAV-n exchanges state information with the BS to report its local information and retrieve the global network information. Note that the information exchange depends on the availability of the U2B link. We can update cn(t) as: 
+
+cn(t) = cn(t − 1)(1 − ϕn, 0(t)) + tϕ n, 0(t). (18) When the U2B link exists, i.e., ϕn, 0(t) = 1 , the UAV-n will report its information to the BS and thus we have cn(t) = t
+
+and otherwise cn(t) = cn(t − 1) . Hence, the information delay ζn(t) can be simply evaluated as ζn(t) = t − cn(t),which represents the number of time slots since the UAV-n’s last successful U2B connection with the BS. In this case, the BS maintains the obsolete state information on(t − ζn(t)) 
+
+to approximate the UAV-n’s most recent state information 
+
+on(t) in the t-th time slot. When the UAV-n reports its state information to the BS in the t-th time slot, the other UAVs can immediately access its latest state information 
+
+on(t) with zero delay, i.e., ζn(t) = 0 . Otherwise, they may make biased decisions based on the obsolete state information 
+
+on(t − ζn(t)) . It is clear that the UAV-n’s information delay 
+
+ζn(t) depends on the frequency of U2B connections with the BS. Infrequent connections force the UAVs to use delayed information for trajectory planning and network formation, potentially leading to interference or service conflictions. V. S PATIO -T EMPORAL ATTENTION ENHANCED MADRL Delay-tolerant MADRL records all UAVs’ information delay and relies on the delay-penalized reward to guide the UAVs’ trajectory planning that ensures frequent information exchange with the BS. As such, all UAVs’ information delay can be maintained at a low level. However, as the network scales up with more UAVs, it becomes more difficult to plan all UAVs’ trajectories and schedule their information exchange with the BS while maintaining the low information delay. Note that the U2B connections are available only when the UAVs are close to the BS. The U2B transmissions can be congested and thus the information delay will inevitably increase as the number of UAVs increases. Besides the delay-penalized reward design, we further explore how UAVs can fly efficiently to counter the inevitable information delay or loss as the network scales up. Our basic idea is to predict and Expansive                        
+
+> Expansive
+> Expansive
+> Spatio-temporal attention module
+> Action
+> TD error
+> Critic -1
+> Delay penalized reward 𝐀 (𝐀 )
+> …
+> Incomplete information
+> UAV-2
+> UAV-𝐀
+> UAV-1
+> …𝐀
+> …
+> Delayed information
+> Real-time information
+> Corrected information
+> GAT
+> Multi-head
+> attention
+> Actor -1
+> G(t)
+> 𝐀 (𝐀 )
+> 𝐀 −2𝐀 −3𝐀 −1
+> …
+> …
+> …
+> Corrected system state 𝐀 (𝐀 )
+> …
+> UAV-2
+> UAV-𝐀
+> UAV-1
+> …𝐀
+> …
+> 𝐀 −2𝐀 −3𝐀 −1
+> …
+> …
+> …
+> Corrected information
+> UAV-2
+> UAV-𝐀
+> UAV-1
+> Actions
+> Information sharing
+> via U2B connections
+> …
+> Fig. 2. The STA-MADRL framework.
+
+recover the UAVs’ missing information, instead of acquiring it from the BS via U2B connections, by exploiting the spatio-temporal dependencies in the UAVs’ historical information. 
+
+A. Spatio-Temporal Attention for Information Prediction 
+
+The overview of the proposed STA-MADRL framework is shown in Fig. 2, which incorporates the delay-penalized re-ward design to improve the UAVs’ information exchange with the BS, and leverages a spatio-temporal prediction module to recover the missing information and thus improve the UAVs’ awareness of the complete system state for collaborative trajectory planning and transmission control. The spatio-temporal prediction module combines temporal and spatial attention mechanisms to improve state prediction. The temporal attention module predicts the latest state in-formation by analyzing individual UAV’s historical behavior pattern. Temporal dynamics are captured using multi-head attention (MHA) [33]. The spatial attention module exploits different UAVs’ spatial correlations for information prediction using graph attention networks (GAT) [30]. The combination of spatial and temporal features creates more comprehensive feature representations. The corrected state information is then input to the MADRL framework for each UAV to learn its trajectory planning, network formation, and transmission control strategies. As shown in Fig. 2, the BS maintains a table of the UAVs’ state information, in which we use solid green points to denote the UAVs’ real-time state information, while the hollow points represent the obsolete or missing information. Due to the UAVs’ limited U2B communications with the BS, the state information cached by the BS is incom-plete. Once some UAV has the U2B connection with the BS, its state information can be updated into the BS’s information table. By counting each UAV’s information delay, the delay-penalized reward can be evaluated to assess the quality of the UAVs’ current actions, including the trajectory planning and transmission control strategies. The BS’s information table can be further processed by the spatio-temporal attention module, which corrects the delayed information or fills up the missing entries in the information table. The corrected information table then provides the complete system state for all UAVs to make coordinated decisions in the MADRL 8Attention score                         
+
+> MatMul
+> Scale
+> Softmax
+> Projection vectors Temporal
+> predictions
+> Graph structure GAT module
+> LeakyReLU
+> MatMul
+> Softmax
+> …
+> Historical
+> information
+> . . .
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 𝐀 (𝐀 −2)
+> 𝐀 𝐀 (𝐀 −1)
+> 𝐀 𝐀 (𝐀 −𝐀 0)
+> Parallel processing in MHA
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 𝐀 (⋅)
+> 𝐀 𝐀 (⋅)
+> 𝐀 𝐀 (⋅)
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 𝐀
+> MatMul
+> Encoding layer
+> 𝐀 𝐀 (⋅)
+> 𝐀 𝐀
+> 𝐀 𝐀 𝐀
+> 𝐀
+> Decoding layer
+> 𝐀 𝐀 (⋅)
+> 𝐀 𝐀
+> 𝐀 𝐀 𝐀
+> 𝐀
+> ℬ𝐀 (𝐀 )𝐀 1(𝐀 )
+> 𝐀 2(𝐀 )
+> 𝐀 𝐀 (𝐀 )
+> . . .
+> 𝐀 𝐀 (𝐀 )
+> 𝐀 (𝐀 (𝐀 ), ℱ(𝐀 ))𝐀 𝐀 𝐀 1
+> 𝐀 𝐀 𝐀 2
+> 𝐀 𝐀 𝐀 𝐀 −1
+> ℱ(𝐀 )𝐀 (𝐀 )
+> 𝐀 (𝐀 (𝐀 ), ℱ(𝐀 )
+> Spatio-temporally
+> corrected system
+> state 𝐀 (𝐀 )
+> . . .
+> Graph
+> update Multi-head  Concatenation
+> Linear decoding
+> Linear encoding
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3
+> 𝐀 4
+> 𝐀 𝐀
+> 𝐀 1
+> 𝐀 2
+> 𝐀 3
+> 𝐀 4
+> 𝐀 𝐀
+
+Fig. 3. Network structure of the spatio-temporal attention prediction module. 
+
+framework. In the sequel, we present the details of the spatio-temporal attention based prediction module. 
+
+B. Temporal Multi-head Attention 
+
+The temporal attention aims to predict each UAV’s future state information by exploiting the dependencies in its histori-cal information. For example, when the GUs’ traffic demands exhibit a stable spatial distribution over time, the UAVs may also have stable and periodically repeated trajectories to serve all GUs, which can be exploited for predicting the UAVs’ future trajectories. To proceed, we define a moving window with length τ0 to predict the UAV’s next state information by focusing on the most recent state information in the past 
+
+τ0 time slots. This allows the temporal prediction model to capture the recent trends efficiently. At the t-th time slot, we collect the UAV-n’s historical state information from time slot t − τ0 to t − 1, denoted as 
+
+Xn(t) = {on(t − τ0), . . . , on(t − 1) } ∈ Rτ0×do , where do
+
+represents the dimension of the UAV-n’s local state informa-tion, including its trajectory point and the buffer size. This sequence Xn(t) is then used to predict the current state ˆon(t).We implement the prediction by the MHA mechanism [33], which processes temporal dependencies in parallel, exhibiting prominent advantages over sequential algorithms such as long short-term memory (LSTM) and gated recurrent unit (GRU) in capturing nonlinear and long-range patterns. Specifically, MHA is composed of a set of DNNs that transform input sequences into queries Q, keys K, and values V, through linear projections using tunable weight matrices. It computes attention score using scaled dot-product independently in each head, allowing simultaneous focus on different feature subspaces. The output of each head is concatenated into a vector and then decoded as the final output of MHA. Such a multi-head architecture can capture complex temporal dependencies in high-dimensional feature space, making it particularly effective for processing sequential time series. As detailed in Fig. 3, the historical input sequence Xn(t) is firstly encoded by Lc(·) and linearly transformed into a high-dimensional form En(t) = Lc (Xn) = Xn(t)( V cn )T + bcn ∈
+
+Rτ0×de , where V cn ∈ Rde×do and bcn ∈ Rτ0×de are the weight matrix and bias of the encoding layer, respectively. For notational convenience, we omit the time index for the following discussions. After encoding, the dimension of the feature space increases from do to de. The encoding into a high-dimensional space typically offers richer features for extraction and facilitates more efficient training of the subse-quent attention modules. We then feed the encoded data En
+
+into parallel self-attention modules, using scaled dot-product computations to capture the correlations in the encoded data. Through three fully connected layers, the self-attention module maps En into query space Qn = LQ (En) ∈ Rτ0×dk ,key space Kn = LK (En) ∈ Rτ0×dk , and the value space 
+
+Vn = LV (En) ∈ Rτ0×dv , respectively, where dk and dv
+
+represent the dimensions of the query-key space and the value space, respectively. The attention score of each query-key pair is λn = QnKTn , which indicates query-key similarity, i.e., a higher value shows a stronger correlation. The scaled scores 
+
+ˆλn = λn√dk
+
+weight the value to focus on the most pertinent parts of the input for accurate predictions. Subsequently, we apply the softmax function to transform the scaled scores ˆλn into attention matrix as follows: 
+
+δn = softmax( ˆλn), (19) which represents the importance of the key Kn to the query 
+
+Qn. A higher weight indicates that the key is more relevant. The final value is Bn = δnVn. Furthermore, multiple inde-pendent attention operations in different heads are employed to stabilize the self-attention learning process. The outputs of all heads are concatenated as a vector ˆBn, which is then decoded as the predicted information vector as follows: 
+
+ˆYn(t) = Ld( ˆBn) = ˆBn(V dn )T + bdn
+
+= { ˆon(t − τ0 + 1) , . . . , ˆon(t)} ∈ Rτ0×do , (20) where V dn ∈ Rdo×dv and bdn ∈ Rτ0×do are the weight matrix and bias of the decoding layer, respectively. Till this point, we can extract the UAV-n’s information ˆon(t) from ˆYn(t)
+
+at the t-th time slot. By collecting all UAVs’ predictions 
+
+{ ˆon(t)}n∈N , the BS can build the complete state information. 
+
+C. Graph-based Spatial Attention 
+
+The temporal MHA focuses on the dynamic state tran-sitions and correlations hidden in individual UAV’s histor-ical information, without considering cross-UAVs’ spatial dependencies. In fact, two UAVs may have highly correlated observations when they are close to each other and have similar trajectories. Intuitively, it is feasible to predict one UAV’s state based on the states of its neighboring UAVs. Such proximity-based spatial correlations imply that we may evaluate the spatial attention based on the distances among UAVs or the similarity of their trajectories. Considering the UAVs’ mobility, we can model the UAVs’ network formation in a dynamic graph structure, based on which we can perform graph computation and extract the spatial correlations among UAVs. We envision that the combination of temporal and spatial correlations can provide more accurate and compre-hensive predictions for the UAVs’ missing state information. As shown in Fig. 3, we define an attention graph 
+
+G(Z(t), F(t)) to represent the UAVs’ spatial connections in the t-th time slot, where Z(t) = {zn(t)}n∈N denotes the set of nodes and F(t) = {fn,n ′ (t)}n̸=n′,n,n ′∈N denotes 9
+
+the weights on edges connecting the nodes. Each node 
+
+zn(t) ∈ Z (t) corresponds to a UAV and contains the encoded observations of the UAV, i.e., zn(t) = Ls( ˆ on(t)) ∈ Rds . The encoding function Ls(·) maps the UAV’s state information into the ds-dimensional feature space, preserving the node’s information for further graph computations. The edge weight 
+
+fn,n ′ (t) is the attention score between two UAVs evaluated based on their distance and U2U connections. Given the graph structure G(Z(t), F(t)) , we further extract spatial features by GAT module, which includes stacked graph attention layers. For each edge, the weight fn,n ′ (t) can be updated by evaluating the similarity between two nodes: 
+
+ˆfn,n ′ (t) = softmax 
+
+
+
+LeakyReLU( ρ[zn(t)∥zn′ (t)]) 
+
+
+
+, (21) where [zn(t)∥zn′ (t)] denotes the concatenation of two vec-tors zn(t) and zn′ (t), and ρ is the GAT’s trainable parameter. After updating all edges’ weights in bF(t), we can further update each node’s feature by aggregating as follows: 
+
+ˆzn(t) = softmax 
+
+ X
+
+> n′∈N \{ n}
+
+ˆfn,n ′ (t)zn′ (t)
+
+ . (22) After iterative graph computation, the graph attention layer produces the final attention graph G( bZ(t), bF(t)) .The integration of the temporal and spatial attention mod-ule is shown in Fig. 3. Initially, the BS replaces the UAVs’ obsolete state information on(t − ζn) with the predicted state information ˆon(t) by using the temporal attention module. The temporal predictions ˆo(t) then drive the spatial attention module to process and extract the dependency information from the graph G(t). The final attention graph G(t) and the temporal prediction ˆo(t) are flattened into a one-dimensional vector by the fusion layer to generate the compensated and complete state information. Leveraging the enhanced state representation, MADRL can be employed to solve the throughput maximization problem, achieving preferable tra-jectories, network formation, and transmission control strate-gies. In summary, the proposed STA-MADRL framework for UAVs’ collaboration addresses the practical challenges of the conventional MADRL framework from two aspects. Firstly, considering the UAVs’ limited communications, we devise the delay-penalized reward to guide the UAVs’ trajectory planning that ensures frequent information exchange with the BS. Secondly, we focus on the hidden spatio-temporal depen-dencies of the UAVs’ historical observations and propose a prediction module to recover the complete state information for the UAVs’ decision making in the MADRL framework. VI. N UMERICAL RESULTS 
+
+In this part, we numerically evaluate the STA-MADRL framework to demonstrate its performance in communication-limited UAV-assisted wireless networks. We consider M = 9 
+
+GUs, N = 3 UAVs, and one BS within a 2 ×2 km 2 area. The x-y coordinate is scaled to the range of [−1, 1] . The BS is located at ℓ0 = (1 , 1, 0) while the GUs are randomly distributed. The UAVs can start services from arbitrary loca-tions, operating at a fixed altitude of H = 100 meters with a maximum speed of vmax = 20 m/s. The main parameters are similar to those in [8]. 0 5000 10000 15000 20000 25000 30000        
+
+> Episode
+> 0.00
+> 0.25
+> 0.50
+> 0.75
+> 1.00
+> 1.25
+> 1.50
+> 1.75
+> Throughput
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+> Ideal-MADRL
+> (a) Throughput dynamics. 06000 12000 18000 24000 30000
+> Episode
+> 0
+> 40
+> 80
+> 120
+> 160
+> 200
+> 240
+> Average information delay
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL (b) Dynamics of information delay. Fig. 4. STA-MADRL achieves close throughput with the Ideal-MADRL.
+
+A. Information Sharing Improves Learning Performance 
+
+We implement the delay-tolerant MADRL with the delay-penalized reward and compare it with Ideal-MADRL. Note that Ideal-MADRL assumes complete and real-time infor-mation available to all UAVs and thus it can serve as a theoretical performance benchmark. We also implement the conventional communication-limited MADRL, which relies on incomplete state information for decision making. Dic-tated by (17), the delay-tolerant MADRL leverages both the throughput performance and delay statistics to guide the UAVs’ trajectory planning that ensures frequent information exchange with the BS. As shown in Fig. 4(a), the delay-tolerant MADRL algorithm demonstrates a higher conver-gence speed and improved reward performance compared with the communication-limited MADRL, verifying the im-portance of information sharing for the UAVs’ efficient collaboration. By forcing the UAVs’ frequent information sharing, we not only achieve a better learning efficiency, but also improve the overall throughput performance. However, compared with Ideal-MADRL, the throughput of the delay-tolerant MADRL still has a significant drop, implying that the importance of information sharing can be further exploited by more sophisticated algorithm design. In Fig. 4(b), we show the average information delay in the delay-tolerant and communication-limited MADRL algorithms. It is obvious that the delay-tolerant MADRL achieves a lower information delay than that of the communication-limited MADRL. This verifies that the delay-penalized reward encourages the UAVs to have more frequent information exchanges with the BS. As such, the BS can timely update the UAVs’ local state in the information table and share the latest system state with the other UAVs via ACK packets. With reduced information delay, all UAVs can make informative control decisions in the MADRL framework to achieve an improved throughput performance as revealed in Fig. 4(a). In Fig. 4, we also compare the throughput and information delay performance of the STA-MADRL and the delay-tolerant MADRL algorithms, along with two baseline approaches. In our simulation, the STA-MADRL algorithm achieves 25% throughput gain compared to the delay-tolerant MADRL and over 75% throughput gain compared to the communication-limited MADRL at convergence. By correcting the delayed information using a spatio-temporal prediction module, the STA-MADRL algorithm offers more accurate awareness of the complete network environment, allowing UAVs to adapt 10 0 10 20 30 40 50 60 
+
+> Time slot
+> 0.0
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> 4.0
+> 4.5
+> Average information delay
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+
+(a) Information delay over time. 0 10 20 30 40 50 60  
+
+> Time slot
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> Variance of information delay  Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+
+(b) Variance of information delay. Fig. 5. Delay-penalized reward improves fair information exchange. 10 30 50 70 90 110 130 
+
+> Time slot
+> 0.20
+> 0.28
+> 0.36
+> 0.44
+> 0.52
+> 0.60
+> 0.68
+> U2B connection frequency
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+> Ideal-MADRL
+
+(a) U2B connection frequency. 0 6 12 18 24 30 36 42 48 54 60  
+
+> Time slot
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> Information errors
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+
+(b) Information error. Fig. 6. Frequent U2B information exchange reduces information error. 
+
+their trajectories and transmission control strategies more effectively. Compared with Ideal-MADRL, the STA-MADRL algorithm achieves a very close throughput performance with-out real-time information sharing among all UAVs, making it more practical for deployment in UAV-assisted wireless networks. Fig. 4(b) shows the UAVs’ average information delay during the learning process. By penalizing the infor-mation delay, the delay-tolerant MADRL algorithm can sig-nificantly reduce the UAVs’ average information delay, com-paring with the communication-limited MADRL. The STA-MADRL algorithm further reduces the information delay by making more informative decisions based on the corrected network state. The average information delay can be reduced by 50% with the communication-limited MADRL. Besides, we observe that STA-MADRL demonstrates a more stable learning performance and faster convergence, as both the dynamics of throughput and information delay in Fig. 4 show a smaller variance of fluctuations. The learning algorithms will converge as the variance of fluctuation stabilizes at a fixed level. By predicting the missing information, the STA-MADRL algorithm may provide smoother gradient updates during learning, leading to a more stable learning perfor-mance and faster convergence speed. 
+
+B. Delay-penalized Reward Improves Information Sharing 
+
+Figure 5 shows the UAVs’ average information delay and delay variance over time along their trajectories. Com-pared with the communication-limited MADRL algorithm, the delay-penalized reward encourages the UAVs to have more frequent information exchange with the BS and thus it can maintain the UAVs’ information delay at a relatively low level as shown in Fig. 5(a). A smaller variance of the UAVs’ information delay in Fig. 5(b) implies that all UAVs in the STA-MADRL and the delay-tolerant MADRL algorithms can fairly have the opportunities to exchange state information with the BS. This verifies that the delay-penalized reward design can incentivize UAVs to maintain well-balanced infor-mation delay at a low level. Without such a delay incentive, the communication-limited MADRL algorithm may allocate one UAV to serve the remote GUs for a long time period, leading to both a higher average delay in Fig. 5(a) and the unbalanced delay among UAVs in Fig. 5(b). Figure 6(a) shows the UAVs’ average frequencies of infor-mation exchange with the BS in different algorithms, which are obtained by counting and averaging the number of the UAVs’ U2B connections on their trajectories over different time slots. Clearly, relying on the delay-penalized reward, the delay-tolerant MADRL and STA-MADRL algorithms achieve more frequent U2B connections than that of the communication-limited MADRL. As such, the BS can timely update all UAVs’ state information and share the complete state with other UAVs, enhancing the UAVs’ environmental awareness and promoting their multi-agent collaborations. An interesting observation is that the STA-MADRL can tolerate a slightly smaller U2B connection frequency compared to the delay-tolerant MADRL algorithm. This is because the spatio-temporal prediction module in the STA-MADRL can help UAVs to recover the delayed information and build the complete system state without frequent U2B connections. As such, the UAVs in the STA-MADRL algorithm can have more opportunities to serve the GUs and thus improve the network capacity, as revealed in Fig. 4(a). The reward performance of the communication-limited MADRL degrades significantly due to the misaligned information input (on(t), ˜o−n(t)) to the UAV-n’s actor network, where ˜o−n(t) is the delayed infor-mation from the other UAVs. The STA-MADRL algorithm actually intends to minimize the information error between 
+
+˜o−n(t) and the real-time state o−n(t) by using the spatio-temporal attention based prediction module. In Fig. 6(b), we characterize each UAV’s information error by | ˜o−n(t) −
+
+o−n(t)| and compare the UAVs’ average information error in different learning algorithms. It is clear that the STA-MADRL algorithm maintains the lowest information error, which provides a more accurate estimate of the complete system state for the UAVs’ decision-making in the MADRL framework. The comparison results in Fig. 6(b) corroborates with the observations in Fig. 6(a). Taking communication-limited MADRL as the baseline, a higher U2B connection fre-quency with the delay-tolerant MADRL algorithm in Fig. 6(a) implies less information error in Fig. 6(b). 
+
+C. Information Sharing Enhances Network Throughput 
+
+The delay-penalized reward design in (17) cares about both the UAVs’ transmission performance and the opportunities for information sharing by planning the UAVs’ trajectories. To ensure frequent information exchange with the BS, a distant UAV has to circulate back to report its local information to the BS. Intuitively this may sacrifice the UAVs’ network throughput to serve the GUs, i.e., the UAVs’ transmission per-formance may degrade when they fly back and forth between 11 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0 
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> GU-1
+> GU-2
+> GU-3
+> GU-4
+> GU-5
+> GU-6
+> GU-7
+> GU-8
+> GU-9
+> BS
+> UAV-1
+> UAV-2
+> UAV-3
+
+(a) Ideal-MADRL 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0  
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> GU-1
+> GU-2
+> GU-3
+> GU-4
+> GU-5
+> GU-6
+> GU-7
+> GU-8
+> GU-9
+> BS
+> UAV-1
+> UAV-2
+> UAV-3
+
+(b) Communication-limited MADRL 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0  
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> GU-1
+> GU-2
+> GU-3
+> GU-4
+> GU-5
+> GU-6
+> GU-7
+> GU-8
+> GU-9
+> BS
+> UAV-1
+> UAV-2
+> UAV-3
+
+(c) Delay-tolerant MADRL 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0  
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> GU-1
+> GU-2
+> GU-3
+> GU-4
+> GU-5
+> GU-6
+> GU-7
+> GU-8
+> GU-9
+> BS
+> UAV-1
+> UAV-2
+> UAV-3
+
+(d) STA-MADRL Fig. 7. The UAVs’ trajectory planning with different learning algorithms. 
+
+the BS and their service areas. However, our counter-intuitive observation is that the UAVs’ throughput performance can also be increased significantly by planning frequent U2B connections on the UAVs’ trajectories. As shown in Fig. 4(a), the convergent throughput performance in STA-MADRL is close to the optimum achievable by the Ideal-MADRL and nearly doubled compared to that of the communication-limited MADRL. This is because the frequent information sharing provides accurate estimation of the complete system state and supports more efficient collaboration among UAVs to improve the overall network throughput. In this part, we further evaluate the UAVs’ throughput on their trajectories with different algorithms. Fig. 7 shows the UAVs’ trajectories in the STA-MADRL and delay-tolerant MADRL algorithms, as well as two baselines, to serve the GUs under the same setting. The UAVs’ trajectories are high-lighted with different line styles. In Fig. 7(a), Ideal-MADRL achieves full network coverage with balanced service of all GUs. With complete information, each UAV can be optimally allocated to serve a subset of GUs with a clear boundary and stable trajectory. In contrast, the communication-limited MADRL algorithm in Fig. 7(b) leads to conflicting trajec-tories with obvious overlaps on individual UAVs’ service areas. Besides service overlap, some UAVs are assigned with excessively large service areas, e.g., the red and green UAVs. This may lead to excessive information delay when they are far from the BS for a long time. Without timely information exchange, each UAV will try to cover the whole service area and serve all GUs, as shown in Fig. 7(b). This explains how excessive information delay hinders the UAV’s efficient collaboration. In Fig. 7(c) and Fig. 7(d), though the delay-tolerant MADRL and STA-MADRL produce different trajectories, one common observation is that all UAVs have relatively stable routes and serve a subset of GUs with little overlap, compared to the communication-limited MADRL. The delay-penalized rewards in both algorithms drive the UAVs to periodically circulate above a subset of GUs. Com-pared with STA-MADRL, the delay-tolerant MADRL still has some overlapping service areas and some uncertainties in the UAVs’ trajectories, due to the lack of real-time complete system state. Compared with Ideal-MADRL, STA-MADRL also performs well, i.e., each UAV’s trajectory has a clear boundary with minimum overlap on the service area. 0 6 12 18 24 30 36 42 48 54 60 
+
+> Time slot
+> 0
+> 20
+> 40
+> 60
+> 80
+> 100
+> 120
+> Accumulated throughput
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+> Ideal-MADRL
+
+(a) Accumulated throughput 0.3 0.4 0.5 0.6  
+
+> U2B connection frequency
+> 0.5
+> 0.7
+> 0.9
+> 1.1
+> 1.3
+> 1.5
+> Throughput
+> Information delay
+> Throughput in Ideal-MADRL
+> Throughput in STA-MADRL
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Average information delay
+
+(b) STA-MADRL’s max. throughput Fig. 8. Throughput performance with different learning algorithms. 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0  
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> 9
+> BS UAV-1
+> UAV-2
+> UAV-3
+> UAV-4
+
+(a) STA-MADRL 0.0 0.2 0.4 0.6 0.8 1.0 1.2 1.4 1.6 1.8 2.0  
+
+> x (km)
+> 0.0
+> 0.2
+> 0.4
+> 0.6
+> 0.8
+> 1.0
+> 1.2
+> 1.4
+> 1.6
+> 1.8
+> 2.0
+> y (km)
+> 1
+> 2
+> 3
+> 4
+> 5
+> 6
+> 7
+> 8
+> 9
+> BS
+> UAV-1
+> UAV-2
+> UAV-3
+> UAV-4
+
+(b) Commun.-limited MADRL Fig. 9. Clear boundary with less service overlap in STA-MADRL. 
+
+D. Trade-off between Learning and Throughput Performance 
+
+Correspondingly, Fig. 8(a) records the BS’s accumulated throughput as the UAVs move on their trajectories. With complete information, the Ideal-MADRL algorithm achieves the highest throughput in Fig. 8(a) and serves as the upper bound. The service overlaps in the communication-limited MADRL algorithm inevitably decrease the efficiency of UAVs’ collaboration and result in a significant throughput degradation, which can be regarded as the throughput lower bound for our algorithm design. The accumulated throughput with STA-MADRL is continuously increasing and close to that of Ideal-MADRL as shown in Fig. 8(a). The above results reveal that the network throughput and learning performance can be improved significantly and simultaneously by enabling regularly frequent information sharing among UAVs. However, we also envision that the cost of information ex-change cannot be ignored when excessive channel resources are consumed to establish real-time U2B connections. In an extreme case, all UAVs will stay close to the BS and exchange real-time information with the BS. Such real-time information 12 0 6 12 18 24 30 36 42 48 54 60 
+
+Time slot 
+
+0
+
+20 
+
+40 
+
+60 
+
+80 
+
+100 
+
+120 
+
+140  
+
+> Accumulated throughput
+> 4 UAVs in Commun.-limited MADRL
+> 4 UAVs in STA-MADRL
+> 3 UAVs in STA-MADRL
+> Fig. 10. STA-MADRL achieves a higher throughput with a fewer UAVs.
+
+exchange is useful for the awareness of network environment and multi-agent decision making in the MADRL framework. However, it inevitably limits the network coverage and ca-pacity. In this part, we examine how the overall network throughput is affected by the U2B connection frequency. Fig. 8(b) shows the change of throughput with respect to the UAVs’ average U2B connection frequencies. Given the weighting coefficient ω2 in the delay-penalized reward (17), we actually fix the UAVs’ sensitivities to information delay and will observe the U2B connection frequency in Fig. 6 by planning trajectories with the STA-MADRL algorithm. Hence, the x-axis in Fig. 8(b) is obtained by varying the weighting coefficient ω2, while the y-axes denote the corre-sponding throughput and delay performance achieved by the STA-MADRL algorithm, respectively. An interesting observation is that the network through-put with STA-MADRL is not always increasing with the UAVs’ frequencies of information exchange. As shown in Fig. 8(b), the network throughput first increases with the U2B connection frequency and then declines as we further increase the U2B connection frequency. There is a clear optimal frequency of information exchange that achieves the maximum throughput, which is close to that of Ideal-MADRL. It implies that real-time information exchange is not necessary for a practical UAV-assisted wireless network, considering the trade-off between throughput and learning performance. With low U2B connection frequencies, the UAVs experience severe information delay and estimation error in the complete system state, leading to throughput degradation in the UAVs’ collaborative control. Conversely, when the UAVs become more sensitive to information de-lays and demand excessive information exchange, substantial channel resources will be consumed by information exchange, which restricts the UAVs’ transmission capabilities to forward the GUs’ sensing data. 
+
+E. Robustness of Multi-UAV’s Collaborative Control 
+
+The delay-penalized reward design constantly monitors each UAV’s information delay and forces frequent infor-1 2 3 4 5      
+
+> GUs' deployment sparsity
+> 12
+> 14
+> 16
+> 18
+> 20
+> 22
+> 24
+> 26
+> Throughput  Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL
+> Ideal-MADRL
+> (a) Throughput 12345
+> GUs' deployment sparsity
+> 0.5
+> 1.0
+> 1.5
+> 2.0
+> 2.5
+> 3.0
+> 3.5
+> Information delay
+> Commun.-limited MADRL
+> Delay-tolerant MADRL
+> STA-MADRL (b) Information delay Fig. 11. The impact of GUs’ deployment sparsity.
+
+mation exchange with the BS, while the spatio-temporal attention based prediction module further recovers the missing information. These will help each UAV estimate the real-time complete system state and adapt to the network environment. Therefore, we expect that STA-MADRL will be more robust against the network dynamics in optimizing the UAVs’ trajec-tories and transmission control strategies. Compared with the 3-UAVs’ trajectory planning in Fig. 7, we add a new UAV into the service area and show the new trajectory planning strategy for the current 4 UAVs scenario in Fig. 9. By enabling frequent information exchange and prediction, STA-MADRL can detect the presence of a new UAV and optimize its trajectory jointly with other UAVs. Thus, we observe that STA-MADRL can adaptively adjust each UAV’s service area to ensure a clear boundary with minimum service overlap, as shown in Fig. 9(a). In contrast, with the same network settings, the UAVs’ trajectories in the communication-limited MADRL become quite chaotic, as shown in Fig. 9(b), due to a lack of accurate state information of the network. Such a lack of information sharing evidently limits the efficiency of UAVs’ collaborative control, and also makes it inflexible and insensitive to the change of network environment. To evaluate the efficiency of collaboration, we quantita-tively compare the throughput accumulated at the BS as 4 UAVs fly along the trajectories in Fig. 10. Without doubt STA-MADRL achieves over a 40% throughput gain over the communication-limited MADRL algorithm. Besides, we plot STA-MADRL’s throughput with 3 UAVs serving the same set of GUs in Fig. 10. An interesting observation is that 3 UAVs with STA-MADRL can even achieve a higher throughput than that of 4 UAVs with the communication-limited MADRL algorithm. This observation further verifies that STA-MADRL is robust to the network dynamics and more efficient for UAVs’ collaborative control. Figure 11 shows the impact of GUs’ deployment sparsity on throughput and information delay, where the sparsity level increases from 1 to 5. As depicted in Fig. 11(a), STA-MADRL achieves throughput comparable to Ideal-MADRL and outperforms communication-limited MADRL across all sparsity levels. While throughput decreases for most schemes as deployment becomes sparser due to deteriorated channel conditions, STA-MADRL maintains relatively stable perfor-mance. Fig. 11(b) demonstrates that STA-MADRL effec-tively reduces information delay compared to delay-tolerant MADRL, which validates the effectiveness of spatio-temporal 13 
+
+prediction in compensating for communication delays. VII. C ONCLUSIONS 
+
+In this paper, we have focused on trajectory planning, network formation, and transmission control, in a multi-UAV-assisted wireless network with limited communications. We have addressed the performance degradation in the conven-tional communication-limited MADRL framework by two special designs. The delay-penalized reward firstly encour-ages each UAV to plan a proper trajectory that supports fre-quent information exchange with the BS. The spatio-temporal attention module exploits the UAVs’ historical information for an enhanced awareness of complete network state and more efficient collaborative control in the MADRL framework. Numerical results showed that the proposed STA-MADRL achieves more favorable delay and throughput performance. It also verified the trade-off between learning and throughput performance. The network throughput and learning perfor-mance can be improved significantly and simultaneously with a proper frequency of information exchange. REFERENCES [1] Y. Wang, Z. Su, Q. Xu, R. Li, T. H. Luan, and P. Wang, “A secure and intelligent data sharing scheme for UAV-assisted disaster rescue,” 
+
+IEEE Trans. Netw. , vol. 31, no. 6, pp. 2422–2438, Apr. 2023. [2] N. Hossein Motlagh, P. Kortoc ¸i, X. Su, L. Lov´ en, H. K. Hoel, S. Bjerkestrand Haugsvær, V. Srivastava, C. F. Gulbrandsen, P. Nurmi, and S. Tarkoma, “Unmanned aerial vehicles for air pollution monitor-ing: A survey,” IEEE Internet Things J. , vol. 10, no. 24, pp. 21 687– 21 704, Jun. 2023. [3] M. Basharat, M. Naeem, Z. Qadir, and A. Anpalagan, “Resource optimization in UAV-assisted wireless networks: A comprehensive survey,” Trans. Emerg. Telecommun. Technol. , vol. 33, no. 7, p. e4464, Feb. 2022. [4] Y. Liu, H.-N. Dai, Q. Wang, M. Imran, and N. Guizani, “Wireless powering internet of things with UAVs: Challenges and opportunities,” 
+
+IEEE Network , vol. 36, no. 2, pp. 146–152, Apr. 2022. [5] S. Javaid, N. Saeed, Z. Qadir, H. Fahim, B. He, H. Song, and M. Bilal, “Communication and control in collaborative UAVs: Recent advances and future trends,” IEEE Trans. Intell. Transp. Syst. , vol. 24, no. 6, pp. 5719–5739, Mar. 2023. [6] G. Sun, J. Li, A. Wang, Q. Wu, Z. Sun, and Y. Liu, “Secure and energy-efficient UAV relay communications exploiting collaborative beamforming,” IEEE Trans. Commun. , vol. 70, no. 8, pp. 5401–5416, Jun. 2022. [7] K. K. Nguyen, T. Q. Duong, T. Do-Duy, H. Claussen, and L. Hanzo, “3D UAV trajectory and data collection optimisation via deep reinforce-ment learning,” IEEE Trans. Commun. , vol. 70, no. 4, pp. 2358–2371, Feb. 2022. [8] S. Gong, M. Wang, B. Gu, W. Zhang, D. T. Hoang, and D. Niyato, “Bayesian optimization enhanced deep reinforcement learning for tra-jectory planning and network formation in multi-UAV networks,” IEEE Trans. Veh. Technol. , pp. 1–16, Mar. 2023. [9] Z. Fan, S. Gong, Y. Long, L. Li, B. Gu, and N. C. Luong, “Delay-tolerant multi-agent DRL for trajectory planning and transmission control in uav-assisted wireless networks,” in Proc. IEEE VTC , 2024, pp. 1–5. [10] Y. Bai, H. Zhao, X. Zhang, Z. Chang, R. J¨ antti, and K. Yang, “Toward autonomous multi-UAV wireless network: A survey of reinforcement learning-based approaches,” IEEE Commun. Surv. Tutor. , vol. 25, no. 4, pp. 3038–3067, Oct. 2023. [11] Z. Qin, Z. Liu, G. Han, C. Lin, L. Guo, and L. Xie, “Distributed UAV-BSs trajectory optimization for User-level fair communication service with multi-agent deep reinforcement learning,” IEEE Trans. Veh. Technol. , vol. 70, no. 12, pp. 12 290–12 301, Oct. 2021. [12] C. Kim, H.-H. Choi, and K. Lee, “Joint optimization of trajectory and resource allocation for multi-UAV-enabled wireless-powered communi-cation networks,” IEEE Trans. Commun. , vol. 72, no. 9, pp. 5752–5764, Mar. 2024. [13] P. Qin, Y. Fu, Y. Xie, K. Wu, X. Zhang, and X. Zhao, “Multi-Agent Learning-Based optimal task offloading and UAV trajectory planning for AGIN-Power IoT,” IEEE Trans. Commun. , vol. 71, no. 7, pp. 4005– 4017, May 2023. [14] M. Chen, Y. Zhang, and K. B. Letaief, “Joint trajectory and communi-cation design for multi-UAV enabled wireless networks,” IEEE Trans. Wireless Commun. , vol. 19, no. 10, pp. 6296–6309, Jan. 2020. [15] Y. Zeng, J. Xu, and R. Zhang, “Energy minimization for wireless com-munication with rotary-wing UAV,” IEEE Trans. Wireless Commun. ,vol. 18, no. 4, pp. 2329–2345, Mar. 2019. [16] Z. Qin, X. Zhang, and Y. Zhang, “Multi-agent learning for joint optimization of UAV trajectory planning, task offloading, and resource allocation in edge computing,” IEEE Trans. Wireless Commun. , vol. 22, no. 3, pp. 1745–1759, Sep. 2023. [17] J. Tang and J. Chen, “Throughput maximization for UAV-assisted data collection with hybrid NOMA,” IEEE Trans. Wireless Commun. ,vol. 23, no. 10, pp. 13 068–13 081, May 2024. [18] H. Xie, T. Zhang, X. Xu, D. Yang, and Y. Liu, “Joint sensing, com-munication, and computation in UAV-assisted systems,” IEEE Internet Things J. , vol. 11, no. 18, pp. 29 412–29 426, Mar. 2024. [19] X. Wang, M. C. Gursoy, T. Erpek, and Y. E. Sagduyu, “Learning-based UAV path planning for data collection with integrated collision avoidance,” IEEE Internet Things J. , vol. 9, no. 17, pp. 16 663–16 676, Sep. 2022. [20] K. Messaoudi, A. Baz, O. S. Oubbati, A. Rachedi, T. Bendouma, and M. Atiquzzaman, “UGV charging stations for UAV-assisted AoI-aware data collection,” IEEE Trans. Cogn. Commun. Netw. , vol. 10, no. 6, pp. 2325–2343, Apr. 2024. [21] O. S. Oubbati, M. Atiquzzaman, H. Lim, A. Rachedi, and A. Lakas, “Synchronizing UAV teams for timely data collection and energy transfer by deep reinforcement learning,” IEEE Trans. Veh. Technol. ,vol. 71, no. 6, pp. 6682–6697, Jun. 2022. [22] N. Zhao, Z. Ye, Y. Pei, Y.-C. Liang, and D. Niyato, “Multi-agent deep reinforcement learning for task offloading in UAV-assisted mobile edge computing,” IEEE Trans. Wireless Commun. , vol. 21, no. 9, pp. 6949– 6960, Mar. 2022. [23] M. Nasr-Azadani, J. Abouei, and K. N. Plataniotis, “Single- and multi-agent actor-critic for initial UAV’s deployment and 3-D trajectory design,” IEEE Internet Things J. , vol. 9, no. 16, pp. 15 372–15 389, Feb. 2022. [24] J. Jiang and Z. Lu, “Learning attentional communication for multi-agent cooperation,” Adv. Neural Inf. Process. Syst. , vol. 31, Mar. 2018. [25] X. Li, H. Zhou, S. Yang, and Z. Li, “Graph neural networks for multi-UAV path planning and network formation,” IEEE Trans. Veh. Technol. ,vol. 70, no. 4, pp. 3533–3547, Jul. 2021. [26] G. Zhu, Y. Du, D. Dai, and T. Nguyen, “Blockchain-enabled federated learning for UAV edge computing network: Issues and solutions,” IEEE Trans. Veh. Technol. , vol. 7, no. 4, pp. 2622–2636, May 2020. [27] S. Hwang, H. Lee, M. Kim, and I. Lee, “Multi-agent deep reinforce-ment learning for decentralized multi-UAV mobile edge computing networks,” IEEE Internet of Things J. , pp. 1–14, Jan. 2025. [28] D. Deng, C. Wang, and W. Wang, “Joint Air-to-ground scheduling in UAV-aided vehicular communication: A DRL approach with partial observations,” IEEE Commun. Lett. , vol. 26, no. 7, pp. 1628–1632, Apr. 2022. [29] Y. Pan, X. Wang, Z. Xu, N. Cheng, W. Xu, and J.-J. Zhang, “GNN-empowered effective partial observation MARL method for AoI man-agement in multi-UAV network,” IEEE Internet Things J. , vol. 11, no. 21, pp. 34 541–34 553, Aug. 2024. [30] Z. Feng, D. Wu, M. Huang, and C. Yuen, “Graph-attention-based reinforcement learning for trajectory design and resource assignment in multi-UAV-assisted communication,” IEEE Internet of Things J. ,vol. 11, no. 16, pp. 27 421–27 434, 2024. [31] G. Yang, R. Dai, and Y.-C. Liang, “Energy-efficient UAV backscatter communication with joint trajectory design and resource optimization,” 
+
+IEEE Trans. Wireless Commun. , vol. 20, no. 2, pp. 926–941, 2021. [32] R. Lowe, Y. I. Wu, A. Tamar, J. Harb, O. Pieter Abbeel, and I. Mor-datch, “Multi-agent actor-critic for mixed cooperative-competitive en-vironments,” Proc. Adv. Neural Inf. Process. Syst , vol. 30, Dec. 2017. [33] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, and I. Polosukhin, “Attention is all you need,” Proc. Adv. Neural Inf. Process. Syst , vol. 30, Dec. 2017.

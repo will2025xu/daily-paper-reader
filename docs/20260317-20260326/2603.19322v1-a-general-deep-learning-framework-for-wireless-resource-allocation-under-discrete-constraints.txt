@@ -1,0 +1,1704 @@
+Title: A General Deep Learning Framework for Wireless Resource Allocation under Discrete Constraints
+
+URL Source: https://arxiv.org/pdf/2603.19322v1
+
+Published Time: Mon, 23 Mar 2026 00:03:02 GMT
+
+Number of Pages: 15
+
+Markdown Content:
+# A General Deep Learning Framework for Wireless Resource Allocation under Discrete Constraints 
+
+Yikun Wang, Yang Li, Yik-Chung Wu, and Rui Zhang 
+
+Abstract—While deep learning (DL)-based methods have achieved remarkable success in continuous wireless resource allocation, efficient solutions for problems involving discrete variables remain challenging. This is primarily due to the zero-gradient issue in backpropagation, the difficulty of enforcing intricate constraints with discrete variables, and the inability in generating solutions with non-same-parameter-same-decision (non-SPSD) property. To address these challenges, this paper proposes a general DL framework by introducing the support set to represent the discrete variables. We model the elements of the support set as random variables and learn their joint probability distribution. By factorizing the joint probability as the product of conditional probabilities, each conditional probability is sequentially learned. This probabilistic model-ing directly tackles all the aforementioned challenges of DL for handling discrete variables. By operating on probability distributions instead of hard binary decisions, the framework naturally avoids the zero-gradient issue. During the learn-ing of the conditional probabilities, discrete constraints can be seamlessly enforced by masking out infeasible solutions. Moreover, with a dynamic context embedding that captures the evolving discrete solutions, the non-SPSD property is inherently provided by the proposed framework. We apply the proposed framework to two representative mixed-discrete wireless resource allocation problems: (a) joint user association and beamforming in cell-free systems, and (b) joint antenna positioning and beamforming in movable antenna-aided sys-tems. Simulation results demonstrate that the proposed DL framework consistently outperforms existing baselines in terms of both system performance and computational efficiency. Index Terms—Deep Learning, discrete variables, mixed-discrete optimization, movable antenna (MA), resource allo-cation. 
+
+I. Introduction Mixed-discrete optimization problems are pervasive in wireless resource allocation, particularly in emerging paradigms such as cell-free (CF) systems [1], holographic multiple-input multiple-output (MIMO) systems [2], and fluid antenna (FA) or movable antenna (MA)-aided sys-tems [3], [4]. In these applications, optimization involves not only continuous variables such as beamforming vectors and transmit powers, but also discrete decisions including user scheduling, antenna selection, or antenna positioning. Mathematically, these problems are commonly NP-hard, making it difficult to find the optimal solution [5]. A common heuristic approach is to solve the problem in two steps, i.e., the discrete variables are first determined using rule-based or greedy methods [6], and then the continuous variables are optimized under the fixed discrete variable configuration. However, such two-stage strategies suffer from severe performance loss due to the absence of joint optimization. To address this issue, several joint op-timization algorithms have been proposed [7]–[12]. Many of these methods rely on continuous relaxation of discrete variables to enable gradient-based optimization [7], [9], [10]. However, such relaxation inevitably introduces aperformance loss due to the relaxation gap and the need for post-hoc projection onto the discrete feasible set. Moreover, these approaches commonly require iterative updates [7]–[12], which incur prohibitive computational latency [13], [14] and render them unsuitable for real-time deployment. Recently, learning-to-optimize has emerged as a promis-ing alternative, leveraging neural networks (NNs) to learn end-to-end mappings from environmental inputs to continuous resource allocation decisions. Representative architectures such as graph neural networks (GNNs) [14]– [16] and transformers [17]–[19] have demonstrated the ability to achieve near-optimal performance with remark-ably low inference latency. However, directly extending these approaches to mixed-discrete optimization problems remains non-trivial, primarily due to the following three challenges. The first challenge is due to the conflict between discrete outputs and gradient-based training. Standard NNs rely on backpropagation, which fails when outputs are discrete because the resulting gradients are zero almost everywhere [20]. Several methods have been proposed to address this challenge. One popular technique is the straight-through estimator (STE) [21], [22], which bypasses the non-differentiability by copying gradients from the discrete outputs back to the continuous representation. However, such approach may provide misleading information about the true optimization landscape, causing performance degradation, especially when discrete variables are highly structured or coupled [22], [23]. Alternative approaches approximate the discrete outputs using differentiable sur-rogates such as softmax or Gumbel-softmax [23]–[25]. While these methods enable gradient flow, they introduce approximation errors that deviate from the true objective. Although a temperature parameter governs how well the relaxed output approximates a true discrete decision, it requires careful specification of the temperature schedule to balance the model learnability and approximation error. The second challenge lies in difficulty in enforcing the constraints involving discrete variables in deep learning. For instance, in MA-aided systems, to avoid mutual coupling between antennas, the distance between any pair 
+
+> arXiv:2603.19322v1 [cs.LG] 17 Mar 2026
+
+of MAs must exceed a given threshold [4]. This yields a highly non-convex and combinatorial feasible set that is challenging for NNs to deal with. While penalty-based methods [26] can incorporate such constraints into the loss function, they require meticulous tuning of penalty coefficients. Moreover, the penalty-based methods cannot guarantee strict feasibility, which is a critical limitation in applications with stringent reliability requirements. The third challenge stems from the struggle of typi-cal deep learning in achieving non-same-parameter-same-decision (non-SPSD) property on the discrete variable so-lutions [24], [27]. In wireless resource allocation, the prob-lem is deemed non-SPSD when identical or nearly identical system parameters are assigned different solutions. For example, consider a multi-user scheduling problem, where two users experience nearly identical channel conditions. However, the optimal scheduler may activate only one of them due to the strong interference between them. This inherent asymmetry in the discrete solution cannot be captured by current DL approaches [14]–[19], [21], [25], resulting in severe performance degradation [24], [27]. To address the aforementioned challenges, we propose a general DL framework for a broad class of mixed-discrete wireless resource allocation problems. The proposed ap-proach leverages a reformulation that expresses discrete decisions using a support set to enhance learnability. Building on this, we design a discrete variable learning network (DVLN) to learn the probability distribution over discrete solutions given system parameters, address-ing the zero-gradient problem of discrete outputs. Cru-cially, to enforce the constraints with discrete variables, the DVLN adopts an encoder-decoder architecture with sequential decoding process: rather than predicting all discrete variables in parallel, it generates the solutions of different variables sequentially, dynamically masking infeasible candidates at each step to guarantee strict feasibility. Notably, the solution is generated by an at-tention mechanism based on a context embedding, which takes into account the current discrete variable solution and evolves dynamically with each step, thereby enabling our DL framework to effectively capture the non-SPSD property. The DVLN is jointly trained with a continuous variable learning network (CVLN), which is specialized for outputting continuous resource allocation solutions. The two networks are optimized end-to-end in an unsupervised manner by directly maximizing the underlying system performance metric, without requiring a precomputed dataset of optimal solutions. The main contributions of this paper are summarized as follows:  
+
+> •
+
+A general formulation for mixed-discrete resource allo-cation in wireless systems is proposed, where discrete variables are represented using the support set.  
+
+> •
+
+A general DL framework comprising a DVLN and a CVLN is proposed. With a novel sequential and dynamic structure, the DVLN directly resolves the challenges of deep learning when handling discrete variables and constraints, namely zero-gradient problem, incapable of enforcing complex constraints involving discrete vari-ables, and lack of non-SPSD property. With the CVLN being flexible to tailor various continuous resource variables, the DVLN and CVLN are jointly trained in an unsupervised manner.  
+
+> •
+
+The proposed DL framework is illustrated with two typical wireless examples: (a) joint user equipment (UE)–access point (AP) association and beamforming in CF systems; and (b) joint antenna positioning and beamforming in MA-aided systems. In both cases, sim-ulations show that the proposed DL framework achieves superior performance and strict constraint satisfaction with significantly lower inference latency than existing DL-based and model-based approaches. The remaining paper is organized as follows. Section II introduces a general problem formulation and two application examples. Section III describes the general DL framework, while Section IV introduces the training algorithm. In Sections V and VI, the DL framework is demonstrated with two examples, with performance evaluated through simulations. Finally, the conclusion is drawn in Section VII. Notations: We use a, a, A, and A to denote scalar, vector, matrix, and set, respectively; AT and AH to denote transpose and Hermitian transpose; ∪ and ∩ to denote the set union and intersection; |·| and ∥·∥ to denote the modulus and l-2 norm; CN (·, ·) to denote complex Gaussian distribution. II. General Problem Formulation and Application Examples A. Problem Formulation Many wireless resource allocation problems appear as a mixed-discrete optimization problem in the following form: (P1): max  
+
+> b∈{ 0,1}Nb,w∈CNw
+
+U (b, w; h) (1a) s.t. fm(b; h) ≤ 0, ∀m = 1 , 2, . . . , Ω,
+
+(1b) 
+
+gm(w; h) ≤ 0, ∀m = 1 , 2, . . . , Ψ,
+
+(1c) where b ∈ { 0, 1}Nb and w ∈ CNw denote the discrete and continuous variables, respectively, and h ∈ CNh represents the known system parameters. Although the discrete variable b is written as a binary vector with each entry 
+
+bn ∈ { 0, 1}, this representation can handle vectors taking any finite discrete values via binary encoding schemes like one-hot encoding (e.g., see Example 2 in Subsection C). Beside the discrete variable b, the general problem formulation (P1) also includes continuous variable w, thus (P1) is a “mixed” optimization. For instance, b may repre-sent the indicator of user scheduling or antenna selection, w may denote the beamforming or power allocation, and h
+
+represents the channel state information or user locations. The objective of (P1) is to maximize a utility function 
+
+U (·, ·; ·), which may depend on all the variables and system parameters. Moreover, fm(·; ·) and gm(·; ·) impose possible restrictions on b and w, respectively 1. This formulation (P1) covers applications in many previous works as special cases [1], [7]–[10], [21], [24], [25]. Specific examples are given in Subsection C. B. Equivalent Problem Transformation In this subsection, we transform (P1) into an equivalent form by leveraging the concept of support set, which enables the NN to better learn the desired solution mapping. Specifically, the binary variable b can be fully captured by its support set A, defined as the set of indices corresponding to the non-zeros entries in b. Instead of optimizing over the full Nb-dimensional vector b, the problem becomes identifying the support set A. The reformulation is formally given by the following property. Property 1 (Reformulation of (P1)): Any mixed-discrete optimization problem in the form of (P1) is equivalent to (P2): max  
+
+> A∈ 2Nb,w∈CNw
+
+U (b, w; h) (2a) s.t. (1b), (1c), 
+
+bn =
+
+{ 1, ∀n ∈ A ,
+
+0, ∀n / ∈ A , (2b) where Nb ≜ {1, 2, . . . , N b}, and 2Nb denotes the power set of Nb, i.e., the collection of its all 2Nb possible subsets. The discrete variable b is fully determined by A through the relationship in (2b). For example, if A = ∅, we have 
+
+b = 0; while if A = Nb, we have b = 1.In order to avoid repeatedly solving (P2) in a case-by-case manner for different h, we strive to design a mapping function given by 
+
+{A , w} = F(h), (3) where F(·) : CNh → 2Nb × CNw is represented by a NN, such that the average objective function (2a) is maximized. The corresponding DL-based optimization problem can be written as (P3): max  
+
+> F(·)
+
+Eh[U (b, w; h)] (4) s.t. (1b) , (1c) , (2b) , (3) ,
+
+where the expectation is taken over the probability distri-bution of h.
+
+> 1For constraints involving coupled discrete and continuous vari-ables, our proposed DL framework can be integrated with a previ-ously proposed penalty-dual learning framework [28]. However, this extension is beyond the scope of the present paper.
+
+(a) Joint UE-AP association and beamforming in CF sys-tems. 
+
+(b) Joint antenna position-ing and beamforming for MA-aided systems. 
+
+Fig. 1: Illustrations of two typical examples of mixed-discrete wireless resource allocation problems. C. Examples in Wireless Communications Here, we present two typical examples of mixed-discrete optimization problems in wireless communications and demonstrate how they can be expressed in the forms of (P2) and (P3). Example 1 (Joint UE-AP Association and Beamforming in CF Systems): Consider a downlink CF system compris-ing L APs and K UEs. Each UE is equipped with a single antenna and each AP is with M antennas. All APs are connected to a central process unit (CPU) for joint signal processing (see Fig. 1(a)). Define the association variable as bkl ∈ { 0, 1}, where bkl = 1 denotes that the k-th UE is served by the l-th AP, and bkl = 0 otherwise. Additionally, due to the limitation of fronthaul capacity, the following constraints are imposed on the association variables [1], [29]. First, each AP can at most serve Kmax ≪ K UEs, which is mathematically described by 
+
+∑Kk=1 bkl ≤ Kmax , ∀l ∈ L ≜ {1, 2, . . . , L }. (5) Second, each UE is served by at most Lmax ≪ L APs, which is given by 
+
+∑Ll=1 bkl ≤ Lmax , ∀k ∈ K ≜ {1, 2, . . . , K }. (6) We adopt a block-fading channel model in which the channels are assumed to be constant within a coherence period. We define the channel between the l-th AP and the 
+
+k-th UE as hkl ∈ CM . Consequently, the received signal at the k-th UE can be expressed as 
+
+yk =
+
+> L
+
+∑
+
+> l=1
+
+bkl hHkl wkl sk +
+
+> K
+
+∑ 
+
+> k=1 ,k ′̸=kL
+
+∑
+
+> l=1
+
+bk′lhHkl wk′lsk′ + nk,
+
+(7) where sk ∈ C denotes the desired symbol of the k-th UE that satisfies E[|sk|2] = 1 , wkl ∈ CM is the beamforming vector of the k-th UE at the l-th AP, and nk ∼ CN (0 , σ 2
+
+> k
+
+)
+
+is the additive white Gaussian noise (AWGN) with σ2
+
+> k
+
+being the noise power. From (7), the achievable sum rate of all K users can be expressed as 
+
+RCF (b, w; h) = 
+
+> K
+
+∑
+
+> k=1
+
+log 2
+
+(
+
+1 + | ∑Ll=1 bkl hHkl wkl |2
+
+∑Kk=1 ,k ′̸ =k | ∑Ll=1 bk′lhHkl wk′l|2 + σ2
+
+> k
+
+)
+
+,
+
+(8) where b = [b11 , b 12 , . . . , b 1L, b 21 , . . . , b KL ]T ∈ {0, 1}KL ,
+
+w = [ wT
+
+> 11
+
+, wT
+
+> 12
+
+, . . . , wT
+
+> 1L
+
+, wT
+
+> 21
+
+, . . . , wTKL ]T ∈ CKLM , and 
+
+h = [ hT
+
+> 11
+
+, hT
+
+> 12
+
+, . . . , hT
+
+> 1L
+
+, hT
+
+> 21
+
+, . . . , hTKL ]T ∈ CKLM . Conse-quently, the joint UE-AP association and beamforming problem can be formulated as (P4): max 
+
+> b∈{ 0,1}KL ,w∈CKLM
+
+RCF (b, w; h) (9a) s.t. (5) , (6) ,
+
+> K
+
+∑
+
+> k=1
+
+∥wkl ∥2 ≤ Pmax , ∀l ∈ L ,
+
+(9b) where Pmax denotes the maximum transmit power of each AP. The problem (P4) shares the same form with (P1), with Nb = KL , Nw = KLM , Nh = KLM , Ω = K +
+
+L, and Ψ = L. Using Property 1, problem (P4) can be rewritten as (P5): max 
+
+> A∈ 2K×L ,w∈CKLM
+
+RCF (b, w; h) (10a) s.t. (5) , (6) , (9b), 
+
+bkl =
+
+{ 1, ∀(k, l ) ∈ A ,
+
+0, ∀(k, l ) /∈ A , (10b) where K × L denotes the Cartesian product of set K and 
+
+L, i.e., K × L = {(k, l )|k ∈ K , l ∈ L} .Let FCF (·) : CKLM → 2K×L × CKLM represent the to-be-designed joint UE-AP association and beamforming mapping, the corresponding DL problem is expressed in the form of (P3) as (P6): max 
+
+> FCF (·)
+
+Eh[RCF (b, w; h)] (11a) s.t. (5), (6), (9b), (10b), 
+
+{A , w} = FCF (h). (11b) Example 2 (Joint Antenna Positioning and Beamform-ing for MA-aided Systems): Consider an MA-aided down-link system with one base station (BS) serving K UEs. The BS is equipped with M MAs and each UE is equipped with a single fixed-position antenna. The positions of the M
+
+MAs can be adjusted simultaneously within a predefined two-dimensional rectangular area, which is divided into 
+
+N ≫ M candidate positions (CPs) for placing the M
+
+MAs (see Fig. 1(b)), with the coordinate of the n-th CP denoted by pn = [ xn, y n]T , where xn and yn represent the coordinates along the x-axis and y-axis, respectively. Define a binary positioning vector as b ≜
+
+[b1, b 2, . . . , b N ]T ∈ {0, 1}N , where bn = 1 indicates an MA is placed at the n-th CP, and bn = 0 otherwise. The vector b is subject to two key constraints. First, exactly M MAs will be placed, which is enforced by 
+
+∑Nn=1 bn = M. (12) Second, to mitigate mutual coupling between any pair of MAs, the distance between their positions must be at least the minimum separation dmin [30], i.e., 
+
+∥pn − pn′ ∥ ≥ bnbn′ dmin , ∀n, n ′ ∈ N , n ̸ = n′, (13) where N ≜ {1, 2, . . . , N }.Let hk ≜ [hk1, h k2, . . . , h kN ]T ∈ CN denote the channel between all N CPs and the k-th UE. The received signal of the k-th UE is given by 
+
+yk = hk(b)H wksk +
+
+> K
+
+∑ 
+
+> l=1 ,l ̸=k
+
+hk(b)H wlsl + nk, (14) where hk(b) ∈ CM denotes the channel between the selected CPs and the k-th UE, wk ∈ CM represents the corresponding transmit beamformer, and nk represents the AWGN with power σ2
+
+> k
+
+. The sum rate of all K UEs is then expressed as 
+
+RMA (b, w; h) = 
+
+> K
+
+∑
+
+> k=1
+
+log 2
+
+1 + |hk(b)H wk|2
+
+> K
+
+∑ 
+
+> l=1 ,l ̸=k
+
+|hHk (b)H wl|2 + σ2
+
+> k
+
+ ,
+
+(15) where w = [wT 
+
+> 1
+
+, wT 
+
+> 2
+
+, . . . , wTK ]T ∈ CKM , and h =[hT 
+
+> 1
+
+, hT 
+
+> 2
+
+, . . . , hTK , pT 
+
+> 1
+
+, pT 
+
+> 2
+
+, . . . , pTN ]T ∈ CKN +2 N . We aim to maximize RMA with respect to b and w, which is expressed as (P7): max  
+
+> b∈{ 0,1}N,w∈CKM
+
+RMA (b, w; h) (16a) s.t. (12), (13) ,
+
+> K
+
+∑
+
+> k=1
+
+∥wk∥2 ≤ Pmax , (16b) where Pmax is the maximum transmit power of the BS. The problem (P7) also shares the same form with (P1), with 
+
+Nb = N , Nw = KM , Nh = KN + 2 N , Ω = M 2 − M + 1 ,and Ψ = 1 . Using Property 1, the problem (P7) can be reformulated as (P8): max  
+
+> A∈ 2N,w∈CKM
+
+RMA (b, w; h) (17a) s.t. (12) , (13) , (16b), 
+
+bn =
+
+{ 1, ∀n ∈ A ,
+
+0, ∀n / ∈ A . (17b) Let FMA (·) : CKN +2 N → 2N × CKM represent the to-be-designed joint antenna positioning and beamforming Fig. 2: The overall architecture of the proposed DL framework. scheme, (P8) can be further represented in the form of DL of (P3) as (P9): max 
+
+> FMA (·)
+
+Eh[RMA (b, w; h)] (18a) s.t. (12), (13), (16b), (17b) ,
+
+{A , w} = FMA (h). (18b) III. Proposed General DL Framework In this section, we propose a general DL framework to learn the desired mapping F(·) : CNh → 2Nb × CNw
+
+in (P3). The proposed framework consists of two distinct models: a DVLN for discrete outputs and a CVLN for con-tinuous outputs. These models are cascaded and trained jointly to provide near-optimal solutions while satisfying the constraints at the same time, as shown in Fig. 2. Specifically, the DVLN FA(·) : CNh → 2Nb produces the support set A of the discrete variable b by A = FA(h).Subsequently, the continuous variable w is produced by 
+
+w = Fw(A, h), where Fw(·, ·) : 2 Nb × CNh → CNw denotes the CVLN. To tackle the zero-gradient problem of discrete outputs, we first model the entries in A as random variables and aim to learn their conditional probability distribution given the system parameter h, i.e., p(A| h). Noticing that the constraints in (1b) are coupled, which means that each element in A depends on other elements, we express 
+
+p (A| h) in its factorized form 
+
+p(A| h) = 
+
+> T
+
+∏
+
+> t=1
+
+p(at | A t−1, h), (19) where at ∈ A denotes the selected element of A at the t-th step, At−1 ≜ {a1, a 2, . . . , a t−1} represents the elements selected up to the ( t − 1)-th step with A0 ≜ ∅, and T
+
+denotes the cardinality of A. In some cases, the value of 
+
+T is exactly determined from the constraints in (1b). For example, in Example 2 of Section II-C, T = M , which is governed by (12). On the other hand, in Example 1 of Section II-C, the constraints (5) and (6) only provide an upper bound on the number of elements in A. In this case, we need a mechanism that allows us to stop adding element to the set A before reaching the upper bound. To this end, we employ an end token in deep learning, which will be elaborated later. To facilitate understanding, we focus on the case where we know the exact number of elements in A at this moment. It is observed from (19) that this factorization enables a sequential construction of A over T steps. At each step 
+
+Fig. 3: Overview of the DVLN. 
+
+t, we calculate the probability of each possible value of 
+
+at, i.e., {p(at = n | A t−1, h)}n∈N b\A t−1 where Nb \ A t−1
+
+denotes remaining candidates. The next element at is then selected by probabilistic sampling or greedy selection based on p(at | A t−1, h).In the following subsections, we present the archi-tectures of FA(·) and Fw(·, ·), and demonstrate that the proposed FA(·) effectively captures the non-SPSD property inherent in the discrete optimization problem. A. Design of FA(·)
+
+To learn the conditional probability p(A| h) while ex-ploiting (19), we propose a DVLN with an encoder-decoder structure, where the encoder generates the embeddings of all Nb elements in Nb, and the decoder outputs the conditional probabilities in T steps. The whole process of the DVLN is summarized in Fig. 3, and the design details are introduced as follows. 1) Design of the encoder: The encoder takes the sys-tem parameter h as the input, and outputs a dh × Nb
+
+embedding: 
+
+R ≜ [r1, r2, . . . , rNb ] = GE (h) , (20) where rn ∈ Rdh is a dh-dimensional vector representing the embedding of the n-th element of b, and GE(·) : CNh →
+
+Rdh×Nb denotes the encoding scheme. The encoder network can be implemented using vari-ous architectures, such as multilayer perceptron (MLPs), GNNs, or transformers. In Sections V and VI, we will design custom architectures of GE(·) for the two examples presented in Section II-C. 2) Design of the decoder: As described earlier, the decoder incrementally constructs the support set A over 
+
+T steps. At the t-step, it selects an element at based on {p(at = n|A t−1, h)}n∈N b\A t−1 . These probabilities are predicted via an attention mechanism that computes the relevance between the embeddings in R and a context representation of the current system state (At−1, h). In particular, we introduce a context embedding network to capture the current system state: 
+
+c⋆t = Fctx (At−1, h, R), (21) where c⋆t ∈ Rdh denotes a dh-dimensional context vector of the system state at step t, and Fctx (·, ·, ·) is a function parameterized by a NN. Then, given c⋆t , a compatibility score for each candidate is computed as [31], [32]: 
+
+un,t = ATT (rn, c⋆t ), ∀n ∈ N b \ A t−1, (22) where ATT (·, ·) denotes a general attention-based NN [31], [32] that quantifies the relevance between rn and 
+
+c⋆t . Finally, the conditional probability is then obtained via a softmax normalization over the compatibility scores: 
+
+p(at = n | A t−1, h) = eun,t 
+
+∑Nb 
+
+> n′=1
+
+eun′,t 
+
+, ∀n ∈ N b \ A t−1.
+
+(23) However, the attention mechanism described above does not inherently respect the discrete constraints in (1b), as it may assign non-zero probabilities to candidates that would render the solution infeasible. To guarantee feasibility at every decoding step, we explicitly mask out any candidate that violates the constraints if added to the current support set. Specifically, we modify the attention scores in (22) by: 
+
+un,t =
+
+{
+
+ATT (rn, c⋆t ) , ∀n ∈ N b \ A t−1 \ ˜Nb,t ,
+
+−∞ , ∀n ∈ ˜Nb,t , (24) where ˜Nb,t ⊆ N b is the set of infeasible candidates at step 
+
+t, which is formally defined as 
+
+˜Nb,t ≜ {n ∈ N b\ A t−1|∃m ∈ { 1, ..., Ω}, f m (b(At−1 ∪ { n})) > 0} , (25) with b(At−1 ∪ { n}) representing the discrete variable b
+
+with support set At−1 ∪ { n}. It can be seen from (23), (24) and (25) that for all elements violating the con-straints in (1b), the corresponding conditional probability 
+
+p(at = n|A t−1, h) will approach zero, which ensures the fulfillment of the discrete constraints in (1b). In cases where the constraints (1b) only provide an upper bound to T (in the worst case, we can always set the upper bound as Nb), we need the capability to stop adding element to A before reaching the upper bound. In such cases, we introduce an end token β. Specifically, at each decoding step t, we augment the candidate set Nb \ A t−1
+
+as Nb \ A t−1 ∪ { β}. The attention score associated with β
+
+is defined in the form of (24) but with uβ,t = ATT (rβ , c⋆t ),where rβ ∈ Rdh is a trainable vector. If β is selected at step t, the decoding process will stop and the final support set is fixed as A = At−1.B. Design of Fw(·, ·)
+
+The CVLN Fw(·, ·) takes A and h as input, and output the continuous variable w. While numerous methods have been developed to learn such continuous mappings [14]– [19], the specific architecture of Fw(·, ·) usually depends on the problem structure, and the case-specific implemen-tation will be given in Sections V and VI, respectively. C. Resolving the Non-SPSD Challenge in Discrete Opti-mization In this subsection, we formalize the non-SPSD property of (P3) and demonstrate that the proposed framework is explicitly designed to capture this property. The non-SPSD property characterizes scenarios in which identical environmental conditions may correspond to significantly different solutions, which is a phenomenon commonly observed in mixed-discrete wireless resource allocation problems. Property 2 (Non-SPSD Property of (P3)): Given that the system parameter of (P3) consists of Nb blocks, i.e., 
+
+h = [ hT 
+
+> 1
+
+, hT 
+
+> 2
+
+, . . . , hTNb ]T , proximity of parameter blocks does not guarantee identical membership in A. More precisely, for any given tolerance ε ≥ 0, there exist instances of (P3) (i.e., choices of h) and distinct indices i
+
+and j such that the corresponding blocks are ε-close, yet their membership status in A differs. Formally, non-SPSD property is defined as 
+
+∃i, j : || hi − hj || ≤ ε and 
+
+(( i ∈ A and j / ∈ A ) or (i / ∈ A and j ∈ A )) .
+
+Many mixed-discrete wireless resource allocation prob-lems possess this non-SPSD property, including the two examples elaborated in Section II-C. For instance, in (P6), when the UE-AP pair (k, l ) and (k′, l ′) have identical channel conditions, i.e., hkl = hk′l′ , their association solutions can be (k, l ) ∈ A and (k′, l ′) /∈ A , due to the strong interference between them as modeled in the rate function (8). Similarly, in (P9), when CP n and CP n′
+
+have near-identical channel conditions and positions, i.e., 
+
+|hkn − hkn ′ | < ϵ and ∥pn − pn′ ∥ < ϵ , their positioning solutions can be n ∈ A and n′ /∈ A , due to the coupled discrete constraints (13). Crucially, thanks to our proposed attention-based encoder-decoder structure with the dynamic context em-bedding, the proposed DVLN is capable of capturing the non-SPSD property on the discrete solutions, as stated below. Proposition 1 (Non-SPSD Property of FA(·)): Let h = [hT 
+
+> 1
+
+, hT 
+
+> 2
+
+, ..., hTNb ]T . The DVLN FA(·)
+
+is capable of producing the output A such that 
+
+(i ∈ A and j / ∈ A ) or (i / ∈ A and j ∈ A ) even if hi = hj .Proof. When hi = hj , the encoder GE(·) in (20) outputs identical embeddings ri = rj , since the encoder cannot distinguish between identical inputs without a judicious design [24]. We can see from (24) that their attention scores are also the same, i.e., ui,t = uj,t if both i and j
+
+belong to the candidate set ˜Nb,t at step t. However, since at most only one of them (say i) can be selected to be included in At, this makes the context vector c∗ 
+
+> t+1
+
+at step 
+
+t+1 different from the previous c∗ 
+
+> t
+
+at step t. Consequently, the attention score of the remaining j will also change in the subsequent decoding steps. This enables the capability of FA(·) to produce A such that i ∈ A while j / ∈ A (or vice versa). IV. Proposed Training Algorithm During training, each element at is obtained via prob-abilistic sampling from its conditional distribution, i.e., 
+
+at ∼ p(at|A t−1, h), to expand the scope of exploration. Then, based on the probabilistic modeling p(A| h), the joint training of (P3) can be formulated as (P10): max 
+
+> θA,θw
+
+J(θA, θw) = Eh,A∼ p(A| h)[U (b, w; h)] ,
+
+(26) where θA and θw denote the trainable parameters of FA(·)
+
+and Fw(·, ·), respectively, and the original constraints in (1b) and (1c) are enforced through the design of FA(·)
+
+and Fw(·, ·), respectively. Next, we show how to update 
+
+θA and θw.1) Update of θA: Since A is sampled according to p(A| h)
+
+during training, U (b, w; h) is non-differentiable with re-spect to θA. However, since p(A| h) itself is differentiable with respect to θA, we equivalently express the gradient of J(θA, θw) with respect to θA as 
+
+∇θA J(θA, θw) = Eh
+
+ ∑
+
+> A∼ p(A| h)
+
+U (b, w; h)∇θA p(A | h)
+
+
+
+= Eh
+
+ ∑
+
+> A∼ p(A| h)
+
+U (b, w; h)p(A| h)∇θA log p(A | h)
+
+
+
+= Eh,A∼ p(A| h) [U (b, w; h)∇θA log p(A | h)] .
+
+(27) In practice, the expectation in (27) is approximated via Monte Carlo sampling over mini-batches, which corre-sponds to the well-known policy gradient method. To reduce the variance of the gradient estimates, we re-place U (b, w; h) in (27) with U (b, w; h) − ˆU (h), where 
+
+ˆU (·) : CNh → R serves as an estimate of the sum rate, also known as the critic-network [33], whose NN-architecture requires a case-specific design. The parameters θA are then updated by a mini-batch stochastic gradient ascent algorithm, which can be implemented with the Adam optimizer [34]. Correspondingly, the trainable parameter of ˆU (·), denoted by θC, is updated by a mini-batch stochastic gradient descent algorithm with the following mean-square-error loss function: 
+
+LMSE (θC) = Eh,A∼ p(A| h)
+
+[( ˆU (h) − U (b, w; h)
+
+)2]
+
+. (28) 2) Update of θw: We assume that U (b, w; h) is differ-entiable with respect to w and consequently with respect Algorithm 1 Joint Training of FA(·) and Fw(·, ·) 
+
+> 1:
+
+Input number of epochs N e, steps per epoch N s, and batch size B 
+
+> 2:
+
+Initialize θA, θw, and θC 
+
+> 3:
+
+for epoch = 1 , 2, . . . , N e do  
+
+> 4:
+
+for step = 1 , 2, . . . , N s do  
+
+> 5:
+
+Select a batch of input {h} from the training dataset  
+
+> 6:
+
+Output p(A| h), A, and w corresponding to each training sample h 
+
+> 7:
+
+θw ← Adam (θw, −∇ θw J(θA, θw))  
+
+> 8:
+
+θA ← Adam (θA, −∇ θA J(θA, θw))  
+
+> 9:
+
+θC ← Adam (θC, ∇θC LMSE (θC))  
+
+> 10:
+
+end for  
+
+> 11:
+
+end for to θw [14]–[19], [21], [24], [25]. Thus, we can compute the gradient of J(θA, θw) with respect to θw by 
+
+∇θw J(θA, θw) = Eh,A∼ p(A| h) [∇θw U (b, w; h)] . (29) Correspondingly, θw is updated by a mini-batch stochastic gradient ascent algorithm using the Adam optimizer. The joint training algorithm is summarized in Algo-rithm 1, where the negative gradient is adopted in line 7 and line 8 to set a gradient ascent update in the Adam optimizer. After training, FA(·) and Fw(·, ·) with parameters θA and θw are used to predict b and w given any system parameter h.Remark 1: To enhance the stability of the joint training, we can alternatively pretrain Fw(·, ·) according to line 7 of Algorithm 1, where the input A corresponding to a given 
+
+h can be randomly generated. V. Case Study 1: Joint UE-AP Association and Beamforming in CF Systems In this section, we apply our proposed DL framework to solve a widely encountered wireless resource allocation problem: joint UE-AP association and beamforming in CF systems, as described in Example 1 of Section II. We first detail the design of FA(·) and Fw(·, ·), and then present simulations to demonstrate the superiority of the proposed DL framework compared with existing approaches. The whole NN architecture of our proposed framework for this case study is illustrated in Fig. 4. A. FA(·) Design Details 1) Design of the encoder: We need to design the encoder GE(·) as shown in (20), which takes h =[hT
+
+> 11
+
+, hT
+
+> 12
+
+, . . . , hT
+
+> 1L
+
+, hT
+
+> 21
+
+, . . . , hTKL ]T as the input, and out-puts the embeddings R = [ r11 , r12 , . . . , r1L, r21 , . . . , rKL ].To this end, we model the CF system as a graph, which includes two types of nodes, i.e., K UE-nodes and L AP-nodes, and there exists an edge between each UE-node and each AP-node. Thus, GE(·) can be designed as a GNN. Specifically, we adopt the edge-node GNN (ENGNN) [13] MLP 
+
+> Attention (31)
+
+h   
+
+> Edge-Node Update (42)-(44) EL
+> RtA
+> X
+> 2MLP X
+> 1MLP
+> Edge-Node Update (46)-(48) XL
+> Feature Aggregation (51)
+> ctx F
+> t
+> 
+> cQ
+> K
+> V
+> Softmax
+> Sampling
+
+# T
+
+> 
+
+r   
+
+> End Token
+> Decoder ( t-th Decoding Step)
+> MLP
+> Edge-Node Update (42)-(44)
+> Output Layer (32)
+> CL
+> Critic-Network
+> Encoder
+> MLP
+> Edge-Node Update (46)-(48) WL
+> Fully-Connected Layer
+> Normalization (33b) CVLN
+> Predicted Rate
+> Real Rate
+
+w
+
+> A
+> b, tN
+> Mask
+
+Fig. 4: The network architecture in Example 1. for its ability to jointly process edge and node features, offering greater expressive power. In the ENGNN implementation, we denote the k-th UE-node feature and l-th AP-node feature at the lE-th (lE = 0 , 1, . . . , L E) hidden layer as f [lE] 
+
+> UE ,k
+
+and f [lE]
+
+> AP ,l
+
+, and the feature of their corresponding edge as e[lE] 
+
+> kl
+
+. The initial edge features are obtained by 
+
+e[0]  
+
+> kl
+
+= MLP E 
+
+> 1
+
+(hkl ), ∀k ∈ K , l ∈ L , (30) where MLP E 
+
+> 1
+
+is an MLP, and the node features f [0] 
+
+> AP ,l
+
+and f [0]  
+
+> UE ,k
+
+are initialized as zero. Then, the node and edge features are updated by the node and edge update strategy, which is detailed in Appendix A. After LE
+
+update layers, the final edge features serves as the required embedding, i.e., rkl = e[LE] 
+
+> kl
+
+.2) Design of the decoder: We design the context em-bedding network Fctx (·, ·, ·) as shown in (21), which takes 
+
+At−1, R, and h as the input, and outputs a context vector 
+
+c⋆t . To extract the CF network-level features, it is natural to employ a GNN as the backbone of Fctx (·, ·, ·). Moreover, to incorporate the structural information At−1 into the NN, unlike in the encoder GE(·) where all edges are treated homogeneously, we distinguish between two types of edges. Specifically, we categorize edges as associated edges, i.e., 
+
+∀(k, l ) ∈ A t−1, and candidate edges, i.e., ∀(k, l ) /∈ A t−1,and employ distinct learnable parameters to extract their features. The detailed update equations are provided in Appendix B. After computing the context vector c⋆t , the compatibility score for each candidate edge is computed via (24), where the function ATT (·, ·) is achieved via a cross-attention mechanism, which is expressed as ATT (rkl , c⋆t ) = C · tanh 
+
+( qTt kkl 
+
+√dh
+
+)
+
+, (31) where qt = WQc⋆t and kkl = WKrkl with trainable matrices WQ, WK ∈ Rdh×dh , and the compatibilities are clipped within [−C, C ] with a hyper-parameter C.In this case study, the total cardinality T of the support set A is upper bounded by min {KL max , LK max }, accord-ing to constraints (5) and (6). To allow the possibility of the model to terminate before reaching this upper bound, we introduce the end token β described at the end of Section III-A. 3) Design of the critic-network: In training period, the critic-network ˆU (·) is introduced to assist the training of 
+
+FA(·), which takes the channel h as the input, and outputs the estimated sum rate. Its architecture closely mirrors that of GE(·), with the only difference in the output layer. The output layer of ˆU (·) is expressed as 
+
+ˆU (h) = ReLU 
+
+[
+
+1
+
+K
+
+> K
+
+∑
+
+> k=1
+
+FC C 
+
+> 1
+
+(˜f [LC]
+
+> UE ,k
+
+) + 1
+
+L
+
+> L
+
+∑
+
+> l=1
+
+FC C 
+
+> 2
+
+(˜f [LC] 
+
+> AP ,l
+
+)+ 1
+
+KL 
+
+> K
+
+∑
+
+> k=1
+> L
+
+∑
+
+> l=1
+
+FC C 
+
+> 3
+
+(˜ e[LC] 
+
+> kl
+
+)
+
+]
+
+,
+
+(32) where FC C 
+
+> 1
+
+(·)-FC C 
+
+> 3
+
+(·) are single-layer fully connected net-works, LC denotes the number of hidden layers of the critic-network, ˜f [LC]
+
+> UE ,k
+
+, ˜f [LC] 
+
+> AP ,l
+
+, and ˜e[LC] 
+
+> kl
+
+correspond to the features of the k-th UE-node, the l-th AP-node, and their associated edge features at the final hidden layer, respectively, and the ReLU activation is applied to ensure the non-negative output. B. Fw(·, ·) Design Details We need to design Fw(·, ·), which takes h and A as the input, and outputs the beamforming variable w. In particular, we adopt an architecture nearly identical to that of Fctx (·, ·, ·), differing only in the first and last layers. Specifically, the first layer of Fw(·, ·) can be adjusted from (45), by removing rkl from the input and replacing At−1
+
+with A. The node features are initialized as zero. After LW
+
+layers of updates (similar to (46)-(50)), the beamformer 
+
+w is obtained by 
+
+[ℜ{ wTkl }, ℑ{ wTkl }]T = FC W(ˆ e[LW] 
+
+> kl
+
+), (33a) 
+
+wkl ←√Pmax bkl wkl 
+
+√
+
+max 
+
+{∑Kk′=1 bk′l∥wk′l∥2, P max 
+
+} , ∀k ∈ K , l ∈ L .
+
+(33b) where ˆe[LW] 
+
+> kl
+
+denotes the edge feature between the k-th UE and the l-th AP at the final hidden layer, FC W(·)
+
+denotes a single-layer fully connected network, and (33b) implements a projection layer that enforces the per-AP power constraints in (9b). Remark 2: Although an optimal beamforming structure of CF systems can be derived [35], which avoids the learning of the mapping by a NN, it entails an a matrix inversion of dimension LM . This incurs prohibitively high computational complexity when LM is large. Con-sequently, we opt to learn the mapping directly using a NN without leveraging this solution structure. C. Numerical Results In this subsection, we provide numerical results to demonstrate the benefits of the proposed DL framework for joint UE-AP association and beamforming in CF systems. 1) Simulation setting, choices of hyper-parameters, and benchmarks: The considered CF system consists of L = 8 
+
+APs and K = 20 UEs. Each AP is equipped with 
+
+M = 4 antennas and each UE has a single antenna. The maximum number of serving UEs of each AP is set as 
+
+Kmax = 6 , and each user is served with at most Lmax = 2 
+
+APs. The APs and UEs are randomly distributed at a 500 m × 500 m square area. The large-scale fading coefficients are generated according to the path-loss model 
+
+30 .5 + 36 .7 log 10 Dkl + Fkl in dB, where Dkl is the distance in meters between the k-th UE and the l-th AP, and 
+
+Fkl ∼ N (0 , 4) denotes the shadow fading component. The small-scale channel is generated from uncorrelated Rayleigh fading. The noise power of each UE is set as 
+
+σ2 
+
+> k
+
+= −100 dBm. The hyper-parameters of the proposed DL framework are summarized as follows. All MLPs in our designed NNs have 2 hidden layers, each with a fully connected layer, a batch normalization layer, and a ReLU activation. The encoder GE(·) has LE = 2 update layers, and the dimension of the hidden representation is set as dh = 128 .The context embedding network Fctx (·, ·, ·) has LX = 2 
+
+update layers. The NN-based Fw(·, ·) has LW = 2 hidden layers with dimension of hidden representation 128 . The critic-network has LC = 6 update layers. The hyper-parameter C in (31) is set as 8. In joint training, the number of training samples and validation samples are 
+
+51200 and 1024 , respectively. The number of training epochs is set as 200 with a batch size of 1024 . The learning rate is set as 10 −4. After training, the perfor-mance is evaluated on 1024 test samples, and in the testing stage, at is determined by a greedy selection, i.e., at = argmax (k,l )∈K×L p(at = ( k, l )|A t−1, h). The implementation of all simulations (including the compared methods) is under the PyTorch version 2.1.2+cu11.8, operating on an NVIDIA GeForce GTX 4090 GPU. For comparison, we provide the simulation results of the following benchmarks, including DL-based approaches and model-based approaches. The DL-based approaches include:  
+
+> •
+
+Straight-Through-Estimator (STE): This method em-ploys an ENGNN to output discrete UE–AP association variables and continuous beamforming variables in par-allel [21]. The discrete association variables are handled by STE. To satisfy the association constraints in (5), we deactivate extra links of those overloaded APs during the inference stage.  
+
+> •
+
+Gumbel-Softmax: This approach also utilizes an EN-GNN to generate association and beamforming variables in parallel [25]. It further incorporates the Gumbel-Softmax reparameterization technique to approximate discrete sampling with differentiable operations [23]. Extra links to overloaded APs are deactivated during inference to satisfy the constraints in (5). We also consider the following model-based approaches:  
+
+> •
+
+Greedy+WMMSE: This approach first determines the UE-AP association via a greedy method [6]. When a UE is accessed, it is served by Lmax APs with the largest channel gains. If the selected AP already has 
+
+Kmax serving users, then the UE will be associated with the AP with next strongest channel gain. Given the association variable, the beamforming is designed by the the WMMSE algorithm [35], with the maximum number of iterations set to 50 to ensure convergence.  
+
+> •
+
+Greedy+P-RZF: This method includes greedy-based UE-AP association and the partial regularized zero-forcing [36] beamforming. 2) Performance Evaluation: We first evaluate the sum rate performance of our proposed DL framework against DL-based baseline methods. In Fig. 5(a), we show the sum rate performance against other DL-based approaches under different power budgets. It can be seen that the pro-posed DL framework consistently outperforms all baselines across all power levels. In particular, unlike STE, which treats discrete variables as continuous and relies on the surrogate gradient, our approach directly handles discrete variables, thereby avoiding the gradient mismatch inherent in STE and achieving superior performance. A similar per-formance degradation occurs in Gumbel-Softmax, due to the approximation error of discrete output by the Gumble-softmax function. These approximation-based strategies struggle when the association variables are highly coupled and exhibit strong combinatorial structure, leading to severe performance degradation, e.g., over 30% loss in sum rate in high-SNR regimes. Furthermore, in contrast to existing DL-based methods that can only handle the SPSD mappings [24], our framework explicitly possesses the non-SPSD property, enabling more expressive modeling and thus delivering superior sum rate performance. We next evaluate the sum rate performance against model-based baselines, as shown in Fig. 5(b). The pro-posed DL framework significantly outperforms the Greedy heuristic, as the scheduling strategy becomes too complex to be handled by heuristic approaches. Moreover, as trans-mit power increases, interference becomes dominant over noise, making effective interference management essential. We can see that the proposed approach excels in such (a) Sum rate performance comparison under different power budgets (versus DL-based methods). 
+
+(b) Sum rate performance comparison under different power budgets (versus model-based methods). 
+
+(c) The average computation time comparison. 
+
+Fig. 5: Sum rate and computation time comparison. 
+
+Fig. 6: The sum rate performance with different context embedding network designs. high-interference environments. Furthermore, we compare the computational complexity of different methods, with results shown in Fig. 5(c). We can see that our proposed DL framework achieves signifi-cantly faster inference speed than iterative optimization– based baselines Greedy+WMMSE due to its computation-ally efficient feed-forward architecture. Next, we investigate the effect of changing the ar-chitecture design. In particular, in one implementation, we replace the proposed GNN-based context embedding network by an attention–based network, while all other components of the framework remain unchanged. Fur-thermore, we also experimented with replacing the FA(·)
+
+with the greedy algorithm, but keep the ENGNN-based beamforming as described in Subsection B. As shown in Fig. 6, the proposed GNN-based design achieves higher sum rates than the attention-based approach, owing to its ability to effectively model edge features and thus offer greater expressive power [13]. Nevertheless, both designs significantly outperform the Greedy baseline, particularly at high-SNR regimes where interference management be-comes critical. Finally, we examine the role of the end token in enabling the framework to learn an appropriate stopping point during the sequential UE-AP association process. In Fig. 7, we set Pmax = 10dBm , and plot the average sum rate and the average association rate on the validation set over       
+
+> 
+> 
+> 
+>     
+>  
+> 
+> 
+> 
+>   
+
+Fig. 7: Average sum rate and association rate on the validation set versus training epoch when Pmax = 10dBm .the number of training epochs. The average association rate is defined as the obtained cardinality T divided by its upper bound, i.e., T / min {LK max , KL max }. As shown Fig. 7, the association rate is low initially, indicating that the end token is triggered early in the sequence. As training progresses and the agent explores more effective association strategies, both the association rate and the sum rate increase significantly. This shows that the end token learns to determine an effective stopping point dynamically, rather than filling up the set A until the upper bound determined by the constraints. VI. Case Study 2: Joint Antenna Positioning and Beamforming in MA-aided Systems In this section, we employ our DL framework to address another wireless resource allocation problem: joint antenna positioning and beamforming for MA-aided systems, as described in Example 2 of Section II. A. FA(·) Design Details 1) Design of the encoder: We need to design the encoder 
+
+GE(·), which takes h = [ hT 
+
+> 1
+
+, hT 
+
+> 2
+
+, . . . , hTK , pT 
+
+> 1
+
+, pT 
+
+> 2
+
+, . . . , pTN ]T
+
+as the input, and outputs the embeddings R =[r1, r2, . . . , rN ]. To this end, we model the MA-aided system as a graph, which includes two types of nodes, i.e., K UE-nodes and N CP-nodes, and there exists an edge between each UE-node and each CP-node. We also adopt the ENGNN [13] as the foundation architecture of GE(·), where the k-th UE-node feature and n-th CP-node feature of the lE-th hidden layer are expressed as f [lE] 
+
+> UE ,k
+
+and f [lE]
+
+> CP ,n
+
+, and the corresponding edge feature is represented by e[lE] 
+
+> kn
+
+. The edge features and CP-node features are initialized as 
+
+e[0]  
+
+> kn
+
+= MLP E 
+
+> 1
+
+(hkn ) , ∀k ∈ K , n ∈ N , (34a) 
+
+f [0]  
+
+> CP ,n
+
+= MLP E 
+
+> 2
+
+(pn) , ∀n ∈ N , (34b) where MLP E 
+
+> 1
+
+and MLP E 
+
+> 2
+
+are 2 MLPs, and the UE-node feature f [0]  
+
+> UE ,k
+
+is initialized as zero. Using the ENGNN update equations (42)-(44), after LE hidden layers, the updated CP-node feature f [LE] 
+
+> CP ,n
+
+serves as the required embedding rn.2) Design of the decoder: We design the context embed-ding function Fctx (·, ·, ·) which takes At−1, h, and R as the input, and outputs the context vector c⋆t . First, when 
+
+t > 2, we perform information aggregation to extract a preliminary graph-level feature, expressed as 
+
+ct =MLP X
+
+> 2
+
+(
+
+1
+
+t − 1
+
+> t−1
+
+∑
+
+> t′=1
+
+MLP X 
+
+> 1
+
+(rat′ ),
+
+1
+
+N
+
+> N
+
+∑
+
+> n=1
+
+MLP X
+
+> 4
+
+(
+
+pn, 1
+
+K
+
+> K
+
+∑
+
+> k=1
+
+MLP X 
+
+> 3
+
+(hkn )
+
+)) 
+
+,
+
+(35) where MLP X 
+
+> 1
+
+-MLP X 
+
+> 4
+
+are 4 MLPs. When t = 1, as 
+
+At−1 = ∅, we use a trainable parameter r⋆ ∈ Rdh to replace the first input term of MLP X 
+
+> 2
+
+. Next, we employ a multi-head attention (MHA) module to extract the deeper contextual features and refine the context vector. The MHA module calculates relevance scores between ct
+
+and the embeddings of CPs, and integrates these score to enhance the representation of ct. The specific update equations are omitted due to space limitations. Given c⋆t , the compatibility score for each CP is com-puted via (24), where the function ATT (·, ·) is achieved similar to (31). In this case study, the total number of decoding steps can be determined as T = M because of the constraint (12). 3) Design of critic-network: The critic-network’s ar-chitecture closely mirrors that of GE(·), with the only difference in the output layer. The output layer of ˆU (·) is expressed as 
+
+ˆU (h) = ReLU 
+
+[
+
+1
+
+K
+
+> K
+
+∑
+
+> k=1
+
+FC C 
+
+> 1
+
+(˜f [LC]
+
+> UE ,k
+
+) + 1
+
+N
+
+> N
+
+∑
+
+> n=1
+
+FC C 
+
+> 2
+
+(˜f [LC]
+
+> CP ,n
+
+)
+
+]
+
++ 1
+
+KN 
+
+> K
+
+∑
+
+> k=1
+> N
+
+∑
+
+> n=1
+
+FC C 
+
+> 3
+
+(˜ e[LC] 
+
+> kn
+
+)
+
+]
+
+,
+
+(36) where FC C 
+
+> 1
+
+(·)-FC C 
+
+> 3
+
+(·) are single-layer fully-connected net-works, LC denotes the number of hidden layers of the critic-network, and ˜f [LC]
+
+> UE ,k
+
+, ˜f [LC] 
+
+> CP ,n
+
+, and ˜e[LC] 
+
+> kn
+
+correspond to the features of the k-th UE-node, the l-th CP-node, and their associated edge features at the final hidden layer, respectively. B. Fw(·, ·) Design Details In this subsection, we introduce the design of Fw(·, ·).First, we note the optimal solution of the beamformer in this case study [37] 
+
+wk =√pk
+
+(
+
+IM + ∑Ki=1 
+
+> μi
+> σ2
+> k
+
+hi(b)hi(b)H
+
+)−1
+
+hk(b)
+
+∥∥∥∥(
+
+IM + ∑Ki=1 
+
+> μi
+> σ2
+> k
+
+hi(b)hi(b)H
+
+)−1
+
+hk(b)
+
+∥∥∥∥
+
+,
+
+∀k ∈ K ,
+
+(37) where μ ≜ [μ1, μ 2, . . . , μ K ]T ∈ RK 
+
+> +
+
+and p ≜
+
+[p1, p 2, . . . , p K ]T ∈ RK 
+
+> +
+
+are unknown parameters and should satisfy ∑Kk=1 μk = ∑Kk=1 pk = Pmax such that (16b) can be satisfied. Exploiting this solution structure can simplify the mapping to be learned by the NN, by decreasing the number of unknown parameters from 2KM 
+
+to 2K.The remaining task is to predict these low-dimensional parameters. For this purpose, we adopt the ENGNN, which consists of two types of nodes, i.e., M MA-nodes and 
+
+K UE-nodes, and there exists an edge between each MA-node and each UE-node. The edge features are initialized as 
+
+ˆe[0]  
+
+> km
+
+= MLP W 
+
+> 1
+
+([ hk(b)] m), ∀k ∈ K , m ∈ M , (38) and the node features ˆf [0]  
+
+> MA ,m
+
+and ˆf [0]  
+
+> UE ,k
+
+are initialized as zero. After LW layers node and edge updating (similar to (42)-(44)), we obtain μ and p by 
+
+[μk, p k]T = FC W(ˆf [LW] 
+
+> UE ,k
+
+), ∀k ∈ K , (39a) 
+
+μ ← Pmax · softmax (μ), (39b) 
+
+p ← Pmax · softmax (p), (39c) where FC W(·) is a single-layer fully-connected network, and the softmax activation is employed to normalize μ
+
+and p. Finally, μ and p are substituted to (37) to get w.C. Numerical Results 1) Simulation setting and choices of hyper-parameters: We consider an MA-aided system where the BS is equipped with [4 , 9] MAs to serve 4 single-antenna UEs. The size of the 2D rectangular transmit area is 2λ × 2λ,where each side is uniformly sampled with [5 , 8] points, resulting in {25 , 36 , 49 , 64 } CPs, and the wavelength λ =60 mm. The minimum distance between every two MAs is set as dmin = 30 mm. The distance between the k-th UE and the BS, denoted as Dk, is uniformly distributed within [100 , 200] in meters. The noise power is set as −100 
+
+dBm. We consider the field-response channel model [38], where the channel between the n-th CP and the k-th UE is expressed as 
+
+hkn = 1TLp Σkgkn , ∀k ∈ K , n ∈ N , (40) where 1Lp ∈ RLp is the all-one field response vector (FRV), and Lp = 16 denotes the path number. The di-agonal matrix Σk ≜ diag 
+
+{[ηk, 1, η k, 2, . . . , η k,L p
+
+]T }
+
+, where 
+
+ηk,l p denotes the response coefficient of the lp-th path to the k-th UE, and it is independently and identically distributed as CN (0, L 0D−αk
+
+) with L0 = 34 .5 dB and 
+
+α = 3 .67 , respectively. Moreover, gkn denotes the transmit FRV between the n-th CP and the k-th UE, which is given by 
+
+gkn =
+
+[
+
+ejρ nk, 1 , e jρ nk, 2 , · · · , e jρ nk,L p
+
+]T
+
+, (41) where ρnk,l p = 2π/λ [( xn − x1) cos θk,l p sin ϕk,l p + ( yn −
+
+y1) sin θk,l p ] represents the phase difference between the 
+
+n-th CP and the first CP at the lp-th path, and θk,l p and 
+
+ϕk,l p represent the elevation angle of departure (AoD) and the azimuth AoD of the lp-th path. The proba-bility density function of AoDs is fAoD 
+
+(θk,l p , ϕ k,l p
+
+) =cos θk,l p /2π, θ k,l p ∈ [−π/ 2, π/ 2] , ϕ k,l p ∈ [−π/ 2, π/ 2] .For the proposed NN model, all the MLPs are im-plemented by 2 linear layers, each followed by a ReLU activation function. The encoder GE(·) has LE = 3 layers, with dh = 128 . The hyper-parameter is set to C = 8 .The critic-network has LC = 6 update layers. Moreover, 
+
+Fw(·, ·) has LW = 3 hidden layers, each with a hidden dimension of 64 . In the training procedure, the number of epochs is set to 100 , where each epoch consists of 50 mini-batches with a batch size of 1024 . A learning rate 10 −4
+
+is adopted to update the trainable parameters through Algorithm 1 using the Adam optimizer. The GPU and environment for training and testing is the same as in Section V. 2) Benchmarks: We consider four baseline methods for comparison:  
+
+> •
+
+Random+WMMSE: This method involves randomly selecting M CPs. If the selected CPs violate the con-straints in (13), the selection is repeated until the constraints are satisfied. Subsequently, with the MA positions determined, the beamformer is computed using the WMMSE algorithm [35].  
+
+> •
+
+Greedy+WMMSE: For this approach, the average chan-nel gain of each CP with respect to all K UEs is first calculated and treated as the equivalent channel gain for that CP. The CPs exhibiting the strongest channel gains are then selected iteratively over M steps, with CPs violating (13) masked in each step. Following the MA positioning, the beamformer is obtained via the WMMSE algorithm.  
+
+> •
+
+Greedy+ZF: This method combines greedy algorithm for determining the MA position, and the zero-forcing beamforming [39].  
+
+> •
+
+FP-C: We modify an approach that jointly optimizes continuous antenna positioning and beamforming for MA-aided systems [9]. To obtain discrete antenna posi-tions that satisfy the discrete constraints in (13), in each iteration of FP-C, we project the position of each MA to its nearest discrete CP that satisfies (13) sequentially. To the best of our knowledge, existing DL approaches cannot effectively handle the distance constraints in (13); therefore, we do not include DL-based benchmarks. 3) Performance Evaluation: We first compare the sum rate performance under different power budgets. In Fig. 8(a), with M = 6 and N = 49 , it can be observed that Random+WMMSE and Greedy+ZF perform badly due to their heuristic antenna positioning and beamform-ing strategies, respectively. Moreover, the proposed DL framework outperforms all baselines particularly at higher transmit power. This demonstrates the great capability of the proposed framework in mitigating interference, par-ticularly when inter-user interference becomes stronger. Next, we evaluate the performance of the proposed DL framework under different system settings. We first set Pmax = 20 dBm and N = 49 , and plot the sum rate against M in Fig. 8b. As observed, the proposed DL framework achieves highest sum rates across different values of M . Next, in Fig. 8c, we plot the sum rate against N when Pmax = 20 dBm and M = 6 . We can see that the proposed DL framework achieves superior performance across different values of N . In contrast to heuristic positioning methods such as Greedy and Random that perform poorly, our proposed method achieves the best performance no matter when the number of CPs is limited, or when the number of CPs is sufficient but with more challenging constraints. Finally, we compare the average computation time of various approaches. It can be observed from Fig. 9 that the computation time of the proposed DL framework is substantially shorter than the iterative optimization-based methods, including WMMSE and FP-C. VII. Conclusion In this paper, we have proposed a DL framework for solving a general class of mixed-discrete wireless resource allocation problems with discrete constraints. A general problem formulation has been established and a DVLN with probabilistic formulation has been designed to handle discrete variables. It employs an encoder-decoder architecture with a sequential decoding, enabling it to rigorously enforce the coupled discrete constraints while satisfying the non-SPSD property on discrete solutions. With a CVLN developed to predict the solutions of continuous variables, the DVLN and CVLN are jointly trained in an unsupervised manner. Simulation results on two representative case studies have demonstrated the superior performance with significantly less computation time compared to existing model-based and DL-based approaches. (a) The sum rate performance compar-ison under different power budgets. 
+
+(b) The sum rate performance compar-ison under different M ’s. 
+
+(c) The sum rate performance compar-ison under different N ’s. 
+
+Fig. 8: The sum rate performance comparison under different power budgets, M ’s, and N ’s. 
+
+Fig. 9: The average computation time comparison when 
+
+M = 6 and N = 49 .Appendix A Update Mechanism of ENGNN The ENGNN comprises two types of nodes: transmitter (TX) nodes and receiver (RX) nodes, with cardinalities 
+
+NT and NR, respectively. Define the TX-node feature and the RX-node feature in the l-th layer as f [l] 
+
+> TX ,n t
+
+and f [l] 
+
+> RX ,n r
+
+,and there corresponding edge features as e[l] 
+
+> ntnr
+
+. At the l-th layer, the node and edge features are updated by 
+
+f [l] 
+
+> TX ,n t
+
+=MLP [l]2
+
+(
+
+f [l−1]  
+
+> TX ,n t
+
+, 1
+
+NR
+
+> NR
+
+∑
+
+> nr=1
+
+MLP [l]1
+
+(
+
+f [l−1]  
+
+> RX ,n r
+
+, e[l−1] 
+
+> ntnr
+
+))
+
+,
+
+∀n = 1 , . . . , N T,
+
+(42) 
+
+f [l] 
+
+> RX ,n r
+
+=MLP [l]4
+
+(
+
+f [l−1]  
+
+> RX ,n r
+
+, 1
+
+NT
+
+> NT
+
+∑
+
+> nt=1
+
+MLP [lE]3
+
+(
+
+f [l−1]  
+
+> TX ,n t
+
+, e[l−1] 
+
+> ntnr
+
+))
+
+,
+
+∀nr = 1 , . . . , N R,
+
+(43) 
+
+e[l] 
+
+> ntnr
+
+=MLP [l]7
+
+(
+
+e[l−1]  
+
+> ntnr
+
+, 1
+
+NT
+
+> NT
+
+∑
+
+> n′=1
+
+MLP [l]5
+
+(
+
+e[l−1]  
+
+> n′nr
+
+, f [l−1] 
+
+> RX ,n r
+
+)
+
+,
+
+1
+
+NR
+
+> NR
+
+∑
+
+> n′=1
+
+MLP [l]6
+
+(
+
+e[l−1]  
+
+> ntn′
+
+, f [l−1] 
+
+> TX ,n t
+
+))
+
+,
+
+∀nt = 1 , . . . , N T, n r = 1 , . . . , N R.
+
+(44) where MLP [l]1 - MLP [l]7 are 7 MLPs. Appendix B Design of Fctx for Example 1 In the t-th decoding step, the edge features of Fctx (·, ·, ·)
+
+are initialized as 
+
+¯e[0]  
+
+> kl,t
+
+=
+
+{
+
+MLP X 
+
+> 1
+
+(hkl , rkl ) , ∀(k, l ) ∈ A t−1,
+
+MLP X 
+
+> 2
+
+(hkl , rkl ) , ∀(k, l ) /∈ A t−1, (45) where MLP X 
+
+> 1
+
+and MLP X 
+
+> 2
+
+are two distinct MLPs, and the node features ¯f [0]  
+
+> UE ,k,t
+
+and ¯f [0]  
+
+> AP ,l,t
+
+are initialized as zero. Furthermore, the node and edge features are updated as 
+
+¯f [lX] 
+
+> UE ,k,t
+
+= MLP X,[lX]3
+
+(
+
+¯f [lX−1]  
+
+> UE ,k,t
+
+, 1
+
+L
+
+> L
+
+∑
+
+> l=1
+
+g[lX]
+
+> kl,t
+
+)
+
+, ∀k ∈ K , (46) 
+
+¯f [lX] 
+
+> AP ,l,t
+
+= MLP X,[lX]4
+
+(
+
+¯f [lX−1]  
+
+> AP ,l,t
+
+, 1
+
+K
+
+> K
+
+∑
+
+> k=1
+
+n[lX]
+
+> kl,t
+
+)
+
+, ∀l ∈ L , (47) 
+
+¯e[lX] 
+
+> kl,t
+
+=
+
+
+
+MLP X,[lX]5
+
+(
+
+¯e[lX]
+
+> kl,t
+
+, ¯f [lX]
+
+> UE ,k,t
+
+, ¯f [lX]
+
+> AP ,l,t
+
+)
+
+, ∀(k, l ) ∈ A t−1,
+
+MLP X,[lX]6
+
+(
+
+¯e[lX]
+
+> kl,t
+
+, ¯f [lX]
+
+> UE ,k,t
+
+, ¯f [lX]
+
+> AP ,l,t
+
+)
+
+, ∀(k, l ) /∈ A t−1,
+
+(48) where MLP X,[lX]3 -MLP X,[lX]6 are 4 MLPs, and g[lX] 
+
+> kl,t
+
+and 
+
+n[lX] 
+
+> kl,t
+
+denote the messages aggregated from edges to nodes, which are computed as 
+
+g[lX] 
+
+> kl,t
+
+=
+
+
+
+MLP X,[lX]7
+
+(¯f [lX−1]  
+
+> AP ,l,t
+
+, ¯e[lX−1] 
+
+> kl,t
+
+)
+
+, ∀(k, l ) ∈ A t−1,
+
+MLP X,[lX]8
+
+(¯f [lX−1]  
+
+> AP ,l,t
+
+, ¯e[lX−1] 
+
+> kl,t
+
+)
+
+, ∀(k, l ) /∈ A t−1,
+
+(49) 
+
+n[lX] 
+
+> kl,t
+
+=
+
+
+
+MLP X,[lX]9
+
+(¯f [lX−1]  
+
+> UE ,k,t
+
+, ¯e[lX−1] 
+
+> kl,t
+
+)
+
+, ∀(k, l ) ∈ A t−1,
+
+MLP X,[lX]10 
+
+(¯f [lX−1]  
+
+> UE ,k,t
+
+, ¯e[lX−1] 
+
+> kl,t
+
+)
+
+, ∀(k, l ) /∈ A t−1,
+
+(50) where MLP X,[lX]7 -MLP X,[lX]10 are 4 additional MLPs. The associated and candidate edges are modeled as distinct edge types, each processed by dedicated MLPs to capture their unique characteristics. Finally, after LX layers, the graph-level context vector is obtained by aggregating node and edge representations: 
+
+c⋆t = 1
+
+K
+
+> K
+
+∑
+
+> k=1
+
+FC X 
+
+> 1
+
+(¯f [LX]
+
+> UE ,k,t
+
+) + 1
+
+L
+
+> L
+
+∑
+
+> l=1
+
+FC X 
+
+> 2
+
+(¯f [LX]
+
+> AP ,l,t
+
+)+ 1
+
+KL 
+
+> K
+
+∑
+
+> k=1
+> L
+
+∑
+
+> l=1
+
+FC X 
+
+> 3
+
+(¯ e[LX] 
+
+> kl,t
+
+),
+
+(51) where FC X 
+
+> 1
+
+(·) − FC X 
+
+> 3
+
+(·) are single-layer fully connected networks. References 
+
+[1] M. Guenach, A. A. Gorji, and A. Bourdoux, “Joint power con-trol and access point scheduling in fronthaul-constrained uplink cell-free massive MIMO systems,” IEEE Trans. on Commun., vol. 69, no. 4, pp. 2709–2722, 2021. [2] C. Huang, S. Hu, G. C. Alexandropoulos, A. Zappone, C. Yuen, R. Zhang, M. D. Renzo, and M. Debbah, “Holographic MIMO surfaces for 6G wireless networks: Opportunities, challenges, and trends,” IEEE Wireless Commun., vol. 27, no. 5, pp. 118– 125, 2020. [3] K.-K. Wong, A. Shojaeifard, K.-F. Tong, and Y. Zhang, “Fluid antenna systems,” IEEE Trans. on Wireless Commun., vol. 20, no. 3, pp. 1950–1962, 2021. [4] L. Zhu, W. Ma, B. Ning, and R. Zhang, “Movable-antenna enhanced multiuser communication via antenna position op-timization,” IEEE Trans. on Wireless Commun., vol. 23, no. 7, pp. 7214–7229, 2024. [5] Y.-F. Liu, T.-H. Chang, M. Hong, Z. Wu, A. Man-Cho So, E. A. Jorswieck, and W. Yu, “A survey of recent advances in optimization methods for wireless communications,” IEEE J. Sel. Areas Commun., vol. 42, no. 11, pp. 2992–3031, 2024. [6] S. Buzzi, C. D’Andrea, L. Wang, A. Hasim Gokceoglu, and G. Peters, “Co-existing/cooperating multicell massive MIMO and cell-free massive mimo deployments: Heuristic designs and performance analysis,” IEEE Open J. of the Commun. Soc., vol. 5, pp. 6180–6200, 2024. [7] M. Sanjabi, M. Razaviyayn, and Z.-Q. Luo, “Optimal joint base station assignment and beamforming for heterogeneous networks,” IEEE Trans. on Signal Process., vol. 62, no. 8, pp. 1950–1961, 2014. [8] K. Shen and W. Yu, “Fractional programming for communica-tion systems—part II: Uplink scheduling via matching,” IEEE Trans. on Signal Processing, vol. 66, no. 10, pp. 2631–2644, 2018. [9] Z. Cheng, N. Li, J. Zhu, X. She, C. Ouyang, and P. Chen, “Sum-rate maximization for fluid antenna enabled multiuser communications,” IEEE Commun. Lett., vol. 28, no. 5, pp. 1206–1210, 2024. [10] Y. Wu, D. Xu, D. Wing Kwan Ng, W. Gerstacker, and R. Schober, “Globally optimal movable antenna-enabled mul-tiuser communication: Discrete antenna positioning, power consumption, and imperfect CSI,” IEEE Trans. on Commun., vol. 73, no. 10, pp. 9903–9923, 2025. [11] Y. Yang, Y. Gong, and Y.-C. Wu, “Intelligent-reflecting-surface-aided mobile edge computing with binary offloading: Energy minimization for iot devices,” IEEE Internet of Things J., vol. 9, no. 15, pp. 12 973–12 983, 2022. [12] ——, “Energy-sensitive binary offloading for reconfigurable-intelligent-surface-assisted wireless-powered mobile-edge com-puting,” IEEE Internet of Things J., vol. 11, no. 7, pp. 11 593– 11 605, 2024. [13] Y. Wang, Y. Li, Q. Shi, and Y.-C. Wu, “ENGNN: A general edge-update empowered GNN architecture for radio resource management in wireless networks,” IEEE Trans. on Wireless Commun., vol. 23, no. 6, pp. 5330–5344, 2024. [14] J. Guo and C. Yang, “Learning power allocation for multi-cell-multi-user systems with heterogeneous graph neural networks,” IEEE Trans. on Wireless Commun., vol. 21, no. 2, pp. 884–897, 2022. [15] S. Liu, J. Guo, and C. Yang, “Multidimensional graph neural networks for wireless communications,” IEEE Trans. on Wire-less Commun., vol. 23, no. 4, pp. 3057–3073, 2024. [16] Z. Liu, Y. Li, Y.-C. Wu, and Y. Gong, “Learning to optimize resource allocation in dynamic wireless environments: Embrac-ing the new while engaging the old,” IEEE Trans. on Wireless Commun., vol. 24, no. 9, pp. 7346–7359, 2025. [17] Y. Li and Y.-F. Liu, “HPE transformer: Learning to optimize multi-group multicast beamforming under nonconvex QoS con-straints,” IEEE Trans. on Commun., vol. 72, no. 9, pp. 5581– 5594, 2024. [18] Y. Li, Z. Chen, Y. Wang, C. Yang, B. Ai, and Y.-C. Wu, “Heterogeneous transformer: A scale adaptable neural network architecture for device activity detection,” IEEE Trans. on Wireless Commun., vol. 22, no. 5, pp. 3432–3446, 2023. [19] Y. Leng, Q. Lin, L.-Y. Yung, J. Lei, Y. Li, and Y.-C. Wu, “Unveiling the power of complex-valued transformers in wireless communications,” IEEE Trans. on Commun., vol. 74, pp. 612– 627, 2026. [20] A. Van Den Oord, O. Vinyals, and K. Kavukcuoglu, “Neural discrete representation learning,” in Advances in Neural Inf. Process. Syst. (NeurIPS), 2017. [21] Y. Li, Y. Liu, and W. Yu, “Multimodal visual image based user association and beamforming using graph neural networks,” IEEE Trans. on Wireless Commun., 2025, doi: 10.1109/TWC.2025.3582887. [22] J. Park, F. Sohrabi, J. Du, and J. G. Andrews, “Self-nomination: Deep learning for decentralized csi feedback reduction in MU-MIMO systems,” IEEE Trans. on Wireless Commun., vol. 25, pp. 10 321–10 336, 2026. [23] E. Jang, S. Gu, and B. Poole, “Categorical reparameterization with gumbel-softmax,” in Int. Conf. on Learn. Representations (ICLR), 2017. [24] S. Liu, C. Yang, and S. Han, “Learning wideband user scheduling and hybrid precoding with graph neural net-works,” IEEE Trans. on Wireless Commun., 2025, doi: 10.1109/TWC.2025.3590424. [25] Q. Lyu and M. Vu, “Joint beamforming and integer user association using a GNN with gumbel-softmax reparam-eterizations,” IEEE Trans. on Veh. Technol., 2025, doi: 10.1109/TVT.2025.3576051. [26] F. Liang, C. Shen, W. Yu, and F. Wu, “Towards optimal power control via ensembling deep neural networks,” IEEE Trans. on Commun., vol. 68, no. 3, pp. 1760–1776, 2020. [27] Q. Chen, L. Li, Q. Li, J. Wu, A. Wang, R. Sun, X. Luo, T.-H. Chang, and Q. Shi, “When GNNs meet symmetry in ILPs: an orbit-based feature augmentation approach,” in Int. Conf. on Learn. Representations (ICLR), 2025. [28] Y. Li, Y.-F. Liu, F. Xu, Q. Shi, and T.-H. Chang, “Learning to optimize qos-constrained beamforming in multi-user systems: A penalty-dual framework,” IEEE Trans. on Wireless Commun., vol. 23, no. 11, pp. 16 123–16 138, 2024. [29] C. D’Andrea and E. G. Larsson, “User association in scalable cell-free massive MIMO systems,” in Asilomar Conf. on Signals, Syst., and Comput., 2020. [30] Y. Jin, Q. Lin, Y. Li, H. Zhu, B. Cheng, Y.-C. Wu, and R. Zhang, “A general optimization framework for tackling distance constraints in movable antenna-aided systems,” IEEE Trans. on Wireless Commun., vol. 25, pp. 10 869–10 885, 2026. [31] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, L. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances in Neural Inf. Process. Syst. (NeurIPS), 2017. [32] W. Kool, H. Van Hoof, and M. Welling, “Attention, learn to solve routing problems!” in Int. Conf. on Learn. Representations (ICLR), 2019. [33] V. R. Konda and J. N. Tsitsiklis, “Actor-critic algorithms,” in Advances in Neural Inf. Process. Syst. (NeurIPS), 1999. [34] D. P. Kingma and J. Ba, “Adam: A method for stochastic optimization,” arXiv:1412.6980, 2014. [35] S. S. Christensen, R. Agarwal, E. De Carvalho, and J. M. Cioffi, “Weighted sum-rate maximization using weighted MMSE for MIMO-BC beamforming design,” IEEE Trans. on Wireless Commun., vol. 7, no. 12, pp. 4792–4799, 2008. [36] G. Interdonato, M. Karlsson, E. Björnson, and E. G. Lars-son, “Local partial zero-forcing precoding for cell-free massive MIMO,” IEEE Trans. on Wireless Commun., vol. 19, no. 7, pp. 4758–4774, 2020. [37] E. Björnson, M. Bengtsson, and B. Ottersten, “Optimal mul-tiuser transmit beamforming: A difficult problem with a simple solution structure,” IEEE Signal Process. Mag., vol. 31, no. 4, pp. 142–148, 2014. [38] L. Zhu, W. Ma, and R. Zhang, “Movable antennas for wireless communication: Opportunities and challenges,” IEEE Commun. Mag., vol. 62, no. 6, pp. 114–120, 2024. [39] Q. Spencer, A. Swindlehurst, and M. Haardt, “Zero-forcing methods for downlink spatial multiplexing in multiuser MIMO channels,” IEEE Trans. on Signal Process., vol. 52, no. 2, pp. 461–471, 2004.

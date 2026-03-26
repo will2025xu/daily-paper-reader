@@ -1,0 +1,894 @@
+Title: Cross-Layer Traffic Allocation and Contention Window Optimization for Wi-Fi 7 MLO: When DRL Meets LSTM
+
+URL Source: https://arxiv.org/pdf/2603.18602v1
+
+Published Time: Fri, 20 Mar 2026 00:48:00 GMT
+
+Number of Pages: 13
+
+Markdown Content:
+> 1
+
+# Cross-Layer Traffic Allocation and Contention Window Optimization for Wi-Fi 7 MLO: When DRL Meets LSTM 
+
+Zhang Liu, Xianbin Wang, Fellow, IEEE , Shumin Lian, Lianfen Huang, Liqun Fu, Senior Member, IEEE , and Ying-Jun Angela Zhang, Fellow, IEEE 
+
+Abstract —To support future diverse applications, multi-link operation (MLO) has been introduced in the Wi-Fi 7 standard (IEEE 802.11be) to enable concurrent communication over multiple frequency bands. This new capability relies on a two-tier medium access control (MAC) architecture, where the upper MAC (U-MAC) allocates traffic across links and the lower MAC (L-MAC) performs independent channel access. However, MLO optimization is challenging due to the inherent coupling between the U-MAC and L-MAC, as well as the dynamic and complex nature of wireless networks. To address these challenges, we propose a cross-layer framework that jointly optimizes traffic allocation at the U-MAC layer and initial contention window (ICW) sizes at the L-MAC layer to maximize network throughput. Specifically, we extend the single-link Bianchi Markov model to develop an analytical framework that captures the relationship among network throughput, traffic allocation, and ICW sizes. Based on this framework, we formulate a nonconvex, nonlinear cross-layer optimization problem. To solve it efficiently, we design a long short-term memory–based soft actor–critic (LSTM-SAC) algorithm that leverages LSTM to handle the partial observability and non-Markovian dynamics inherent in Wi-Fi networks. Finally, using a well-developed event-based Wi-Fi simulator, we demonstrate that the proposed LSTM-SAC substantially outperforms existing benchmark solutions across a wide range of network settings. 
+
+Index Terms —Wi-Fi 7, multi-link operation, traffic allocation, contention window optimization, deep reinforcement learning, and long short-term memory network. 
+
+I. I NTRODUCTION 
+
+A. Background and Overview 
+
+Over more than three decades of rapid evolution, Wi-Fi has become the world’s most widely used indoor wireless networking technology. Owing to its ease of deployment, flexibility, and cost-effectiveness, Wi-Fi networks now carry approximately 70% of global Internet traffic [1]. To support increasingly diverse future services and applications, several new features have been introduced at both the physical and medium access control (MAC) layers in the IEEE 802.11be 
+
+Z. Liu (zhangliu@xmu.edu.cn, zhangliu@cuhk.edu.hk) is with the Depart-ment of Computer Science and Technology, Xiamen University, China, and also with the Department of Information Engineering, The Chinese University of Hong Kong, Hong Kong. X. Wang (xianbin.wang@uwo.ca) is with the Department of Electrical and Computer Engineering, Western University, Canada. L. Huang (lfhuang@xmu.edu.cn) is with the Key Laboratory of Intel-ligent Manufacturing Equipment and Industrial Internet Technology, School of Information Science and Technology, Xiamen University Tan Kah Kee College, China, and also with the Department of Informatics and Communication Engineering, Xiamen University, China. S. Lian (smlian@stu.xmu.edu.cn) and L. Fu (liqun@xmu.edu.cn) are with the Department of Informatics and Communication Engineering, Xiamen University, China. Y. Zhang (yjzhang@ie.cuhk.edu.hk) is with the Department of Information Engineering, The Chinese University of Hong Kong, Hong Kong. (Corresponding author: Xianbin Wang.) AP/STA MLD    
+
+> Upper MAC (U -MAC)
+> L-MAC
+> Link 1
+> Incoming traffic
+> Traffic allocation
+> ……
+> AP MLD
+> STA MLD
+> (a) MLO framework (b) MLO MAC instance
+> L-MAC
+> Link 2
+> L-MAC
+> Link 3
+> 2.4 GHz 5 GHz 6 GHz
+
+Fig. 1: A schematic illustration of the MAC instance in MLO, where each L-MAC in a different color represents a distinct band corresponding to one of the multiple links. In addition, the traffic allocated to each link is highlighted in red, while the channel occupancy is shown in black. 
+
+Extremely High Throughput (EHT) amendment [2], also known as Wi-Fi 7. At the physical layer, Wi-Fi 7 supports increased channel bandwidths of up to 320 MHz, enabling extremely high data rates and low-latency communication. At the MAC layer, it introduces multiple resource unit capabilities and multi-link operation (MLO) [3]. Together, these features provide substantial throughput gains and support emerging applications such as virtual and augmented reality, remote collaboration and teleoperation, and cloud gaming [4]. Among these new features, MLO – the focus of this work – is a new foundational MAC layer technique that enables access points (APs) and stations (STAs) to perform concurrent transmissions over multiple links operating across different frequency bands, including 2.4/5/6 GHz. To this end, multi-link devices (MLDs), including AP MLDs and STA MLDs, 1
+
+provide a unique MAC instance bifurcated into two MAC sublayers [5], each with distinct functionalities. As shown in Fig. 1(b), the upper MAC (U-MAC) serves as a common sublayer for all links and is responsible for the aggregation and de-aggregation of MAC service data units. In contrast, the lower MAC (L-MAC) handles link-specific functions, operating independent channel access for each link. Although the two-layer MAC architecture enables flexible multi-link transmission, it also poses significant optimization challenges. In particular, the overall performance of MLO is jointly determined by traffic allocation at the U-MAC and link-specific channel access at the L-MAC, which are inherently interdependent. This cross-layer coupling, further exacerbated by the dynamic nature of wireless channel and data traffic, makes efficient MLO optimization a highly nontrivial task. 
+
+> 1
+
+The APs and STAs with MLO capability are defined as MLDs, referred to as AP MLDs and STA MLDs, respectively. In this paper, we assume that all APs and STAs are capable of MLO, without considering coexistence scenarios with legacy Wi-Fi devices. For simplicity, we refer to AP MLDs and STA MLDs as APs and STAs throughout the remainder of the paper. 
+
+> arXiv:2603.18602v1 [cs.NI] 19 Mar 2026 2
+
+B. Motivation and Main Challenges 
+
+To improve MLO performance, several traffic allocation policies at the U-MAC layer have been proposed [6]–[9] (as detailed in Sec. II-A ). However, these studies focus solely on traffic allocation at the U-MAC layer and do not account for channel contention at the L-MAC layer. In other words, they implicitly assume that all links can access the channel within a reasonable time and successfully transmit their allocated traffic. In practice, Wi-Fi adopts carrier-sense multiple access with collision avoidance (CSMA/CA), where each AP/STA performs a random backoff before attempting channel access, thereby introducing significant uncertainty (as detailed in Sec. III-A ). To address this issue, we explicitly incorporate the impact of channel access parameters – namely, the initial contention window (ICW) sizes at the L-MAC layer – and propose a cross-layer framework that jointly optimizes traffic allocation and ICW sizes to maximize network throughput. To this end, we extend the widely adopted Bianchi Markov model for single-link Wi-Fi [10] to derive explicit expressions that relate network throughput to both the traffic allocation policy and the ICW size in Wi-Fi 7 MLO (as detailed in Sec. III-D ). This analysis reveals that network throughput is jointly determined by two key factors: (i) the traffic allocation policy at the U-MAC layer and (ii) the ICW size at the L-MAC layer, thereby providing a solid theoretical foundation for the subsequent optimization. Most existing studies employ analytical approaches [8], [11]– [13] to derive closed-form traffic allocation policies or ICW sizes. However, these analytical methods typically rely on quasi-static assumptions, which limit their applicability in realistic Wi-Fi 7 MLO scenarios. This limitation stems from the fact that closed-form solutions often scale poorly with network size and lack adaptability to time-varying traffic pat-terns and dynamic contention conditions. Recently, the research community has increasingly turned to artificial intelligence (AI) to optimize Wi-Fi performance [14], with deep reinforcement learning (DRL) emerging as a particularly promising approach. In DRL, an intelligent agent (e.g., the AP) observes the current environment state (e.g., channel occupancy), selects an action (e.g., a traffic allocation policy), and receives a reward signal (e.g., network throughput). Through this trial-and-error inter-action, the agent learns adaptive strategies suited to dynamic environments. Motivated by these advantages, we adopt the soft actor–critic (SAC) algorithm [15] to jointly optimize traffic allocation and ICW sizes. SAC is based on the maximum-entropy framework, which aims to maximize not only the expected cumulative reward but also the policy entropy. This entropy-regularized objective encourages persistent exploration and mitigates premature convergence to suboptimal solutions. 
+
+Despite its promising potential, direct application of DRL to Wi-Fi 7 MLO networks poses substantial challenges. First, decision-making in Wi-Fi networks is inherently partially ob-servable. A DRL agent (e.g., the AP) cannot directly access fine-grained MAC-layer states, such as the exact backoff counters of competing STAs or instantaneous collision events on each link. Consequently, the underlying optimization problem is more accurately modeled as a partially observable Markov decision 1Throughput2 3
+
+Traffic arrival 
+
+Traffic 1 
+
+Traffic 2 
+
+Traffic 3 
+
+Reshape point 
+
+> Fig. 2: Non-Markovian nature of Wi-Fi networks: The throughput of the current traffic flow depends not only on the present state but is also influenced by subsequent flow arrivals.
+
+process (POMDP) [16]. 2 Second, the system exhibits non-Markovian behavior. 3 As illustrated in Fig. 2, the throughput resulting from a given traffic allocation policy and ICW size for Traffic 1 is strongly affected by subsequent actions, since later traffic arrivals dynamically reshape channel congestion and contention levels [3]. Together, these two factors significantly degrade the effectiveness and training stability of conventional DRL methods. To address these challenges, we incorporate long short-term memory (LSTM) into SAC and propose an LSTM-SAC algorithm. The LSTM network encodes a history of past observations into a compact latent representation that approximates the underlying hidden system state (as detailed in Sec. IV-B ). This capability allows the DRL agent to capture temporal correlations induced by non-Markovian dynamics and to infer unobservable network conditions under partial observability, thereby enabling more stable training. 
+
+C. Summary of Contributions 
+
+To the best of our knowledge, this is the first work on Wi-Fi 7 MLO that jointly incorporates cross-layer optimization by addressing traffic allocation at the U-MAC layer and ICW optimization at the L-MAC layer. Our main contributions are as follows: 1) Modeling: We extend the Bianchi Markov model from the single-link case to develop a novel analytical framework for characterizing the network throughput of Wi-Fi 7 MLO. Within this framework, we derive explicit expressions for network throughput as functions of the traffic allocation policy at the U-MAC layer and the ICW size at the L-MAC layer. Building on this analysis, we formulate a cross-layer optimization problem, which is shown to be non-convex and nonlinear through rigorous theoretical examination. 2) Solution: To address this problem effectively, we propose an LSTM-SAC algorithm to jointly optimize the traffic allocation policy and the ICW size. Specifically, built upon the maximum-entropy DRL framework, SAC encourages per-sistent exploration and mitigates premature convergence to suboptimal solutions. LSTM networks are then incorporated to cope with the partial observability and non-Markovian behavior inherent in Wi-Fi networks, where a history of past observations is fed into the LSTM to produce a compact 
+
+> 2Unlike standard MDPs, the true system state in a POMDP is not directly accessible. The agent must therefore approximate hidden states, making policy learning more difficult and less stable.
+> 3The Markov property assumes that the future state of an environment depends only on its current state and the action taken. 3
+
+latent representation, which is subsequently used as the system state for training the DRL agent. 3) Validation: We implemented the LSTM-SAC algorithm in Python using OpenAI Gym for DRL-based learning, and integrated it with a well-established event-based Wi-Fi simulator [1], [17] implemented in Matlab . The two platforms interact iteratively during training and evaluation. Simulation results demonstrate that the traffic allocation policies and ICW sizes obtained by the proposed LSTM-SAC algorithm consistently outperform existing benchmark solutions across a wide range of network settings. 
+
+D. Paper Organization 
+
+The rest of this paper is organized as follows. Sec. II reviews related work. Sec. III describes the Wi-Fi 7 MLO system model and formulates the corresponding cross-layer optimization problem. Sec. IV introduces the preliminaries of LSTM networks. Sec. V presents the proposed LSTM-SAC algorithm. Sec. VI reports and discusses the simulation results, followed by conclusions and future research directions in Sec. VII. II. R ELATED WORK 
+
+Henceforth, we summarize the contributions of related works and highlight the aspects they have not addressed, which serve as the primary motivations for this work. 
+
+A. Traffic Allocation in Wi-Fi 7 MLO 
+
+When using MLO, traffic flows at the transmitter are dis-tributed across different links according to an implementation-specific traffic allocation policy. The authors in [6] proposed a condition-aware policy that considers the transmission data rate of each link, thereby maximizing the number of STAs that Wi-Fi can support. The authors in [7] studied a congestion-aware policy which distributes incoming traffic according to the channel occupancy, with the goal of maximizing spectrum utilization. The authors in [8] developed an analytical model for the latency performance of coexisting Wi-Fi 7 networks and numerically derived optimal traffic allocation strategies for minimizing mean end-to-end delay and delay jitter. The authors in [9] introduced a dynamic congestion-aware policy which periodically adjusts traffic allocation in response to spectrum occupancy changes, aiming to minimize the negative impact from neighboring APs. However, the above studies focus solely on the traffic allocation policy at the U-MAC layer, overlooking cross-layer interdependencies (e.g., the influence of the ICW size at the L-MAC layer). Intuitively, ICW optimization directly determines each link’s channel access effectiveness, which fundamentally shapes the actual gains achievable through traffic allocation. 
+
+B. Contention Window Optimization in Wi-Fi 7 MLO 
+
+ICW optimization plays a crucial role in Wi-Fi networks, as each node (including APs and STAs) performs a random backoff before attempting to access the channel. The authors in [12] obtained appropriate ICW sizes for STAs in coexisting Wi-Fi networks, enabling each STA to access the channel fairly alongside legacy STAs (i.e., STAs without MLO capabilities). The authors in [18] derived explicit expressions for the maximum network sum rate and the corresponding optimal ICW sizes, aiming to maximize the network throughput. The authors in [19] proposed exponentially increasing and decreasing ICW schemes for STAs by allowing them to alternate between dif-ferent ICW update rules, thereby enabling low-latency wireless local area networks. The authors in [20] evaluated various channel access schemes under non-simultaneous transmit and receive operation, with the goal of achieving efficient and fair channel access in congested Wi-Fi 7 MLO networks. However, the above studies are based on analytical models with restrictive assumptions. They typically presume quasi-static network conditions and simplified contention behaviors, and thus fail to capture dynamic traffic variations, cross-link interactions, and the strong coupling between traffic allocation and channel access inherent in Wi-Fi 7 MLO. 
+
+C. Usage of Deep Reinforcement Learning in Wi-Fi 
+
+The IEEE 802.11 working group is exploring the use of DRL to develop intelligent strategies for improving the performance of Wi-Fi networks. The authors in [1] modeled the channel allocation problem within a multi-armed bandit framework to enable online learning for maximizing network throughput. The authors in [16] employed two DRL algorithms – deep Q-network and deep deterministic policy gradient – to learn optimal ICW sizes under varying network conditions, with the goal of maximizing network throughput. The authors in [21] developed a DRL approach based on SAC to dynamically de-termine flexible traffic allocation policies, achieving improved average network throughput. The authors in [22] proposed an intelligent Q-learning–based resource allocation mechanism for MAC-layer channel access, aiming to maximize network throughput while minimizing channel access delay. However, the above studies mostly rely on conventional DRL algorithms, which fail to address the partial observability and non-Markovian behavior inherent in Wi-Fi networks. These two factors significantly degrade the effectiveness and training stability of conventional DRL methods, highlighting the need for further algorithmic development. III. S YSTEM MODEL AND PROBLEM FORMULATION 
+
+In this section, we first revisit the IEEE 802.11 channel access rules and provide an overview of Wi-Fi 7 MLO. We then derive network throughput as an explicit function of the traffic allocation policy and ICW sizes. Finally, we formulate the corresponding cross-layer optimization problem. 
+
+A. Carrier-Sense Multiple Access with Collision Avoidance 
+
+The enhanced distributed channel access (EDCA) mechanism generalizes the basic distributed coordination function (DCF) by allowing each STA to use its own medium-access parameters. Unlike DCF – where all devices share identical ICW sizes – EDCA enables each STA to operate with distinct ICW, thereby providing differentiated channel-access behavior. Specifically, under EDCA, once an STA senses that the channel is idle for an arbitration inter-frame space (AIFS), it initializes its backoff counter with a random value uniformly drawn from 
+
+[0 , w − 1] , where w is the CW size determined by its previous transmission failures. At the first transmission attempt, w is set to the STA’s ICW w0. After each unsuccessful attempt, 4                                                             
+
+> Table I: Main Notations.
+> Notation Description
+> b(n,l )
+> i,k The stationary probability of the Markov chain for STA
+> non link lin backoff stage iwith backoff counter k.
+> bn,l (t)The stochastic process representing the backoff counter of STA non link lat time slot t.
+> CeThe cell state of LSTM cell e.
+> feThe output of the forget gate of LSTM cell e.
+> heThe hidden state output of LSTM cell e.
+> jeThe updated input activation of LSTM cell e.
+> LThe set of available links.
+> NThe set of STAs.
+> TThe set of time slots.
+> BeThe output gate control signal of LSTM cell e.
+> pn,l The probability that STA nexperiences a collision on link l.
+> Ptr lThe probability that at least one STA transmits on link
+> lin a randomly chosen time slot.
+> Psu lThe probability that a transmission on link lis successful, conditioned on at least one transmission occurring.
+> qn,l (t)The stochastic process representing the backoff stage of STA non link lat time slot t.
+> τn,l The probability that STA ntransmits a packet on link l
+> in a randomly chosen time slot.
+> eR(d)The total network throughput achieved during decision step d.
+> βn,l (t)The probability that a packet from STA nis allocated to link lat time slot t.
+> w0
+> n,l (t)The ICW size when STA nfirst attempts to access link
+> lat time slot t.
+
+w doubles until reaching 2M w0, where M is the maximum backoff stage. 4 The backoff counter decreases while the channel is idle, freezes when the medium becomes busy, and resumes after the channel is sensed idle for at least an AIFS. The STA transmits when the backoff counter reaches zero. 5
+
+B. Transmission Mode in Multi-Link Operation 
+
+Recalling that MLO adopts a distinct two-tier MAC archi-tecture: the unified U-MAC serves as the common component for all links, while each link has its own independent L-MAC. The L-MAC performs channel access according to one of two transmission models: (i) simultaneous transmit and receive (STR) and (ii) non-simultaneous transmit and receive (NSTR). Specifically, STR enables independent link operations with asynchronous data transmission and reception, allowing each link to maintain its own channel access parameters. Namely, under STR, APs/STAs perform the backoff process independently on each link, and transmission attempts across different links are mutually independent. NSTR requires synchronized data transmissions across all available links by enforcing either end-time alignment or the defer-transmission mechanism [2]. In this paper, we focus on the STR mode, as it offers superior throughput performance [5] and is recommended as the default operational scheme in Wi-Fi 7. 
+
+C. Network Outline 
+
+As shown in Fig. 1(a), we consider an uplink (STA-to-AP) Wi-Fi 7 network with L links, denoted by the set L =         
+
+> 4The contention window (CW) evolves dynamically according to the exponential backoff rule after each failed transmission, while the initial contention window (ICW) specifies the starting CW value before any retransmissions. In this paper, we focus on optimizing the ICW, as it directly determines the baseline channel access aggressiveness.
+> 5We briefly summarize the CSMA/CA mechanism defined in the 802.11 protocol, a complete description can be found in the standard [23].
+
+{1, . . . , L }, consisting of a single AP and N STAs, denoted by the set N = {1, . . . , N }. All STAs operate with saturated traffic under the STR mode. Upon a data packet’s arrival at the MAC of STA n at time slot t, the U-MAC assigns the packet from the buffer to a specific link according to the traffic allocation policy βn,l (t), which denotes the probability that the packet is allocated to link l. Subsequently, at the L-MAC, each link performs channel access independently based on its assigned ICW size w0
+
+> n,l
+
+(t). That is, when STA n attempts to access link l at first time, it uniformly selects a backoff counter from the interval [0 , w 0
+
+> n,l
+
+(t) − 1] . As a result, jointly optimizing these two components, i.e., βn,l (t) at the U-MAC layer and w0
+
+> n,l
+
+(t) at the L-MAC layer, constitutes the central motivation of this paper. The major notations used in the paper are summarized in Table I. 
+
+D. Throughput Analysis via Bianchi Markov Chain 
+
+We extend the widely adopted Bianchi Markov model for single-link Wi-Fi [10] to the MLO setting with L links, deriving expressions that relate network throughput to both the traffic allocation policy and the ICW sizes. This extension is enabled by the observation that, under STR mode, the contention processes on different links can be decoupled because they operate over separate frequency bands, while the channel access procedure on each individual link still follows the standard CSMA/CA backoff mechanism assumed in Bianchi’s analysis. In constructing the Markov model, we make the following standard assumptions: (i) transmission failures occur solely due to collisions; and (ii) the number of STAs remains fixed. The analysis begins by modeling the behavior of STA n
+
+on link l using a Markov chain, from which we derive the stationary transmission probability τn,l , i.e., the probability that STA n transmits a packet on link l in a randomly chosen time slot. Specifically, let bn,l (t) denote the stochastic process representing the backoff counter of STA n on link l at time slot 
+
+t,6 and let qn,l (t) denote the stochastic process representing the backoff stage (0 , . . . , M ), i.e., the number of unsuccessful transmission attempts. Assuming that, at each transmission attempt and regardless of the number of retransmissions, STA 
+
+n on link l experiences a collision with probability pn,l , the bidimensional process {qn,l (t), b n,l (t)} can be modeled as the discrete-time Markov chain shown in Fig. 3. In this Markov chain, the one-step transition probabilities are given by 7
+
+
+
+P {i, k | i, k + 1 } = 1 , k ∈ [0 , w in,l − 2] , i ∈ [0 , M ],P {0, k | i, 0} = 1 − pn,l 
+
+w0
+
+> n,l
+
+, k ∈ [0 , w 0 
+
+> n,l
+
+− 1] , i ∈ [0 , M ],P {i, k | i − 1, 0} = pn,l 
+
+win,l 
+
+, k ∈ [0 , w in,l − 1] , i ∈ [1 , M ],P {M, k | M, 0} = pn,l 
+
+wMn,l 
+
+, k ∈ [0 , w Mn,l − 1] .
+
+(1)                   
+
+> 6In this paper, a time slot trefers to the moment when the backoff counter is decremented. Note that this does not correspond directly to the fixed Wi-Fi time slot, because the backoff countdown pauses whenever the channel is busy (e.g., during packet transmissions). Therefore, throughout the paper, time slot tmay represent either the fixed Wi-Fi time slot or the variable interval between two consecutive backoff counter decrements.
+> 7For simplicity, we adopt the shorthand notation P{i1, k 1|i0, k 0}=
+> P{qn,l (t+ 1) = i1, b n,l (t+ 1) = k1|qn,l (t) = i0, b n,l (t) = k0}.5
+
+0, 1 0, 0 
+
+i, 0 i, 1 1
+
+## ... 
+
+## ... 
+
+M, 0 
+
+i-1, 0 
+
+M, 1 1 ... 
+
+## ... ... ... ... 
+
+## ... ... ... ... 
+
+## ... ... ... 
+
+1
+
+1
+
+0, -1
+
+i, -1
+
+M, -1         
+
+> Fig. 3: Markov chain model for the backoff stage qn,l (t) = iand backoff counter bn,l (t) = kof STA non link l.
+
+Here, the first equation captures the decrement of the backoff counter at the beginning of each time slot. The second equation states that after a successful transmission, a new packet enters backoff stage 0 with its backoff counter uniformly selected from 
+
+[0 , w 0 
+
+> n,l
+
+−1] . The third and fourth equations model unsuccessful transmissions: following a failure at backoff stage i − 1, the STA moves to backoff stage i and draws a new backoff counter from [0 , w in,l − 1] , whereas once the maximum backoff stage 
+
+M is reached, the backoff stage is no longer increased. Let b(n,l ) 
+
+> i,k
+
+= lim t→∞ P {qn,l (t) = i, b n,l (t) = k} denote the stationary distribution of the Markov chain for STA n on link 
+
+l. Owing to the regularity properties of the chain, we can obtain [10] 
+
+b(n,l ) 
+
+> i,k
+
+= win,l − kwin,l 
+
+b(n,l ) 
+
+> i, 0
+
+, i ∈ [0 , M ], k ∈ [0 , w in,l − 1] . (2) Since the stationary probabilities of the Markov chain must sum to one, applying this normalization to (2) yields 
+
+> M
+
+X
+
+> i=0
+> win,l −1
+
+X
+
+> k=0
+
+b(n,l ) 
+
+> i,k
+
+=
+
+> M
+
+X
+
+> i=0
+
+b(n,l )
+
+> i, 0
+> win,l −1
+
+X
+
+> k=0
+
+win,l − kwin,l 
+
+= 1 . (3) Then, using the facts that PMi=0 b(n,l ) 
+
+> i, 0
+
+(1 − pn,l ) = b(n,l )0,0
+
+and win,l = 2 iw0 
+
+> n,l
+
+under the exponential backoff scheme of CSMA/CA, we can derive b(n,l )0,0 from (3) as follows: 
+
+b(n,l )0,0 = 2(1 − 2pn,l )(1 − pn,l )(1 − 2pn,l )( w0 
+
+> n,l
+
++ 1)+ pn,l w0
+
+> n,l
+
+ 1 − (2 pn,l )M  . (4) Recalling that the traffic allocation policy βn,l denotes the probability that a data packet from STA n is allocated to link 
+
+l, we can now express the transmission probability τn,l —the probability that STA n transmits on link l in a randomly selected time slot. Since a transmission occurs when the traffic is allocated to link l and the backoff counter reaches zero, regardless of the backoff stage, we have 
+
+τn,l = βn,l MX
+
+> i=0
+
+b(n,l ) 
+
+> i, 0
+
+= βn,l 
+
+b(n,l )0,0
+
+1 − pn,l 
+
+= 2(1 − 2pn,l )βn,l 
+
+(1 − 2pn,l )( w0 
+
+> n,l
+
++ 1) + pn,l w0
+
+> n,l
+
+ 1 − (2 pn,l )M  . (5) Meanwhile, the collision probability pn,l experienced by STA n on link l equals the probability that at least one of the remaining N − 1 STAs transmits on link l. This yields 
+
+pn,l = 1 −
+
+> N
+
+Y
+
+> m=1 ,m ̸=n
+
+(1 − τm,l ). (6) Let P tr l = 1 − QNn=1 (1 − τn,l ) denote the probability that at least one STA transmits on link l. Let P su l =PNn=1 τn,l  
+
+> QN
+> m=1 ,m ̸=n(1 −τm,l )
+> Ptr l
+
+be the probability that a trans-mission on link l is successful (i.e., exactly one STA transmits, conditioned on at least one transmission occurring). Using these, the normalized throughput of link l – defined as the fraction of time during which the channel is used to successfully transmit payload bits – can be expressed as 
+
+Rl = P tr l P su l E [Yl](1 − P tr l ) σ + P tr l P su l T su l + P tr l (1 − P su l ) T co l
+
+, (7) where E [Yl] denotes the average packet payload size trans-mitted on link l, σ is the duration of an empty slot, T su l is the average time that link l is sensed busy due to a successful transmission, and T co l is the average time that link l is sensed busy due to a collision. 8
+
+Under the STR mode, the throughputs of different links are independent since they operate on separate frequency bands. Therefore, the total network throughput is obtained by summing the throughputs of all links, which can be expressed as 
+
+eR =
+
+> L
+
+X
+
+> l=1
+
+Rl. (8) Based on (1) – (8) , the total network throughput eR is expressed as a function of the traffic allocation policy βn,l at the U-MAC and the ICW w0 
+
+> n,l
+
+at the L-MAC. This clearly demonstrates the necessity of cross-layer optimization to fully unlock the performance potential of Wi-Fi 7 MLO. 
+
+E. Problem Formulation 
+
+The goal of this paper is to maximize the throughput in (8) – consistent with the primary performance objective of Wi-Fi 7 (i.e., extremely high throughput) – by jointly optimizing the traffic allocation policy βn,l (t) and the ICW size w0
+
+> n,l
+
+(t), i.e., 
+
+max 
+
+> {β,w}
+> D
+
+X
+
+> d=1
+
+eR(d) (9) s.t. ∀n ∈ N , l ∈ L , t ∈ T ,
+
+C1 : 
+
+> L
+
+X
+
+> l=1
+
+βn,l (t) = 1 ,
+
+C2 : wmin ≤ w0
+
+> n,l
+
+(t) ≤ wmax ,
+
+where β = {βn,l (t)}n∈N ,l ∈L ,t ∈T denotes the traffic alloca-tion policy of different STAs across links over time, w =
+
+{w0
+
+> n,l
+
+(t)}n∈N ,l ∈L ,t ∈T represents the ICW sizes of different STAs on different links over time, and d = 1 , 2, . . . , D denotes       
+
+> 8The durations of Tsu land Tco lare determined by the PHY/MAC–layer timing parameters such as SIFS, AIFS, ACK transmission time, and the PHY header duration. These parameters are fixed prior to the simulation and remain constant throughout the evaluation. 6
+
+the decision steps at which the traffic allocation policy and ICW sizes are updated (as detailed in Sec. V-B). 9
+
+Constraint C1 ensures that all outgoing traffic of STA n is fully allocated across the available links without duplication or omission, while constraint C2 guarantees that the ICW adaptation remains compliant with protocol specifications, where wmin and wmax denote the minimum and maximum CW sizes, respectively. 
+
+Remark 1. As shown in (5) , the transmission probability 
+
+τn,l depends jointly on the traffic allocation policy βn,l at the U-MAC layer and the ICW size w0 
+
+> n,l
+
+at the L-MAC layer, while the collision probability pn,l recursively depends on τn,l as expressed in (6) . In addition, network dynamics evolve over time due to varying traffic loads and fluctuating contention levels, creating temporal dependencies among decisions. Consequently, the problem in (9) becomes a non-convex, nonlinear program with recursive cross-layer coupling and strong temporal correlations, making direct optimization computationally prohibitive. This complexity motivates the use of a DRL-based solution (as detailed in Sec. V). 
+
+IV. B ASIC IDEA OF LONG SHORT -T ERM MEMORY 
+
+Before introducing our LSTM-SAC algorithm, we first explain the motivation for integrating long short-term memory (LSTM) with deep reinforcement learning (DRL). We then detail the components of each LSTM cell. 
+
+A. Motivation of Adopting LSTM 
+
+Applying conventional DRL to Wi-Fi 7 MLO faces two major challenges. First, the decision-making process is in-herently partially observable. In practical Wi-Fi 7 networks, the DRL agent cannot directly observe the exact backoff states of competing STAs or instantaneous collision events on each link. Consequently, the problem is more accurately modeled as a partially observable Markov decision process (POMDP) [16], where the underlying network state must be inferred from noisy and incomplete observations. Second, the system exhibits non-Markovian behavior. As shown in Fig. 2, the performance of an action depends not only on the current state but also on actions taken in subsequent states. That is, the network throughput achieved by a given traffic allocation policy and ICW size selected upon the arrival of the current flow is not solely determined by this decision. It is further influenced by the actions taken for subsequent flows, as later arrivals modify channel congestion and the resulting signal-to-noise ratio (SNR). Consequently, these two factors significantly degrade the effectiveness and training stability of conventional DRL methods. The LSTM [24]–[26], a variant of recurrent neural networks (RNNs) that incorporates gated mechanisms (as detailed in Sec. IV-B ), is capable of capturing temporal dependencies in sequential data. When integrated into DRL, LSTM enables the agent to encode a history of past observations into a compact          
+
+> 9Each decision step dcorresponds to one period of the real-world CSMA/CA procedure, which is set to 20 ms in our experiments and comprises multiple time slots t. As a result, the stationary transmission probability τn,l remains constant within each decision step, and the network throughput eR(d)can be obtained by evaluating the bidimensional process qn,l (t), b n,l (t)according to (1)–(8).
+
+σ σ tanh σ  
+
+> tanh
+> Forget gate Input gate Output gate
+> Fig. 4: Internal structure of an LSTM cell, containing the forget gate, input gate, and output gate.
+
+LSTM cell LSTM cell LSTM cell ... 
+
+LSTM network 
+
+# ... 
+
+> Fig. 5: LSTM-based partial historical information state representation layer network.
+
+latent representation, thereby approximating the underlying hidden system state. This capability allows the DRL agent to recover temporal correlations induced by non-Markovian dynamics and to infer unobservable network conditions under partial observability, leading to more stable training and improved decision quality in Wi-Fi 7 MLO networks. 
+
+B. Preliminaries of LSTM 
+
+An LSTM cell consists of two states, namely the cell state 
+
+and the hidden state , as well as three gates: the forget gate ,
+
+input gate , and output gate , as illustrated in Fig. 4. We denote the outputs of the forget gate, cell state, and hidden state at cell 
+
+e by fe, Ce, and he, respectively. The forget gate implements the forgetting mechanism by determining which information from the previous cell state should be discarded, which can be expressed as 
+
+fe = sigmod  W xf xe + W hf he−1 + ξf
+
+, (10) where xe denotes the input to the current cell. The input gate processes the current input and determines what information should be stored into the cell state. This operation consists of two parts: a sigmoid layer that computes the updated value je, and a tanh layer that generates the candidate cell state eCe, given by 
+
+je = sigmod  W xj xe + W hj he−1 + ξj
+
+, (11) 
+
+eCe = tanh  W xC xe + W hC he−1 + ξC
+
+. (12) The cell state is then updated by combining these two components: 
+
+Ce = fe ⊙ Ce−1 + je ⊙ eCe, (13) where fe ⊙ Ce−1 selectively retains past information, and 
+
+je ⊙ eCe selectively incorporates new information. Here, ⊙
+
+denotes element-wise multiplication. The output gate determines the output of the current LSTM cell, enabling it to selectively retain relevant information while suppressing irrelevant features. The control signal of the output 7
+
+gate, denoted by Be, is first computed using a sigmoid function, and the current hidden state is then obtained as follows: 
+
+Be = sigmod  W xB xe + W hB he−1 + ξB
+
+, (14) 
+
+he = Be ⊙ tanh( Ce). (15) Here, {W xf , W hf , W xj , W hj , W xC , W hC , W xB , W hB } and 
+
+{ξf , ξ j , ξ C , ξ B } denote the weight matrices and bias vectors. These parameters constitute the trainable components of the LSTM network and can be uniformly expressed as 
+
+η = W xf , W hf , W xj , W hj , W xC , W hC , W xB , W hB , ξ f , ξ j , ξ C , ξ B .Finally, as shown in Fig. 5, we propose an LSTM-based historical information representation layer composed of mul-tiple LSTM cells and integrated with the conventional DRL framework. Specifically, the LSTM network takes H sequential historical observations as input and outputs an aggregated latent state, which serves as the state representation for DRL decision-making (as detailed in Sec. V-B). V. LSTM-BASED SOFT ACTOR –C RITIC ALGORITHM 
+
+In this section, we first present the motivation of adopting the soft actor-critic (SAC) algorithm. We then define the elements of the Markov decision process (MDP), followed by an overview of the LSTM-SAC algorithm’s architecture. Finally, we provide a comprehensive analysis of its computational complexity. 
+
+A. Motivation for Adopting the SAC Algorithm 
+
+The primary motivation for adopting a DRL-based solution arises from the fact that the formulated problem in (9) is highly non-convex and nonlinear (as discussed in Remark 1), making direct optimization computationally prohibitive. Existing ana-lytical approaches [8], [11], [12], [27], [28] also face significant scalability challenges (as detailed in Sec. I-B). Among various DRL algorithms, we select SAC [15] due to its superior stability, efficiency, and exploration capability. SAC is built on the maximum-entropy reinforcement learning framework, where entropy reflects the randomness of the agent’s policy [15]. Unlike traditional DRL methods such as DQN [29] and DDPG [30], [31], which focus solely on maximizing cumulative rewards and often suffer from insufficient exploration and unstable training, SAC simultane-ously maximizes the expected return and policy entropy. This entropy-regularized objective encourages persistent exploration, significantly enhances learning stability, and mitigates the risk of converging to suboptimal solutions—particularly important in high-dimensional and dynamic Wi-Fi 7 MLO networks. 
+
+B. MDP Elements in the LSTM-SAC Algorithm 
+
+We deploy a DRL agent at the AP, where the agent learns to select an action based on the observed system state under a trained policy by interacting with the environment and receiving a corresponding reward :1) State Space: At decision step d, the DRL agent obtains the network information through observation o(d) =
+
+{g(d), u(d)) }, where g(d) = {gn,l (d)}n∈N ,l ∈L denotes the SNR of each STA–link pair, and u(d) = {un,l (d)}n∈N ,l ∈L 
+
+represents the corresponding channel busy time. We then select H sequential historical observations as the input to the ...... 
+
+> decision steps
+
+LSTM LSTM ...         
+
+> Real -world CSMA/CA procedure
+> Fig. 6: The relationship between the observation o(d)and state s(d)when the history window is set to H= 5 .Storage
+> Actor network
+> Soft update
+> Mini -batch
+> sampling Replay buffer
+> Critic networks
+> Critic1 Critic2
+> Target critic networks
+> Critic1 Critic2
+> Update
+> Update
+> Evaluating policy
+> Min
+> LSTM cell
+> LSTM network
+
+... 
+
+> Actor
+> Fig. 7: The overall architecture of the LSTM-SAC algorithm.
+
+LSTM network and use its output as the state representation. Accordingly, the state is defined as: 
+
+s(d) = {LST M (o(d − H), . . . , o(d)) }, d ≥ H. (16) As shown in Fig. 6, as the number of decision steps increases, the oldest observation in the history window is removed and the newest observation is appended. In addition, each decision step d corresponds to one period of the real-world CSMA/CA procedure, which is set to 20 ms in our experiments. 2) Action Space: Based on state s(d), the DRL agent selects an action at each decision step d to interact with the environment. The action space contains 2N L elements, and is expressed as follows: 
+
+a(d) = {β(d), w(d)}, (17) where β(d) = {βn,l (d)}n∈N ,l ∈L denotes the traffic al-location vector, specifying for each STA the probability of assigning a packet to each link at decision step d,and w(d) = {w0
+
+> n,l
+
+(d)}n∈N ,l ∈L represents the ICW sizes for different STAs on different links at decision step d.Specifically, the initial traffic allocation policy eβ(d) is first normalized to the range [0 , 1] . To satisfy constraint C1, we enforce βn,l (d) = gβn,l (d)  
+
+> P
+> l∈L gβn,l (d)
+
+. Similarly, the ICW size 
+
+ew(d) is normalized to the range [0 , 6] . To satisfy constraint 
+
+C2, we map it to w0
+
+> n,l
+
+(d) = ⌊2 gw0
+
+> n,l (d)+4
+
+⌋, which ensures that w0
+
+> n,l
+
+(d) falls within the standard CW range of 16 to 1024. Note that within each decision step d, the updated traffic allocation policy β(d) and ICW sizes w(d) remain fixed throughout the 20 ms CSMA/CA period, until the next decision step d + 1 is triggered. 3) Reward Function: After executing action a(d) based on the state s(d), the environment returns a reward r(d). As detailed in Sec. III-D , we adopt the system objective in (8) 8
+
+as the reward, which can be given by 
+
+r(d) = eR(d), (18) with the goal of maximizing network throughput, serving as the primary performance objective of Wi-Fi 7 (i.e., extremely high throughput). 
+
+C. Architecture of the LSTM-SAC Algorithm 
+
+The architecture of LSTM-SAC is illustrated in Fig. 7. It comprises an LSTM network, an actor network, two critic networks, two target critic networks, and a replay buffer, as detailed below. 1) LSTM Network: The LSTM network, parameterized by η =
+
+{W xf , W hf , W xj , W hj , W xC , W hC , W xB , W hB , ξ f , ξ j , ξ C , ξ B },takes H sequential historical observations as input and outputs a corresponding state representation sη (d). For traffic allocation and ICW size decisions, the state representation sη (d) produced by the LSTM is then fed into the SAC algorithm and combined with reward signals to guide policy optimization. 2) Actor Network: The actor network πϕ, parameterized by ϕ,takes the state sη (d) as input and outputs the corresponding action a(d). Unlike the standard reinforcement learning objective, which focuses solely on maximizing the expected cumulative reward, LSTM-SAC further incorporates an entropy term. This enables the optimal policy to maximize its entropy, thereby maintaining sufficient exploration [15]: 
+
+π∗ 
+
+> ϕ
+
+= arg max 
+
+> πϕ
+
+X
+
+> d
+
+E[r(d) + εH(πϕ(·| sη (d)))] , (19) where H(πϕ(·| sη (d))) = E[− log πϕ(a(d)|sη (d))] denotes the entropy that measures the randomness of policy πϕ, and 
+
+ε is the temperature parameter that controls the trade-off between the entropy term and the reward. 3) Replay Buffer: During training, at each decision step d, the transition tuple [( o(d − H), . . . , o(d)) , a(d), r (d), (o(d −
+
+H + 1) , . . . , o(d + 1))] is stored in the replay buffer F.Notably, we store the H sequential historical observations 
+
+(o(d − H), . . . , o(d)) rather than the encoded state sη (d).This design ensures that the LSTM network can be trained jointly with SAC in an end-to-end manner, without breaking the computational graph during gradient backpropagation. The replay buffer then serves as an experience memory, allowing the DRL agent to decorrelate samples via random mini-batch sampling, which improves sample efficiency and stabilizes the training process. 4) Two Critic Networks: Two critic networks, Qθ1 and Qθ2 ,parameterized by θ1 and θ2, respectively, take the state sη (d)
+
+and action a(d) as inputs and produce the corresponding Q-values Qθm (sη (d), a(d))) [15]: 
+
+Qθm (sη (d), a(d)) = r(d) + γE[Qθm (sη (d + 1) , a(d))) 
+
+− ε log πϕ(a(d + 1) |sη (d + 1))] , m ∈ { 1, 2}. (20) Specifically, γ denotes the reward discount factor, and these Q-values quantify the expected quality of the state–action pair by incorporating both reward and entropy, where a higher value reflects not only a greater expected return but 
+
+Algorithm 1: LSTM-SAC Algorithm.                                                                                                           
+
+> 1Input: η,ϕ,θ1,θ2,¯θ1←θ1,¯θ2←θ2,F ← ∅.
+> 2Output: The optimal traffic allocation policy and initial CW size.
+> 3for episode = 1 to Edo
+> 4for d= 1 to Hdo
+> 5Reset the environment, randomly select an action a(d),receive the reward r(d)according to (18), and obtain the next observation o(d+ 1) .
+> 6end
+> 7for d=Hto Ddo
+> 8The Hsequential historical observations
+> {o(d−H), . . . , o(d)}are fed into the LSTM network to generate the state sη(d).
+> 9Input the state sη(d)into the actor network πϕto produce the corresponding action a(d).
+> 10 Receive the reward r(d)according to (18) and obtain the next observation o(d+ 1) .
+> 11 Store the transition tuple
+> [( o(d−H), . . . , o(d)) ,a(d), r (d),(o(d−H+1) , . . . , o(d+ 1))] into F.
+> 12 Delete the first observation in the history window and append o(d+ 1) to the end of the history window.
+> 13 The Hsequential historical observations
+> {o(d−H+ 1) , . . . , o(d+ 1) }are fed into the LSTM network to generate the state sη(d+ 1) .
+> 14 Randomly sample a mini-batch of transitions from the replay buffer. Update the parameters θ1and θ2of the two critic networks, together with the LSTM parameters η, by minimizing (21). Update the actor network parameters ϕ
+> by minimizing (23), and adaptively update the entropy coefficient εby minimizing (24). Finally, update the parameters ¯θ1and ¯θ2of the target critic networks using (25).
+> 15 end
+> 16 end
+
+also a higher potential for exploration. Moreover, during policy improvement, the smaller of the two Q-values is used as the target Q-value, which helps reduce overestimation bias and stabilize training. 5) Policy Improvement: After sufficient exploration, a mini-batch of samples is randomly drawn from the replay buffer 
+
+F to update the critic, LSTM, and actor networks. Since the LSTM is responsible for extracting state representations that are critical for value estimation, its parameters should be trained using a stable and informative learning signal. Compared to the high-variance policy gradient from the actor, the value-based learning signal from the critic provides more reliable gradients for optimizing the LSTM. Therefore, the parameters of the two critic networks and the LSTM network are updated jointly using the same optimization objective. Specifically, the parameters θ1 and θ2 of two critic networks, together with the LSTM parameters η, are trained to minimize the soft Bellman residual [15]: 
+
+JQ(θm, η ) = EF
+
+h 12 (Qθm (sη (d), a(d)) 
+
+− min  
+
+> m∈{ 1,2}
+
+Q¯θm (sη (d), a(d))) 2i
+
+, m ∈ { 1, 2}, (21) where min m∈1,2 Q¯θm (sη (d), a(d)) denotes the soft Bellman target, defined as 
+
+r(d) + γE
+
+h
+
+min  
+
+> m∈{ 1,2}
+
+Q¯θm (sη (d + 1) , a(d)) 
+
+− ε log πϕ(a(d + 1) |sη (d + 1)) 
+
+i
+
+, (22) where Q¯θm denotes the target critic networks, which take the 9
+
+next state sη (d + 1) and action a(d + 1) as inputs and output the corresponding Q-values. The entropy term encourages policy stochasticity and improves exploration. The parameters ϕ of the actor network are then updated by minimizing the expected Kullback–Leibler divergence between the policy and the exponentiated Q-function [15]: 
+
+Jπ (ϕ) = EF [E[ε log πϕ(a(d)|sη (d)) 
+
+−Qθ1 (sη (d), a(d))]] . (23) The entropy coefficient ε plays a critical role in balancing exploration and exploitation in SAC. A smaller ε reduces the algorithm to a conventional actor–critic method that prioritizes reward maximization, whereas a larger ε overly emphasizes entropy and may degrade performance. To automatically balance this trade-off, ε is adaptively adjusted during training by minimizing the entropy loss: 
+
+J(ε) = εEF
+
+H πϕ(·| sη (d)) − ¯H , (24) where ¯H denotes the target entropy. Finally, to stabilize learning, the parameters of the target critic networks are updated using soft updates: 
+
+¯θm ← ρθ m + (1 − ρ)¯θm, m ∈ { 1, 2}, (25) where ρ ∈ (0 , 1] is the target update rate. This gradual update mechanism ensures smooth evolution of the target Q-values and improves training stability. 
+
+D. LSTM-SAC Algorithm and Complexity Analysis 
+
+Algorithm 1 provides the pseudocode of the proposed LSTM-SAC algorithm. The computational complexity of LSTM-SAC mainly stems from two aspects: training complexity and execution complexity. Note that since the training of learning-based methods can be carried out in a cloud data center with abundant computational resources [32], [33], our analysis of the LSTM-SAC algorithm’s computational complexity primarily focuses on the execution phase. During execution, only the LSTM network and the SAC actor network are required, and the computational cost corresponds to a single forward pass through these networks. According to [25], the computational complexity of the LSTM network is O(LLST M M 2 
+
+> LST M
+
+C2 
+
+> LST M
+
+),10 where LLST M denotes the number of hidden layers, M 2 
+
+> LST M
+
+the number of memory blocks, and C2 
+
+> LST M
+
+the capacity of the memory cells in each block. In addition, for the SAC algorithm, according to [34], the computational complexity of the actor network is O  P Lactor  
+
+> l=0
+
+N lactor N l+1 
+
+> actor
+
+, where Lactor is the number of fully connected layers and N lactor denotes the number of neu-rons in the l-th layer. Consequently, over E episodes and D de-cision steps, the total computational complexity of the proposed LSTM-SAC algorithm is O ED  LLST M M 2 
+
+> LST M
+
+C2 
+
+> LST M
+
++
+
+PLactor  
+
+> l=0
+
+N lactor N l+1 
+
+> actor
+
+ . This complexity scales linearly with the number of episodes E and decision steps D, and quadrati-cally with the network width. VI. P ERFORMANCE EVALUATION 
+
+In this section, we first present the simulation parameter settings and then evaluate the performance of the proposed                              
+
+> 10 In this subsection, we slightly abuse the notation for simplicity. X (m)
+> 0510 15 20
+> Y (m)
+> 0
+> 2
+> 4
+> 6
+> 8
+> 10
+> 12
+> 14
+> 16
+> 18
+> 20
+> STA 1
+> STA 2
+> STA 3
+> STA 4
+> STA 5
+> STA 6
+> STA 7
+> STA 8
+> STA 9
+> STA 10
+> AP
+> STA
+> Fig. 8: A Wi-Fi network consisting of one AP and 10 STAs uniformly distributed within a 20 ×20 m area. Table II: MAC layer and physical layer simulation parameters [1], [8].
+> Parameter Value
+> Transmission power 20 dBm Date rate in 2.4 GHz [20, 50, 100, 150] Mbps Date rate in 5 GHz [50, 100, 200, 400] Mbps Channel bandwidth 20 MHz/40 MHz Background noise -85 dBm/-95 dBm Minimum CW size ( wmin )16 Maximum CW size ( wmax )1024 Packet payload size 12000 bits Slot time 9 microsecs SIFS 16 microsecs AIFS 34 microsecs ACK size 304 bits Number of episodes ( E)500 Number of decision steps ( D)50 Reward discount factor ( γ)0.99 Target entropy ( ¯H)−4N
+> Target network update rate ( ρ)0.005 CSMA/CA duration per decision step 20 ms
+
+LSTM-SAC algorithm by comparing it against three benchmark solutions under various network configurations. 
+
+A. Simulation Settings 1) Network Layout: We consider a 20 ×20 m square network, as shown in Fig. 8, where the AP is located at the center and the STAs are uniformly distributed within the area. The AP and STAs are configured with two links operating on different frequency bands (i.e., 2.4 GHz and 5 GHz). 11 For simplicity, we assume that each band contains only one channel. The large-scale fading is modeled as (3 ×10 8/4πf cD(STA , AP )) 2, where 
+
+fc ∈ { 2.4, 5} GHz is the carrier frequency and D(STA , AP )
+
+denotes the Euclidean distance between a STA and the AP. The small-scale fading follows a Rayleigh distribution with scale parameter p1/2. The key simulation parameters are summarized in Table II. 
+
+2) Algorithm Layout: We implement the LSTM-SAC al-gorithm using Anaconda 25.11.0 with Python 3.12.0 and 
+
+> 11 Although Wi-Fi 7 supports the 6 GHz band, its availability varies across regulatory regions. By contrast, the 2.4 GHz and 5 GHz bands are globally open and universally supported by Wi-Fi 7 devices. Therefore, using two links operating on 2.4 GHz and 5 GHz not only preserve the essential characteristics of MLO, but also enable us to focus on cross-layer optimization without loss of generality. 10
+
+PyTorch 2.9.1 on a Windows platform equipped with an Intel(R) Core(TM) i7-10700 CPU, together with an event-driven Wi-Fi simulator implemented in MATLAB R2025b. In the SAC model, the actor network consists of two fully connected (FC) hidden layers, each with 256 neurons. The critic networks are also composed of two FC hidden layers with 256 neurons each. For the LSTM model, the number of layers is set to 1, and the hidden size (i.e., the state dimension) is set to 128. The Adam optimizer is adopted, with learning rates of 10 −3 and 
+
+3 × 10 −4 for the critic and actor networks, respectively. 
+
+B. Benchmark Solutions 
+
+To demonstrate the effectiveness of the proposed LSTM-SAC algorithm, we compare its performance against three benchmark solutions: 1) LSTM-SAC without optimizing CW sizes (LSTM-SAC w/o CW): Following most existing Wi-Fi 7 MLO studies [6]–[9], LSTM-SAC w/o CW optimizes only the traffic allocation policy β(d) at each decision step d, focusing exclusively on the U-MAC layer. This baseline highlights the performance degradation that may arise from ignoring the uncertainty introduced by the CSMA/CA procedure and demonstrates the necessity of cross-layer optimization. 2) SAC [15]: At each decision step d, SAC directly takes the observation o(d) as input – without using LSTM to encode historical information – and outputs the corresponding action 
+
+a(d). The remaining training procedure is identical to that of LSTM-SAC. This baseline is designed to illustrate the performance degradation caused by the partial observability and non-Markovian behavior inherent in Wi-Fi networks, thereby highlighting the necessity of integrating LSTM with DRL. 3) LSTM-DDPG: Borrowing ideas from the standard DDPG algorithm [30], we integrate LSTM with DDPG. DDPG extends DQN to continuous action spaces by combining deterministic policy gradients with an actor–critic architec-ture, enabling direct optimization of continuous actions. This baseline is designed to highlight the motivation for adopting SAC, as SAC simultaneously maximizes the expected return and the policy entropy. This entropy-regularized objective encourages persistent exploration and significantly enhances learning stability. 
+
+C. Training Convergence Performance 
+
+In this subsection, we analyze the convergence behavior of different algorithms during the training phase. 
+
+1) Effect of the Numbers of Historical Observations H:
+
+In Fig. 9a, we illustrate the convergence behavior of LSTM-SAC under different lengths of the historical observation window H. The results show that as H increases from 2 to 6, the episodic reward improves, but beyond a certain point (around H = 6 ), further enlarging the window leads to performance degradation. This is because a moderate history length helps the agent infer hidden system states (e.g., channel occupancy and backoff stages) and capture the non-Markovian dynamics of CSMA/CA, enabling more informed decisions. However, an overly long history introduces outdated information; due to rapidly changing traffic and contention conditions, older observations become less relevant to current decisions. Therefore, in subsequent experiments involving LSTM modules, the history window is fixed to H = 6 .12 
+
+2) Network Throughput Training Convergence Performance: 
+
+In Fig. 9b, we illustrate the network throughput (reward) training convergence of four algorithms. The results show that LSTM-SAC consistently converges to the highest reward, followed by SAC, LSTM-DDPG, and finally LSTM-SAC w/o CW. This is because: The superiority of LSTM-SAC comes from combining LSTM-based temporal modeling with entropy-regularized SAC and cross-layer optimization. The LSTM helps infer hidden MAC-layer states under partial observability and non-Markovian CSMA/CA dynamics, while SAC ensures stable exploration. By jointly optimizing U-MAC traffic allocation and L-MAC ICW sizes, LSTM-SAC effectively balances load and controls contention, fully exploiting the throughput potential of Wi-Fi 7 MLO. SAC performs worse due to the absence of LSTM. By relying only on instantaneous observations, it fails to infer hidden state and capture non-Markovian effects caused by CSMA/CA contention and traffic reshaping. LSTM-DDPG, due to its deterministic policy gradient, lacks sufficient exploration and is therefore prone to local optima. This behavior is reflected in the reward jump, where the actor rapidly moves toward a reasonably good region once the critic provides informative gradients. LSTM-SAC w/o CW starts with a higher initial reward but converges to the lowest final throughput. Its higher initial reward stems from fixed ICW settings, whereas other methods must explore a wide range of ICW sizes and may initially select overly large ICWs that reduce early throughput. However, because LSTM-SAC w/o CW cannot adapt the ICW to changing traffic conditions, its long-term performance is limited. This observation confirms that traffic allocation alone is insufficient, as the achievable service rate is ultimately governed by CSMA/CA at the L-MAC layer, thereby motivating joint cross-layer optimization. 
+
+3) STA Fairness Training Convergence Performance: In Fig. 9c, we illustrate the STA fairness training convergence of four algorithms using Jain’s Fairness Index (PNn=1 Rn)2  
+
+> NPNn=1 (Rn)2
+
+,where Rn is the throughput of STA n and values closer to 1 indicate higher fairness. The results show that LSTM-SAC, SAC, and LSTM-DDPG gradually improve fairness during training, as the agents learn more balanced traffic allocation and ICW sizes, reducing bias toward specific STAs. LSTM-SAC w/o CW achieves the highest fairness, with a slight upward trend primarily driven by the U-MAC traffic allocation. The main reason for its superior fairness is that all STAs use fixed ICWs, which impose similar channel access aggressiveness and prevent any STA from becoming overly dominant during contention. Meanwhile, allocating traffic to less congested or higher-quality links further balances the achieved throughputs, contributing to the slight upward trend. As a result, LSTM-SAC attains fairness close to LSTM-SAC w/o CW while achieving        
+
+> 12 We use an LSTM rather than a Transformer because the historical observation window in our problem is short (e.g., H= 6 ), for which an LSTM is sufficient to capture the relevant temporal dependencies while incurring significantly lower computational overhead. In contrast, Transformer-based architectures are typically more advantageous for modeling substantially longer sequences. 11 0100 200 300 400 500
+> Episode
+> 10
+> 15
+> 20
+> 25
+> 30
+> Training episodic reward
+> LSTM-SAC (H=2)
+> LSTM-SAC (H=4)
+> LSTM-SAC (H=6)
+> LSTM-SAC (H=8)
+> LSTM-SAC (H=10)
+
+(a): Impact of the number of historical observation on the reward convergence trends in LSTM-SAC (the number of STA N = 10 ). 0 100 200 300 400 500 
+
+> Episode
+> 10
+> 15
+> 20
+> 25
+> 30
+> Training episodic reward
+> LSTM-SAC
+> SAC
+> LSTM-DDPG
+> LSTM-SAC w/o CW
+
+(b): Comparison of reward convergence trends among different algorithms (the number of STA N = 10 ). 0 100 200 300 400 500 
+
+> Episode
+> 0.5
+> 0.6
+> 0.7
+> 0.8
+> Training average fairness
+> LSTM-SAC
+> SAC
+> LSTM-DDPG
+> LSTM-SAC w/o CW
+
+(c): Comparison of fairness convergence trends among different algorithms (the number of STA N = 10 ). 0 100 200 300 400 500 
+
+> Episode
+> 300
+> 400
+> 500
+> 600
+> 700
+> 800
+> 900
+> 1000
+> 1100
+> Training average channel access delay (us)  LSTM-SAC
+> SAC
+> LSTM-DDPG
+> LSTM-SAC w/o CW
+
+(d): Comparison of channel access delay convergence trends among different algorithms (the number of STA N = 10 ). Fig. 9: Training convergence of different algorithms under various metrics, including training reward, fairness, and channel access delay. 
+
+much higher throughput, showing that cross-layer optimization can coordinate traffic allocation and contention control without sacrificing fairness, thereby balancing efficiency and fairness in Wi-Fi 7 MLO networks. 
+
+4) Channel Access Delay Training Convergence Perfor-mance: In Fig. 9d, we plot the channel access delay training convergence of four algorithms. Channel access delay repre-sents the waiting time before a successful transmission and is closely related to backoff duration and collision frequency under CSMA/CA. The results show that, for LSTM-SAC, SAC, and LSTM-DDPG, the channel access delay gradually decreases and then converges as training progresses. This is because, in the early stage of training, the agents explore a wide range of traffic allocation and ICW sizes (e.g., overly small ICWs causing collisions or overly large ICWs causing long backoff). As learning proceeds, the agents gradually discover more suitable policies that better match traffic load and contention levels, thereby reducing collisions and unnecessary waiting time. For LSTM-SAC w/o CW, the delay is also relatively stable across episodes but at a moderate level. This is because although its ICW sizes are fixed, the agent still optimizes U-MAC traffic allocation, which can slightly adjust the load distribution across links and produce mild delay variations. However, without ICW adaptation, it cannot actively regulate channel access aggressiveness under changing contention levels, so the delay reduction is limited compared to cross-layer optimization framework. 
+
+D. Verification of the Proposed LSTM-SAC Algorithm 
+
+In this subsection, we evaluate the deployment (inference) performance of the trained models. The following results reflect the steady-state performance of the learned policies after training, where the policies are fixed and executed without exploration. 
+
+1) Network Throughput Test Performance: In Table III, we first examine the impact of the number of STAs on network throughput under different algorithms. The results show that, for all algorithms, throughput increases monotonically with the number of STAs. This is because more contending STAs inject additional traffic into the network, enabling better exploita-tion of multi-link transmission opportunities and improved spatial and temporal channel utilization under saturated traffic conditions. Since network throughput is directly used as the training reward, the underlying causes of the performance differences among algorithms are consistent with the reward-based analysis and are therefore not repeated here. Overall, 12                                                                                                                                                                                              
+
+> Table III: Performance comparison under different numbers of STAs.
+> Metric Algorithm Number of STAs ( N)
+> 5678910 11 12 13 14 15
+> Throughput (Gbps) LSTM-SAC (Ours) 16.46 18.06 20.87 24.84 26.18 29.95 33.82 37.66 38.21 40.19 41.08
+> SAC 15.49 17.20 20.32 23.24 25.63 28.69 31.91 35.93 36.43 38.46 40.17 LSTM-DDPG 13.66 16.76 17.55 18.36 19.74 25.83 27.79 34.05 35.67 36.34 38.61 LSTM-SAC w/o CW 11.99 12.59 15.82 17.97 18.69 22.19 25.16 27.78 28.02 29.44 31.11
+> Fairness LSTM-SAC (Ours) 0.9558 0.8782 0.8564 0.8481 0.8455 0.8141 0.8531 0.8558 0.8101 0.8224 0.7914 SAC 0.9317 0.8491 0.8378 0.8004 0.7933 0.7777 0.8128 0.8348 0.7696 0.7763 0.7691 LSTM-DDPG 0.8231 0.7681 0.7632 0.7281 0.7121 0.6905 0.7335 0.7538 0.6474 0.6494 0.6257 LSTM-SAC w/o CW 0.9652 0.9057 0.8833 0.8561 0.8533 0.8481 0.8723 0.8819 0.8131 0.8478 0.8079 Access delay (us) LSTM-SAC (Ours) 185.69 275.31 282.44 299.29 303.76 319.93 322.59 352.10 389.79 390.17 416.54
+> SAC 216.86 298.16 305.48 333.35 334.36 335.50 339.06 361.31 403.52 407.39 423.52 LSTM-DDPG 286.45 361.48 368.41 394.91 403.90 438.72 442.02 495.88 506.97 570.17 696.42 LSTM-SAC w/o CW 260.33 329.30 358.98 382.80 386.17 388.41 396.97 409.98 428.32 439.27 482.65
+> Running time (ms) LSTM-SAC (Ours) 0.6651 0.6879 0.7011 0.7076 0.7129 0.7216 0.7485 0.7584 0.7755 0.8238 0.8691 SAC 0.2698 0.2838 0.2839 0.2848 0.2856 0.2905 0.2999 0.3025 0.3026 0.3034 0.3264
+> LSTM-DDPG 0.5787 0.5925 0.6225 0.6293 0.6307 0.6398 0.6449 0.6459 0.6606 0.7001 0.7973 LSTM-SAC w/o CW 0.6707 0.6785 0.6904 0.7006 0.7014 0.7072 0.7861 0.8276 0.8487 0.8674 0.9044
+
+the proposed LSTM-SAC outperforms the other algorithms, achieving performance improvements of 6.26% over SAC, 20.49% over LSTM-DDPG, and 37.28% over LSTM-SAC w/o CW when the number of STAs is set to 5. Additionally, when the number of STAs is 15, LSTM-SAC outperforms SAC by 2.27%, LSTM-DDPG by 6.39%, and LSTM-SAC w/o CW by 32.05%. 
+
+2) STA Fairness Test Performance: We then examine the impact of the number of STAs on fairness under different algorithms. The results show that fairness varies only slightly as the number of STAs increases from 5 to 15 for all methods. This is because Jain’s Fairness Index reflects the relative throughput distribution among STAs rather than absolute throughput. Under saturated traffic and similar contention rules, increasing the number of STAs tends to scale their throughputs in a comparable manner, resulting in limited variation in fairness. Overall, LSTM-SAC w/o CW achieves the highest fairness across different STA numbers, mainly due to its fixed ICW configuration, which enforces similar channel access aggressiveness among STAs. The proposed LSTM-SAC consistently ranks second, achieving fairness close to that of LSTM-SAC w/o CW while simultaneously delivering higher throughput, thereby demonstrating a strong balance between efficiency and fairness. 
+
+3) Channel Access Delay Test Performance: Also, we examine the impact of the number of STAs on channel access delay under different algorithms. The results show that, for all algorithms, channel access delay generally increases as the number of STAs grows. This is expected because more contending STAs intensify channel competition under CSMA/CA, leading to higher collision probability and longer backoff durations. As a result, packets experience longer waiting times before successful transmission. Overall, the proposed LSTM-SAC consistently achieves the lowest channel access delay across all STA numbers. This is because its cross-layer design jointly optimizes traffic allocation and ICW sizes, enabling it to balance load across links while regulating channel access aggressiveness to mitigate excessive contention. Overall, the proposed LSTM-SAC achieves the lowest channel access delay, reducing the delay by 31.17% compared to SAC, 35.18% compared to LSTM-DDPG, and 28.67% compared to LSTM-SAC w/o CW when the number of STAs is set to 5. Additionally, when the number of STAs is 15, LSTM-SAC reduces the delay by 1.65% relative to SAC, 40.18% relative to LSTM-DDPG, and 13.69% relative to LSTM-SAC w/o CW. 
+
+4) Algorithm Running Time Performance: We finally exam-ine how the number of STAs affects the algorithm running time per decision step. The results show that the running time generally increases with the number of STAs for all methods. This is because a larger STA population enlarges the state and action spaces, so the neural networks must handle higher-dimensional inputs and outputs, resulting in greater computation per forward pass. Among the compared methods, SAC achieves the lowest running time, as it relies only on feedforward networks with instantaneous observations. In contrast, other methods requires more running time due to the additional LSTM module that extracts temporal features from historical observations. The recurrent operations and extra parameters inevitably introduce computational overhead. Nevertheless, the runtime of LSTM-SAC remains at the millisecond level. Considering that LSTM-SAC achieves the highest throughput, the lowest channel access delay, and fairness comparable to LSTM-SAC w/o CW, we conclude that it delivers superior overall performance with only a modest increase in computational complexity. VII. C ONCLUSIONS AND FUTURE WORKS 
+
+In this paper, we proposed a novel cross-layer optimization framework for Wi-Fi 7 MLO. Specifically, we addressed the joint problem of traffic allocation at the U-MAC layer and ICW optimization at the L-MAC layer with the objective of maximizing network throughput. We first extended the classical single-link Bianchi Markov model to develop a new analytical framework for Wi-Fi 7 MLO, deriving explicit expressions that characterize throughput as functions of both the traffic allocation policy and ICW size. To effectively solve the resulting non-convex and temporally coupled optimization problem, we then introduced an LSTM-SAC algorithm that 13 
+
+leverages LSTM networks to encode historical observations into compact latent representations, thereby mitigating the partial observability and non-Markovian behaviors inherent in Wi-Fi networks. Numerical results demonstrate that the proposed LSTM-SAC algorithm significantly outperforms existing benchmark solutions across diverse network settings. There are several promising directions for future work. First, our analytical framework focuses on the STR mode, where links operate independently across frequency bands. Extending the cross-layer optimization to NSTR or hybrid STR/NSTR configurations would be valuable, as these modes require tight temporal coordination and introduce complex inter-link dependencies that challenge analytical modeling. Second, the current evaluation is conducted using an event-based Matlab simulator integrated with Python -based DRL. Real-world deployment involves additional uncertainties such as imperfect carrier sensing and device heterogeneity. Therefore, validating the proposed framework on real Wi-Fi 7 testbeds or FPGA-based prototypes [35] is an important future step. Such hardware-in-the-loop experiments would help close the gap between simulation and practice and offer deeper insights into the feasibility, scalability, and robustness of intelligent cross-layer optimization for Wi-Fi 7 MLO networks. REFERENCES [1] S. Lian, J. Tong, J. Zhang, and L. Fu, “Intelligent channel allocation for IEEE 802.11 be multi-link operation: When MAB meets LLM,” IEEE J. Sel. Areas Commun. , 2025. [2] IEEE 802.11 Working Group, IEEE Draft Standard for Information Technology–Telecommunications and Information Exchange Between Systems Local and Metropolitan Area Networks–Specific Requirements– Part 11: Wireless LAN Medium Access Control (MAC) and Physical Layer (PHY) Specifications Amendment: Enhancements for Extremely High Throughput (EHT) , IEEE P802.11be/D7.0, Dec. 2024. [3] P. E. Iturria-Rivera, M. Chenier, B. Herscovici, B. Kantarci, and M. Erol-Kantarci, “RL meets multi-link operation in IEEE 802.11 be: Multi-headed recurrent soft-actor critic-based traffic allocation,” in Proc. IEEE Int. Conf. Commun. , 2023, pp. 4001–4006. [4] C. Deng, X. Fang, X. Han, X. Wang, L. Yan, R. He, Y. Long, and Y. Guo, “IEEE 802.11 be Wi-Fi 7: New challenges and opportunities,” 
+
+IEEE Commun. Surveys & Tut. , vol. 22, no. 4, pp. 2136–2166, 2020. [5] A. L ´opez-Ravent ´os and B. Bellalta, “Multi-link operation in IEEE 802.11 be WLANs,” IEEE Wireless Commun. , vol. 29, no. 4, pp. 94–100, 2022. [6] M. Alsakati, C. Pettersson, S. Max, V. N. Moothedath, and J. Gross, “Performance of 802.11 be Wi-Fi 7 with multi-link operation on AR applications,” in Proc. IEEE Wireless Commun. Netw. Conf. , 2023, pp. 1–6. [7] A. L ´opez-Ravent ´os and B. Bellalta, “IEEE 802.11 be multi-link operation: When the best could be to use only a single interface,” in Proc. IEEE Mediterranean Commun. Comput. Netw. Conf. , 2021, pp. 1–7. [8] Y. Gao, M. Shen, Y. Zou, H. Yin, and S. Roy, “Latency optimal traffic-to-link allocation for MLO/SLO coexistence in Wi-Fi 7,” IEEE J. Sel. Areas Commun. , 2025. [9] A. L ´opez-Ravent ´os and B. Bellalta, “Dynamic traffic allocation in IEEE 802.11 be multi-link WLANs,” IEEE Wireless Commun. Letters , vol. 11, no. 7, pp. 1404–1408, 2022. [10] G. Bianchi, “Performance analysis of the IEEE 802.11 distributed coordination function,” IEEE J. Sel. Areas Commun. , vol. 18, no. 3, pp. 535–547, 2002. [11] L. Dai and X. Sun, “A unified analysis of IEEE 802.11 DCF networks: Stability, throughput, and delay,” IEEE Trans. Mobile Comput. , vol. 12, no. 8, pp. 1558–1572, 2012. [12] J. Park, J. Han, and S. Bahk, “Adaptive multilink channel access under cross-link interference in next-generation WLANs,” IEEE Internet Things J. , vol. 11, no. 14, pp. 24 685–24 697, 2024. [13] Y. Xu, Z. Liu, B. Qian, H. Du, J. Chen, J. Kang, H. Zhou, and D. Niyato, “Fully-decoupled RAN for feedback-free multi-base station transmission in MIMO-OFDM system,” IEEE J. Sel. Areas Commun. , vol. 43, no. 3, pp. 780–794, 2025. [14] F. Wilhelmi, S. Szott, K. Kosek-Szott, and B. Bellalta, “Machine learning and Wi-Fi: Unveiling the path toward AI/ML-native IEEE 802.11 networks,” IEEE Commun. Mag. , 2024. [15] T. Haarnoja, A. Zhou, K. Hartikainen, G. Tucker, S. Ha, J. Tan, V. Kumar, H. Zhu, A. Gupta, P. Abbeel et al. , “Soft actor-critic algorithms and applications,” arXiv preprint arXiv:1812.05905 , 2018. [16] W. Wydma ´nski and S. Szott, “Contention window optimization in IEEE 802.11 ax networks with deep reinforcement learning,” in Proc. IEEE Wireless Commun. Netw. Conf. , 2021, pp. 1–6. [17] J. Tong, L. Fu, and Z. Han, “Throughput enhancement of full-duplex CSMA networks using multiplayer bandits,” IEEE Internet Things J. ,vol. 8, no. 15, pp. 11 807–11 821, 2021. [18] J. Zhang, Y. Gao, X. Sun, W. Zhan, P. Liu, and Z. Guo, “Synchronous multi-link access in IEEE 802.11 be: Modeling and network sum rate optimization,” in Proc. IEEE Int. Conf. Commun. , 2022, pp. 2309–2314. [19] Y. Lv, Y. Chen, J. Li, M. Bi, and Y. Lu, “Multi-link operation with exponential increasing and exponential decreasing hybrid contention windows for low-latency WLANs,” IEEE Commun. Letters , 2025. [20] N. Korolev, I. Levitsky, I. Startsev, B. Bellalta, and E. Khorov, “Study of multi-link channel access without simultaneous transmit and receive in IEEE 802.11 be networks,” IEEE Access , vol. 10, pp. 126 339–126 351, 2022. [21] C.-L. Tai, M. Eisen, D. Akhmetov, D. Das, D. Cavalcanti, and R. Sivaku-mar, “Model-free dynamic traffic steering for multi-link operation in IEEE 802.11 be,” in Proc. IEEE Int. Conf. Mach. Learn. Commun. Netw. ,2024, pp. 44–49. [22] R. Ali, N. Shahin, Y. B. Zikria, B.-S. Kim, and S. W. Kim, “Deep reinforcement learning paradigm for performance optimization of channel observation-based MAC protocols in dense WLANs,” IEEE Access , vol. 7, pp. 3500–3511, 2018. [23] I. C. S. L. M. S. Committee et al. , “Wireless lan medium access control (MAC) and physical layer (PHY) specifications,” IEEE Std. 802.11-1997 ,1997. [24] S. Hochreiter and J. Schmidhuber, “Long short-term memory,” Neural Computation , vol. 9, no. 8, pp. 1735–1780, 1997. [25] G. Chen, S. Qi, F. Shen, Q. Zeng, and Y.-D. Zhang, “Information-aware driven dynamic LEO-RAN slicing algorithm joint with communication, computing, and caching,” IEEE J. Sel. Areas Commun. , vol. 42, no. 5, pp. 1044–1062, 2024. [26] Y. Cui, X. Huang, P. He, D. Wu, and R. Wang, “QoS guaranteed network slicing orchestration for Internet of Vehicles,” IEEE Internet Things J. ,vol. 9, no. 16, pp. 15 215–15 227, 2022. [27] Z. Wang, J. Zhang, B. Xu, D. Niyato, B. Ai, S. Mao, and Z. Han, “Low-complexity distributed combining design for near-field cell-free XL-MIMO systems,” IEEE Trans. Wireless Commun. , pp. 1–1, 2026. [28] X. Hou, J. Wang, F. Guan, J. Du, C. Jiang, and Y. Ren, “Energy-efficient federated learning for edge real-time vision via joint data, computation, and communication design,” IEEE J. Sel. Areas Commun. , vol. 43, no. 12, pp. 4000–4014, 2026. [29] V. Mnih, K. Kavukcuoglu, D. Silver, A. Graves, I. Antonoglou, D. Wier-stra, and M. Riedmiller, “Playing atari with deep reinforcement learning,” 
+
+arXiv preprint arXiv:1312.5602 , 2013. [30] T. P. Lillicrap, J. J. Hunt, A. Pritzel, N. Heess, T. Erez, Y. Tassa, D. Silver, and D. Wierstra, “Continuous control with deep reinforcement learning,” 
+
+arXiv preprint arXiv:1509.02971 , 2015. [31] Z. Liu, L. Huang, Z. Gao, X. Wang, D. Niyato et al. , “A Lyapunov-guided diffusion-based reinforcement learning approach for UAV-assisted vehicular networks with delayed CSI feedback,” arXiv preprint arXiv:2507.20524 , 2025. [32] Z. Liu, H. Du, J. Lin, Z. Gao, L. Huang, S. Hosseinalipour, and D. Niyato, “DNN partitioning, task offloading, and resource allocation in dynamic vehicular networks: A Lyapunov-guided diffusion-based reinforcement learning approach,” IEEE Trans. Mobile Comput. , 2024. [33] Z. Liu, H. Du, X. Hou, L. Huang, S. Hosseinalipour, D. Niyato, and K. B. Letaief, “Two-timescale model caching and resource allocation for edge-enabled AI-generated content services,” IEEE Trans. Mobile Comput. , pp. 1–17, 2025. [34] Y. Qin, Z. Zhang, X. Li, W. Huangfu, and H. Zhang, “Deep reinforcement learning based resource allocation and trajectory planning in integrated sensing and communications UAV network,” IEEE Trans. Wireless Commun. , vol. 22, no. 11, pp. 8158–8169, 2023. [35] B. Ding, J. Liu, H. Wu, and T. Wang, “GPLM: An 802.11 ac-capable low-MAC architecture for FPGA-based SDR systems,” in Proc. IEEE Wireless Commun. Netw. Conf. , 2019, pp. 1–7.
