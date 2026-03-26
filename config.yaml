@@ -25,3 +25,48 @@ subscriptions:
     stage: A
     diff_threshold_pct: 15
   keyword_recall_mode: or
+  intent_profiles:
+    - tag: DL Comm
+      description: 深度学习和通信收发机结合的文章
+      enabled: true
+      keywords:
+        - keyword: attention
+          keyword_cn: ''
+          query: attention
+        - keyword: computer vision
+          keyword_cn: ''
+          query: computer vision
+        - keyword: end-to-end
+          keyword_cn: ''
+          query: end-to-end
+        - keyword: physical layer
+          keyword_cn: ''
+          query: physical layer
+        - keyword: wireless communication
+          keyword_cn: ''
+          query: w
+        - keyword: deep learning
+          keyword_cn: 深度学习
+          query: deep learning in communication systems
+      intent_queries:
+        - query: deep learning applications in transceiver design
+          query_cn: 深度学习在收发机设计中的应用
+          enabled: true
+          source: manual
+          note: ''
+        - query: neural networks for wireless communication systems
+          query_cn: 用于无线通信系统的神经网络
+          enabled: true
+          source: manual
+          note: ''
+        - query: AI enhanced signal processing in communications
+          query_cn: 通信中人工智能增强的信号处理
+          enabled: true
+          source: manual
+          note: ''
+        - query: machine learning techniques for adaptive transceivers
+          query_cn: 自适应收发机的机器学习技术
+          enabled: true
+          source: manual
+          note: ''
+      updated_at: '2026-03-26T01:42:07.986Z'
